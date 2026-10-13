@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { clientIpFromHeaders, rateLimit } from '@/lib/ratelimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,8 +11,13 @@ const LIMITS = {
   name: 120,
   email: 200,
   phone: 40,
+  subject: 200,
   message: 5000,
 } as const;
+
+/** Basic abuse guard: 5 messages per minute per IP. */
+const RATE_LIMIT = 5;
+const RATE_WINDOW_MS = 60 * 1000;
 
 function str(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
@@ -22,6 +28,15 @@ function bad(error: string) {
 }
 
 export async function POST(request: Request) {
+  const ip = clientIpFromHeaders(request.headers);
+  const rl = rateLimit(`contact:${ip}`, RATE_LIMIT, RATE_WINDOW_MS);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { ok: false, error: 'You are sending messages too quickly. Please wait a minute and try again.' },
+      { status: 429 },
+    );
+  }
+
   let payload: unknown;
   try {
     payload = await request.json();
@@ -47,6 +62,7 @@ export async function POST(request: Request) {
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return bad('Please enter a valid email address.');
   if (email.length > LIMITS.email) return bad('Email address is too long.');
   if (phone.length > LIMITS.phone) return bad('Phone number is too long.');
+  if (subjectRaw.length > LIMITS.subject) return bad('Subject is too long.');
 
   try {
     await prisma.contactSubmission.create({

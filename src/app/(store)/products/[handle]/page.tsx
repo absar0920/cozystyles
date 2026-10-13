@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getProductByHandle, getRelatedProducts, getReviewsForProduct } from '@/lib/queries';
+import { getProductByHandle, getRecentReviews, getRelatedProducts, getReviewsForProduct } from '@/lib/queries';
 import { SITE } from '@/lib/constants';
 import { ChevronRight, PhoneIcon, ShieldIcon, TruckIcon } from '@/components/icons';
 import { Stars } from '@/components/ui/Stars';
@@ -62,6 +62,23 @@ export default async function ProductPage({ params }: Params) {
     getReviewsForProduct(product.id),
     getRelatedProducts(product.id, product.collections.map((c) => c.handle), 8),
   ]);
+  // Testimonial strip: reuse the product's own reviews, falling back to recent site reviews
+  const testimonialReviews: {
+    id: number;
+    author: string;
+    rating: number;
+    title: string;
+    body: string;
+    product?: { title: string };
+  }[] = reviews.length > 0 ? reviews.slice(0, 3) : await getRecentReviews(3);
+  const testimonials = testimonialReviews.map((r) => ({
+    id: r.id,
+    author: r.author,
+    rating: r.rating,
+    title: r.title,
+    body: r.body,
+    productTitle: r.product?.title ?? null,
+  }));
 
   const options = parseOptions(product.options);
   const variants: VariantInfo[] = product.variants.map((v) => ({
@@ -109,7 +126,10 @@ export default async function ProductPage({ params }: Params) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/<\//g, '<\\/') }}
+      />
 
       <div className="container-iw pb-4 pt-5">
         {/* Breadcrumb */}
@@ -258,6 +278,33 @@ export default async function ProductPage({ params }: Params) {
       <div className="border-t border-cream-border bg-cream">
         <ReviewsSection rating={product.rating} reviewCount={product.reviewCount} reviews={reviews} />
       </div>
+
+      {/* Testimonials strip */}
+      {testimonials.length > 0 && (
+        <section aria-labelledby="testimonials-heading" className="container-iw py-9 lg:py-12">
+          <h2 id="testimonials-heading" className="mb-6 font-heading text-xl font-semibold text-ink-dark sm:text-2xl">
+            What Our Customers Say
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {testimonials.map((t) => (
+              <figure
+                key={t.id}
+                className="flex flex-col gap-2.5 rounded-xl border border-cream-border bg-white p-5 shadow-card"
+              >
+                <Stars rating={t.rating} />
+                <blockquote className="text-[13px] leading-relaxed text-ink">
+                  {t.title && <span className="mb-1 block text-sm font-semibold text-ink-dark">{t.title}</span>}
+                  {t.body}
+                </blockquote>
+                <figcaption className="mt-auto text-xs text-ink-muted">
+                  <span className="font-semibold text-ink-dark">{t.author}</span>
+                  {t.productTitle && <> · {t.productTitle}</>}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Related products */}
       {related.length > 0 && (

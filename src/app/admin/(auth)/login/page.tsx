@@ -25,13 +25,6 @@ export default async function LoginPage() {
       </div>
 
       <LoginForm />
-
-      <div className="mt-6 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 text-center text-xs leading-relaxed text-gray-400">
-        Seeded credentials: <span className="font-medium text-gray-500">admin@interwood.local</span> ·{' '}
-        <span className="font-medium text-gray-500">Interwood@2026</span>
-        <br />
-        (set via <code className="text-[11px]">ADMIN_EMAIL</code> / <code className="text-[11px]">ADMIN_PASSWORD</code> before seeding)
-      </div>
     </div>
   );
 }

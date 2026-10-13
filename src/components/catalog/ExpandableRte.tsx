@@ -4,8 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import { ChevronDown } from '@/components/icons';
 
 /**
- * Renders DB rich-text HTML (`.rte`) that collapses behind a gradient fade
- * with a "Read more" toggle when the content is taller than `collapsedHeight`.
+ * Renders a plain-text DB description (e.g. collection `description`) inside
+ * `.rte` typography, collapsing behind a gradient fade with a "Read more"
+ * toggle when the content is taller than `collapsedHeight`. The string is
+ * rendered as TEXT ONLY — never interpreted as HTML (prop keeps the historic
+ * `html` name for callers).
  */
 export function ExpandableRte({ html, collapsedHeight = 176 }: { html: string; collapsedHeight?: number }) {
   const contentRef = useRef<HTMLDivElement>(null);
@@ -26,7 +29,7 @@ export function ExpandableRte({ html, collapsedHeight = 176 }: { html: string; c
           className="rte overflow-hidden transition-[max-height] duration-300"
           style={expanded ? undefined : { maxHeight: collapsedHeight }}
         >
-          <div dangerouslySetInnerHTML={{ __html: html }} />
+          <p className="whitespace-pre-line text-sm leading-relaxed text-ink">{html}</p>
         </div>
         {!expanded && needsToggle && (
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white via-white/80 to-transparent" />

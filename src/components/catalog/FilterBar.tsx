@@ -9,7 +9,9 @@ const SORT_OPTIONS = [
   { value: 'price-asc', label: 'Price: Low to High' },
   { value: 'price-desc', label: 'Price: High to Low' },
   { value: 'newest', label: 'Newest First' },
+  { value: 'created-asc', label: 'Oldest First' },
   { value: 'title-asc', label: 'Alphabetical: A–Z' },
+  { value: 'title-desc', label: 'Alphabetical: Z–A' },
 ];
 
 export type FilterBarProps = {

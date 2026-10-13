@@ -21,7 +21,12 @@ export default async function StoreLayout({ children }: { children: React.ReactN
 
   return (
     <>
-      <Header menu={menu} announcement={topbar[0]?.label ?? settings.announcement ?? ''} phone={settings.phone ?? ''} />
+      <Header
+        menu={menu}
+        announcement={settings.announcement ?? ''}
+        phone={settings.phone ?? ''}
+        topbarLinks={topbar.map((item) => ({ label: item.label, href: item.href }))}
+      />
       <main className="min-h-[60vh]">{children}</main>
       <Footer columns={columns} settings={settings} />
       <WhatsappButton whatsapp={settings.whatsapp ?? ''} />

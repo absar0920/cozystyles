@@ -8,7 +8,7 @@ import { getCurrentAdmin } from '@/lib/auth';
 /* ------------------------------------------------------------------ helpers */
 
 /** These live as plain consts (not exports) because a 'use server' module may only export async functions. */
-const BANNER_LOCATIONS = ['HOME_HERO', 'HOME_STRIP_1', 'HOME_STRIP_2', 'HOME_GRID', 'POPUP'];
+const BANNER_LOCATIONS = ['HOME_HERO', 'HOME_STRIP_1', 'HOME_STRIP_2'];
 const MENU_LOCATIONS = ['MAIN', 'TOPBAR', 'FOOTER_1', 'FOOTER_2', 'FOOTER_3'];
 
 const str = (fd: FormData, key: string): string => {
@@ -54,13 +54,16 @@ export async function saveBannerAction(formData: FormData) {
 
   const idRaw = str(formData, 'id');
   const id = idRaw === '' ? null : Number(idRaw);
+  const back: (msg: string) => never = (msg) => redirect(`/admin/banners?error=${encodeURIComponent(msg)}`);
 
   const location = str(formData, 'location');
   const image = str(formData, 'image');
   const title = str(formData, 'title');
 
-  if (!BANNER_LOCATIONS.includes(location)) return;
-  if (image === '') return; // image is required
+  // Validation errors bounce back to the banners page with a descriptive message
+  // (same pattern as saveProductAction).
+  if (!BANNER_LOCATIONS.includes(location)) back(`“${location || '—'}” is not a valid banner location.`);
+  if (image === '') back('A desktop image URL is required.');
 
   const data = {
     location,
@@ -79,7 +82,7 @@ export async function saveBannerAction(formData: FormData) {
   let bannerId: number;
   if (id != null && Number.isFinite(id)) {
     const existing = await prisma.banner.findUnique({ where: { id }, select: { id: true } });
-    if (!existing) return;
+    if (!existing) back('This banner no longer exists.');
     await prisma.banner.update({ where: { id }, data });
     bannerId = id;
   } else {

@@ -29,9 +29,9 @@ const SECTIONS: Section[] = [
     fields: [
       {
         key: 'announcement',
-        label: 'Announcement Bar',
+        label: 'Announcement Bar (top of every page)',
         type: 'textarea',
-        hint: 'Text strip shown above the site header. Leave empty to hide the bar.',
+        hint: 'Drives the announcement bar shown at the very top of the storefront on every page. Leave empty to hide the bar.',
         placeholder: 'Flat 20% off on all sofas — limited time only!',
       },
       {

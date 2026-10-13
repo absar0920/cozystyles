@@ -5,10 +5,21 @@ import { useCart } from '@/lib/cart';
 import type { ProductCardData } from '@/lib/queries';
 import { CheckIcon, CartIcon } from '@/components/icons';
 
-/** Quick add-to-cart button used on product cards. Adds the cheapest variant. */
+/** Quick add-to-cart button used on product cards. Adds the cheapest variant. Price-on-request items link to the enquiry form instead. */
 export function QuickAdd({ product }: { product: ProductCardData }) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
+
+  if (product.priceOnRequest) {
+    return (
+      <a
+        href="/pages/contact"
+        className="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-cream-border bg-white px-3 py-2 text-xs font-semibold text-ink-dark transition hover:border-brand hover:bg-brand hover:text-white"
+      >
+        Enquire Now
+      </a>
+    );
+  }
 
   return (
     <button

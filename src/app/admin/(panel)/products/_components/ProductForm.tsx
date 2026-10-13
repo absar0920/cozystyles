@@ -5,10 +5,10 @@ import { TitleSlugFields } from './TitleSlugFields';
 import { VariantsEditor, type VariantInit } from './VariantsEditor';
 import { ImagesEditor, type ImageInit } from './ImagesEditor';
 
-export type CollectionGroup = {
+export type CollectionRow = {
   id: number;
   title: string;
-  children: { id: number; title: string }[];
+  depth: number;
 };
 
 export type ProductFormValues = {
@@ -27,19 +27,30 @@ export type ProductFormValues = {
   collectionIds: number[];
 };
 
-/** Group a flat collection list under parents for the checkbox tree. */
+/** Flatten the collection parent/child graph into DFS order with a depth for indenting checkboxes. */
 export function buildCollectionTree(
   collections: { id: number; title: string; parentId: number | null }[],
-): CollectionGroup[] {
-  const byId = new Map(collections.map((c) => [c.id, { ...c, children: [] as { id: number; title: string }[] }]));
-  const roots: CollectionGroup[] = [];
+): CollectionRow[] {
+  const byId = new Map(
+    collections.map((c) => [c.id, { id: c.id, title: c.title, parentId: c.parentId, childIds: [] as number[] }]),
+  );
+  const rootIds: number[] = [];
   for (const c of collections) {
-    const node = byId.get(c.id)!;
     const parent = c.parentId != null ? byId.get(c.parentId) : undefined;
-    if (parent && parent.id !== c.id) parent.children.push({ id: node.id, title: node.title });
-    else roots.push({ id: node.id, title: node.title, children: node.children });
+    if (parent && parent.id !== c.id) parent.childIds.push(c.id);
+    else rootIds.push(c.id);
   }
-  return roots;
+  const rows: CollectionRow[] = [];
+  const seen = new Set<number>(); // guards against corrupted parent loops
+  const visit = (id: number, depth: number) => {
+    if (seen.has(id)) return;
+    seen.add(id);
+    const node = byId.get(id)!;
+    rows.push({ id: node.id, title: node.title, depth });
+    for (const childId of node.childIds) visit(childId, depth + 1);
+  };
+  for (const rootId of rootIds) visit(rootId, 0);
+  return rows;
 }
 
 /** Full product create/edit form. Posts straight to the saveProductAction server action. */
@@ -51,7 +62,7 @@ export function ProductForm({
   saved,
 }: {
   product: ProductFormValues | null;
-  collectionTree: CollectionGroup[];
+  collectionTree: CollectionRow[];
   createMode?: boolean;
   error?: string;
   saved?: boolean;
@@ -129,36 +140,24 @@ export function ProductForm({
         <div className="space-y-5">
           <AdminCard title="Collections">
             <p className="mb-2 text-xs text-gray-400">Checked collections show this product.</p>
-            <div className="max-h-80 space-y-2 overflow-y-auto rounded-lg border border-gray-200 p-3 text-sm">
-              {collectionTree.map((group) => (
-                <div key={group.id}>
-                  <label className="flex cursor-pointer items-center gap-2 font-semibold text-ink-dark">
-                    <input
-                      type="checkbox"
-                      name="collectionIds"
-                      value={group.id}
-                      defaultChecked={p?.collectionIds.includes(group.id) ?? false}
-                      className="h-4 w-4 accent-brand"
-                    />
-                    <span className="truncate">{group.title}</span>
-                  </label>
-                  {group.children.length > 0 && (
-                    <div className="ml-6 mt-1 space-y-1">
-                      {group.children.map((child) => (
-                        <label key={child.id} className="flex cursor-pointer items-center gap-2 text-gray-600">
-                          <input
-                            type="checkbox"
-                            name="collectionIds"
-                            value={child.id}
-                            defaultChecked={p?.collectionIds.includes(child.id) ?? false}
-                            className="h-4 w-4 accent-brand"
-                          />
-                          <span className="truncate">{child.title}</span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
+            <div className="max-h-80 space-y-1 overflow-y-auto rounded-lg border border-gray-200 p-3 text-sm">
+              {collectionTree.map((row) => (
+                <label
+                  key={row.id}
+                  className={`flex cursor-pointer items-center gap-2 ${
+                    row.depth === 0 ? 'font-semibold text-ink-dark' : 'text-gray-600'
+                  }`}
+                  style={{ marginLeft: `${row.depth * 16}px` }}
+                >
+                  <input
+                    type="checkbox"
+                    name="collectionIds"
+                    value={row.id}
+                    defaultChecked={p?.collectionIds.includes(row.id) ?? false}
+                    className="h-4 w-4 shrink-0 accent-brand"
+                  />
+                  <span className="truncate">{row.title}</span>
+                </label>
               ))}
             </div>
           </AdminCard>

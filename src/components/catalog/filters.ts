@@ -6,7 +6,7 @@
 
 export type RawSearchParams = Record<string, string | string[] | undefined>;
 
-export const SORT_KEYS = ['price-asc', 'price-desc', 'newest', 'title-asc'] as const;
+export const SORT_KEYS = ['price-asc', 'price-desc', 'newest', 'title-asc', 'title-desc', 'created-asc'] as const;
 export type SortKey = (typeof SORT_KEYS)[number];
 
 export type CatalogFilters = {
@@ -22,20 +22,25 @@ export function firstValue(v: string | string[] | undefined): string | undefined
   return Array.isArray(v) ? v[0] : v;
 }
 
-function parseIntParam(v: string | undefined): number | undefined {
+/** Belt-and-braces caps (listProducts clamps again on the query side). */
+const MAX_PRICE_FILTER = 10_000_000;
+const MAX_PAGE = 100_000;
+
+function parseIntParam(v: string | undefined, max: number): number | undefined {
   if (v == null || v.trim() === '') return undefined;
   const n = Number.parseInt(v, 10);
-  return Number.isFinite(n) && n >= 0 ? n : undefined;
+  // rejects NaN / negatives and caps huge values so they can't overflow downstream
+  return Number.isFinite(n) && n >= 0 ? Math.min(n, max) : undefined;
 }
 
 export function parseCatalogFilters(sp: RawSearchParams): CatalogFilters {
   const sortRaw = firstValue(sp.sort);
   return {
     sort: SORT_KEYS.find((s) => s === sortRaw),
-    min: parseIntParam(firstValue(sp.min)),
-    max: parseIntParam(firstValue(sp.max)),
+    min: parseIntParam(firstValue(sp.min), MAX_PRICE_FILTER),
+    max: parseIntParam(firstValue(sp.max), MAX_PRICE_FILTER),
     inStock: firstValue(sp.stock) === '1',
-    page: Math.max(1, parseIntParam(firstValue(sp.page)) ?? 1),
+    page: Math.min(MAX_PAGE, Math.max(1, parseIntParam(firstValue(sp.page), MAX_PAGE) ?? 1)),
     q: (firstValue(sp.q) ?? '').trim(),
   };
 }

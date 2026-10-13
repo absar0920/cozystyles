@@ -31,7 +31,7 @@ export function LoginForm() {
           autoComplete="email"
           autoFocus
           required
-          placeholder="admin@interwood.local"
+          placeholder="admin@example.com"
           className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm outline-none transition placeholder:text-gray-300 focus:border-brand focus:ring-2 focus:ring-brand/20"
         />
       </div>

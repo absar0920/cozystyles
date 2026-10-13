@@ -6,8 +6,16 @@ import type { AdminUser } from '@prisma/client';
 const COOKIE_NAME = 'iw_admin_session';
 const MAX_AGE_S = 60 * 60 * 12; // 12h
 
+// Fail fast at module load: without a real secret anyone could forge admin
+// session cookies, so a hard-coded fallback is never acceptable.
+const providedSecret = process.env.SESSION_SECRET;
+if (!providedSecret) {
+  throw new Error('SESSION_SECRET is required');
+}
+const SESSION_SECRET: string = providedSecret;
+
 function secret(): string {
-  return process.env.SESSION_SECRET ?? 'insecure-dev-secret';
+  return SESSION_SECRET;
 }
 
 function sign(payload: string): string {
@@ -40,7 +48,10 @@ export async function setSessionCookie(adminId: number) {
   store.set(COOKIE_NAME, createSessionToken(adminId), {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    // Secure cookies require HTTPS. Plain-HTTP VPS deployments must opt in
+    // explicitly (COOKIE_SECURE=1); otherwise the browser would silently drop
+    // the cookie and login would appear broken.
+    secure: process.env.COOKIE_SECURE === '1',
     path: '/',
     maxAge: MAX_AGE_S,
   });

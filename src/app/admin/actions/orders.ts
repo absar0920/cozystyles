@@ -13,6 +13,12 @@ function revalidateOrders(id?: number) {
   if (id != null) revalidatePath(`/admin/orders/${id}`);
 }
 
+/** "[YYYY-MM-DD HH:mm]" server-side timestamp for the status audit trail. */
+function auditStamp(now = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
+
 /** Update status and/or internal admin notes for one order. */
 export async function updateOrderAction(formData: FormData) {
   const admin = await getCurrentAdmin();
@@ -21,7 +27,7 @@ export async function updateOrderAction(formData: FormData) {
   const id = Number(formData.get('id'));
   if (!Number.isFinite(id)) return;
 
-  const existing = await prisma.order.findUnique({ where: { id }, select: { id: true } });
+  const existing = await prisma.order.findUnique({ where: { id }, select: { id: true, status: true, adminNotes: true } });
   if (!existing) return;
 
   const data: { status?: string; adminNotes?: string } = {};
@@ -29,27 +35,18 @@ export async function updateOrderAction(formData: FormData) {
   const status = String(formData.get('status') ?? '');
   if ((ORDER_STATUSES as readonly string[]).includes(status)) data.status = status;
 
-  if (formData.has('adminNotes')) data.adminNotes = String(formData.get('adminNotes') ?? '');
+  if (data.status != null && data.status !== existing.status) {
+    // Append an audit line so the note history shows every status transition.
+    const line = `[${auditStamp()}] status ${existing.status} → ${data.status}`;
+    const base = formData.has('adminNotes') ? String(formData.get('adminNotes') ?? '') : existing.adminNotes;
+    data.adminNotes = base.trim() ? `${base.trimEnd()}\n${line}` : line;
+  } else if (formData.has('adminNotes')) {
+    data.adminNotes = String(formData.get('adminNotes') ?? '');
+  }
 
   if (Object.keys(data).length === 0) return;
 
   await prisma.order.update({ where: { id }, data });
-  revalidateOrders(id);
-}
-
-/** Quick status change from the orders list. */
-export async function setOrderStatusAction(formData: FormData) {
-  const admin = await getCurrentAdmin();
-  if (!admin) redirect('/admin/login');
-
-  const id = Number(formData.get('id'));
-  const status = String(formData.get('status') ?? '');
-  if (!Number.isFinite(id) || !(ORDER_STATUSES as readonly string[]).includes(status)) return;
-
-  const existing = await prisma.order.findUnique({ where: { id }, select: { id: true } });
-  if (!existing) return;
-
-  await prisma.order.update({ where: { id }, data: { status } });
   revalidateOrders(id);
 }
 

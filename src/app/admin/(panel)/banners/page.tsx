@@ -17,8 +17,6 @@ const BANNER_LOCATIONS = [
   { value: 'HOME_HERO', label: 'Home — Hero slider', hint: 'Large rotating hero banner. Desktop 1200×462, mobile 450×700.' },
   { value: 'HOME_STRIP_1', label: 'Home — Promo strip 1', hint: 'First promotional strip below the hero.' },
   { value: 'HOME_STRIP_2', label: 'Home — Promo strip 2', hint: 'Second promotional strip below the hero.' },
-  { value: 'HOME_GRID', label: 'Home — Grid tiles', hint: 'Small tiles in the category/lookbook grid.' },
-  { value: 'POPUP', label: 'Site popup', hint: 'Promotional popup shown over the storefront.' },
 ] as const;
 
 const locationLabel = (value: string) => BANNER_LOCATIONS.find((l) => l.value === value)?.label ?? value;
@@ -36,6 +34,7 @@ export default async function BannersPage({
   const sp = await searchParams;
   const saved = sp.saved === '1';
   const deletedFlag = sp.deleted === '1';
+  const error = typeof sp.error === 'string' && sp.error ? sp.error : '';
   const requested =
     typeof sp.location === 'string' && BANNER_LOCATIONS.some((l) => l.value === sp.location) ? sp.location : 'HOME_HERO';
 
@@ -43,12 +42,22 @@ export default async function BannersPage({
   const nextPosition = (location: string) =>
     banners.filter((b) => b.location === location).reduce((max, b) => Math.max(max, b.position), -1) + 1;
 
+  // Legacy rows (e.g. HOME_GRID/POPUP from older data) stay visible so they can be edited or deleted.
+  const knownLocations = new Set<string>(BANNER_LOCATIONS.map((l) => l.value));
+  const otherBanners = banners.filter((b) => !knownLocations.has(b.location));
+
   return (
     <div>
       <AdminPageHeader
         title="Banners"
-        subtitle="Hero slides, promo strips, grid tiles and popups rendered on the storefront"
+        subtitle="Hero slides and promo strips rendered on the storefront home page"
       />
+
+      {error && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700" role="alert">
+          {error}
+        </div>
+      )}
 
       {(saved || deletedFlag) && (
         <div
@@ -61,7 +70,7 @@ export default async function BannersPage({
       )}
 
       {/* ---------------------------------------------------------- add banner */}
-      <div className="mb-8">
+      <div id="add" className="mb-8 scroll-mt-24">
         <AdminCard title="Add a banner">
           <BannerForm key={`add-${requested}`} locationDefault={requested} positionDefault={nextPosition(requested)} />
         </AdminCard>
@@ -97,6 +106,27 @@ export default async function BannersPage({
             </section>
           );
         })}
+
+        {otherBanners.length > 0 && (
+          <section>
+            <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="font-heading text-base font-bold text-ink-dark">
+                Other locations
+                <span className="ml-2 rounded-full bg-gray-200 px-2 py-0.5 text-[11px] font-semibold text-gray-600">
+                  {otherBanners.length}
+                </span>
+              </h2>
+              <p className="text-xs text-gray-400">
+                Legacy locations no longer rendered by the storefront — edit to move them, or delete them.
+              </p>
+            </div>
+            <div className="space-y-4">
+              {otherBanners.map((banner) => (
+                <BannerCard key={banner.id} banner={banner} />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );
@@ -229,6 +259,9 @@ function BannerForm({
                 {l.label}
               </option>
             ))}
+            {isEdit && banner != null && !BANNER_LOCATIONS.some((l) => l.value === banner.location) && (
+              <option value={banner.location}>{banner.location} (legacy — not rendered by the storefront)</option>
+            )}
           </Select>
         </Field>
         <Field label="Position" hint="Lower numbers show first within the location.">

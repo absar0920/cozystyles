@@ -26,12 +26,13 @@ export function ProductCard({ product }: { product: ProductCardData & { compareA
             -{off}% OFF
           </span>
         )}
-        {product.hot && off == null && (
-          <span className="absolute left-3 top-3 rounded-md bg-terra px-2 py-0.5 text-[11px] font-bold text-white shadow">HOT</span>
-        )}
-        {product.inventory === 0 && (
+        {product.inventory === 0 ? (
           <span className="absolute bottom-3 left-3 rounded-md bg-ink-dark/80 px-2 py-0.5 text-[11px] font-medium text-white">
-            Made to Order
+            Sold Out
+          </span>
+        ) : (
+          <span className="absolute bottom-3 left-3 rounded-md bg-white/90 px-2 py-0.5 text-[11px] font-medium text-brand-700 shadow-sm backdrop-blur-sm">
+            Ready to ship
           </span>
         )}
       </Link>
@@ -45,9 +46,15 @@ export function ProductCard({ product }: { product: ProductCardData & { compareA
           {product.title}
         </Link>
         <div className="mt-auto flex items-baseline gap-2">
-          <span className="text-[15px] font-bold text-brand">{formatPKR(product.price)}</span>
-          {product.compareAtPrice != null && product.compareAtPrice > product.price && (
-            <span className="text-xs text-ink-light line-through">{formatPKR(product.compareAtPrice)}</span>
+          {product.priceOnRequest ? (
+            <span className="text-[13px] font-semibold text-ink-dark">Price on Request</span>
+          ) : (
+            <>
+              <span className="text-[15px] font-bold text-brand">{formatPKR(product.price)}</span>
+              {product.compareAtPrice != null && product.compareAtPrice > product.price && (
+                <span className="text-xs text-ink-light line-through">{formatPKR(product.compareAtPrice)}</span>
+              )}
+            </>
           )}
         </div>
         <QuickAdd product={product} />

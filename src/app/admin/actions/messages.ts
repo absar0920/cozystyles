@@ -20,6 +20,10 @@ export async function markMessageAction(formData: FormData) {
   const status = String(formData.get('status') ?? '');
   if (!Number.isFinite(id) || !MESSAGE_STATUSES.includes(status)) return;
 
+  // Guard: the row may have been deleted in another tab (matches the catalog.ts pattern).
+  const existing = await prisma.contactSubmission.findUnique({ where: { id }, select: { id: true } });
+  if (!existing) return;
+
   await prisma.contactSubmission.update({ where: { id }, data: { status } });
   revalidateMessages();
 }
@@ -30,6 +34,10 @@ export async function deleteMessageAction(formData: FormData) {
 
   const id = Number(formData.get('id'));
   if (!Number.isFinite(id)) return;
+
+  // Guard: already-deleted rows must not crash the action (matches the catalog.ts pattern).
+  const existing = await prisma.contactSubmission.findUnique({ where: { id }, select: { id: true } });
+  if (!existing) return;
 
   await prisma.contactSubmission.delete({ where: { id } });
   revalidateMessages();

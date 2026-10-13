@@ -45,6 +45,7 @@ export type ProductCardData = {
   handle: string;
   title: string;
   price: number;
+  priceOnRequest?: boolean;
   compareAtPrice: number | null;
   image: string | null;
   hot: boolean;
@@ -68,16 +69,24 @@ const cardSelect = {
 
 type CardRaw = Prisma.ProductGetPayload<{ select: typeof cardSelect }>;
 
-export function toCard(p: CardRaw): ProductCardData & { compareAtPrice: number | null } {
+/** Display price: min over variants with price > 0; null when every variant is 0 (design/request items). */
+export function displayPrice(prices: number[]): number | null {
+  const positive = prices.filter((p) => p > 0);
+  return positive.length ? Math.min(...positive) : null;
+}
+
+export function toCard(p: CardRaw): ProductCardData & { compareAtPrice: number | null; priceOnRequest: boolean } {
   const vs = p.variants;
-  const price = vs.length ? Math.min(...vs.map((v) => v.price)) : 0;
+  const price = displayPrice(vs.map((v) => v.price)) ?? 0;
+  const priceOnRequest = price === 0;
   const compares = vs.map((v) => v.compareAtPrice).filter((c): c is number => c != null && c > price);
-  const compareAtPrice = compares.length ? Math.max(...compares) : null;
+  const compareAtPrice = priceOnRequest ? null : compares.length ? Math.max(...compares) : null;
   return {
     id: p.id,
     handle: p.handle,
     title: p.title,
     price,
+    priceOnRequest,
     compareAtPrice,
     image: p.images[0]?.src ?? null,
     hot: p.hot,
@@ -107,9 +116,14 @@ export type ProductListResult = {
   pages: number;
 };
 
+const MAX_PRICE_FILTER = 10_000_000;
+
 export async function listProducts(params: ProductListParams): Promise<ProductListResult> {
-  const page = Math.max(1, params.page ?? 1);
+  const requestedPage = Math.max(1, params.page ?? 1);
   const perPage = Math.min(48, Math.max(1, params.perPage ?? 24));
+  const clampPrice = (n: number) => Math.min(MAX_PRICE_FILTER, Math.max(0, n));
+  const minPrice = params.minPrice != null ? clampPrice(params.minPrice) : undefined;
+  const maxPrice = params.maxPrice != null ? clampPrice(params.maxPrice) : undefined;
   const where: Prisma.ProductWhereInput = { status: 'ACTIVE' };
 
   if (params.collectionHandle) {
@@ -124,17 +138,22 @@ export async function listProducts(params: ProductListParams): Promise<ProductLi
       { bodyHtml: { contains: q } },
     ];
   }
-  if (params.minPrice != null || params.maxPrice != null || params.inStockOnly) {
+  if (minPrice != null || maxPrice != null || params.inStockOnly) {
+    // ONE `price` object — spreading `price` twice would silently drop minPrice when maxPrice is also set
     where.variants = {
       some: {
-        ...(params.minPrice != null ? { price: { gte: params.minPrice } } : {}),
-        ...(params.maxPrice != null ? { price: { lte: params.maxPrice } } : {}),
+        price: {
+          ...(minPrice != null ? { gte: minPrice } : {}),
+          ...(maxPrice != null ? { lte: maxPrice } : {}),
+        },
         ...(params.inStockOnly ? { inventory: { gt: 0 } } : {}),
       },
     };
   }
 
   const total = await prisma.product.count({ where });
+  // Clamp AFTER computing total so a huge ?page= can never overflow skip/slice (int64 500s)
+  const page = Math.min(requestedPage, Math.max(1, Math.ceil(total / perPage)));
 
   let rows;
   if (params.sort === 'price-asc' || params.sort === 'price-desc') {
@@ -143,8 +162,11 @@ export async function listProducts(params: ProductListParams): Promise<ProductLi
       where,
       select: { id: true, variants: { select: { price: true } } },
     });
-    const minPrice = (id: number, prices: { price: number }[]) => ({ id, min: prices.length ? Math.min(...prices.map((v) => v.price)) : Infinity });
-    const priced = all.map((p) => minPrice(p.id, p.variants));
+    // Same purchasable-variant price logic as toCard so sort order matches displayed prices
+    const priced = all.map((p) => ({
+      id: p.id,
+      min: displayPrice(p.variants.map((v) => v.price)) ?? Infinity,
+    }));
     priced.sort((a, b) => (params.sort === 'price-asc' ? a.min - b.min : b.min - a.min));
     const pageIds = priced.slice((page - 1) * perPage, page * perPage).map((p) => p.id);
     const byId = await prisma.product.findMany({ where: { id: { in: pageIds } }, select: cardSelect });
@@ -158,6 +180,12 @@ export async function listProducts(params: ProductListParams): Promise<ProductLi
         break;
       case 'title-asc':
         orderBy = [{ title: 'asc' }];
+        break;
+      case 'title-desc':
+        orderBy = [{ title: 'desc' }];
+        break;
+      case 'created-asc':
+        orderBy = [{ createdAt: 'asc' }];
         break;
       case 'best-selling':
       default:

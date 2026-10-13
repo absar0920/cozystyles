@@ -150,7 +150,7 @@ export default async function AdminDashboardPage() {
             <PlusIcon className="h-4 w-4" /> New Product
           </Link>
           <Link
-            href="/admin/banners/new"
+            href="/admin/banners#add"
             className="inline-flex items-center gap-2 rounded-lg bg-brand-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-950"
           >
             <HeartIcon className="h-4 w-4" /> New Banner

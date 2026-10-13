@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { MenuNode } from '@/lib/queries';
 import { PhoneIcon, MailIcon, MapPinIcon, FacebookIcon, InstagramIcon, YoutubeIcon, LinkedinIcon, WhatsappIcon } from '@/components/icons';
+import { NewsletterForm } from '@/components/layout/NewsletterForm';
 
 type FooterProps = {
   columns: { title: string; items: MenuNode[] }[];
@@ -54,6 +55,15 @@ export function Footer({ columns, settings }: FooterProps) {
               </a>
             ))}
           </div>
+          <NewsletterForm />
+          <div className="mt-6">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-white/60">Certified by</p>
+            <div className="flex flex-wrap gap-2">
+              {['FSC', 'IAS', 'EIAC', 'BMTF'].map((c) => (
+                <span key={c} className="rounded border border-white/20 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white/75">{c}</span>
+              ))}
+            </div>
+          </div>
         </div>
 
         {columns.map((col) => (
@@ -73,12 +83,17 @@ export function Footer({ columns, settings }: FooterProps) {
       </div>
 
       <div className="border-t border-white/10">
-        <div className="container-iw flex flex-col items-center justify-between gap-3 py-5 text-[12px] text-white/60 sm:flex-row">
+        <div className="container-iw flex flex-col items-center gap-4 py-5 text-[12px] text-white/60 sm:flex-row sm:justify-between">
           <p>© {new Date().getFullYear()} Interwood Mobel (Pvt.) Ltd. All rights reserved.</p>
-          <div className="flex items-center gap-3">
-            {['VISA', 'Mastercard', 'Bank Transfer', 'COD', 'Baadmay'].map((m) => (
-              <span key={m} className="rounded border border-white/20 px-2 py-1 text-[10px] font-semibold text-white/70">{m}</span>
-            ))}
+          <div className="text-center">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/50">
+              Installment Plans &amp; Payment Gateway
+            </p>
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+              {['VISA', 'Mastercard', 'Amex', 'Bank Transfer', 'COD', 'Baadmay'].map((m) => (
+                <span key={m} className="rounded border border-white/20 px-2 py-1 text-[10px] font-semibold text-white/70">{m}</span>
+              ))}
+            </div>
           </div>
         </div>
       </div>

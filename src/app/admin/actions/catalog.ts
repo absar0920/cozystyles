@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/auth';
 
@@ -313,14 +314,28 @@ export async function saveCollectionAction(formData: FormData) {
 
   const image = String(formData.get('image') ?? '').trim() || null;
 
-  // Parent (may not be itself)
+  // Parent — may not be the collection itself nor one of its descendants (would create a cycle).
   let parentId: number | null = null;
   const parentRaw = String(formData.get('parentId') ?? '').trim();
   if (parentRaw && /^\d+$/.test(parentRaw)) {
     const candidate = Number(parentRaw);
-    if (id == null || candidate !== id) {
-      const parent = await prisma.collection.findUnique({ where: { id: candidate }, select: { id: true } });
-      if (parent) parentId = candidate;
+    if (id != null && candidate === id) back('A collection cannot be its own parent.');
+
+    const parent = await prisma.collection.findUnique({ where: { id: candidate }, select: { id: true } });
+    if (parent) {
+      if (id != null) {
+        // Walk the candidate's ancestor chain; bumping into the edited collection means a cycle.
+        let cursor: number | null = candidate;
+        for (let depth = 0; cursor != null && depth < 20; depth++) {
+          if (cursor === id) back('That parent is a descendant of this collection — it would create a cycle.');
+          const node: { parentId: number | null } | null = await prisma.collection.findUnique({
+            where: { id: cursor },
+            select: { parentId: true },
+          });
+          cursor = node?.parentId ?? null;
+        }
+      }
+      parentId = candidate;
     }
   }
 
@@ -337,41 +352,51 @@ export async function saveCollectionAction(formData: FormData) {
     if (!exists) redirect(`/admin/collections?error=${encodeURIComponent('This collection no longer exists.')}`);
   }
 
+  // Keep handles unique (append -2, -3, … on collision) — always re-based on the original handle.
+  const baseHandle = handle;
   for (let n = 2; ; n++) {
     const clash = await prisma.collection.findFirst({
       where: { handle, ...(id != null ? { id: { not: id } } : {}) },
       select: { id: true },
     });
     if (!clash) break;
-    handle = `${handle}-${n}`;
+    handle = `${baseHandle}-${n}`;
   }
 
   const validProductIds = productIds.length
     ? (await prisma.product.findMany({ where: { id: { in: productIds } }, select: { id: true } })).map((p) => p.id)
     : [];
 
-  const collection = await prisma.$transaction(async (tx) => {
-    const data = {
-      handle,
-      title,
-      description: String(formData.get('description') ?? '').trim(),
-      image,
-      parentId,
-      kind,
-      featured: formData.get('featured') === 'on',
-      showInNav: formData.get('showInNav') === 'on',
-      position: Math.max(0, asInt(formData.get('position'), 0)),
-    };
-    const c =
-      id != null
-        ? await tx.collection.update({ where: { id }, data })
-        : await tx.collection.create({ data });
-    await tx.collection.update({
-      where: { id: c.id },
-      data: { products: { set: validProductIds.map((pid) => ({ id: pid })) } },
+  let collection: { id: number; handle: string };
+  try {
+    collection = await prisma.$transaction(async (tx) => {
+      const data = {
+        handle,
+        title,
+        description: String(formData.get('description') ?? '').trim(),
+        image,
+        parentId,
+        kind,
+        featured: formData.get('featured') === 'on',
+        showInNav: formData.get('showInNav') === 'on',
+        position: Math.max(0, asInt(formData.get('position'), 0)),
+      };
+      const c =
+        id != null
+          ? await tx.collection.update({ where: { id }, data })
+          : await tx.collection.create({ data });
+      await tx.collection.update({
+        where: { id: c.id },
+        data: { products: { set: validProductIds.map((pid) => ({ id: pid })) } },
+      });
+      return c;
     });
-    return c;
-  });
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      back(`The handle “${handle}” is already in use — pick a different one.`);
+    }
+    throw err;
+  }
 
   // Nav, menus and collection pages all read collections.
   revalidatePath('/', 'layout');

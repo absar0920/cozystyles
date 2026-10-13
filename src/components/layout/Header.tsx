@@ -8,7 +8,17 @@ import type { MenuNode } from '@/lib/queries';
 import { useCart } from '@/lib/cart';
 import { CartIcon, ChevronDown, MenuIcon, PhoneIcon, SearchIcon, UserIcon, XIcon, ChevronRight } from '@/components/icons';
 
-export function Header({ menu, announcement, phone }: { menu: MenuNode[]; announcement: string; phone: string }) {
+export function Header({
+  menu,
+  announcement,
+  phone,
+  topbarLinks = [],
+}: {
+  menu: MenuNode[];
+  announcement: string;
+  phone: string;
+  topbarLinks?: { label: string; href: string }[];
+}) {
   const { count } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -40,10 +50,15 @@ export function Header({ menu, announcement, phone }: { menu: MenuNode[]; announ
       <div className="bg-brand-900 text-white">
         <div className="container-iw flex h-9 items-center justify-between gap-4 text-[11.5px]">
           <p className="truncate font-medium tracking-wide">{announcement}</p>
-          <div className="hidden items-center gap-5 md:flex">
-            <Link href="/track" className="transition hover:text-cream">Track Order</Link>
-            <Link href="/pages/store-locator" className="transition hover:text-cream">Store Locator</Link>
-            <a href={`tel:${phone.replace(/-/g, '')}`} className="inline-flex items-center gap-1.5 font-semibold transition hover:text-cream">
+          <div className="hidden items-center gap-4 md:flex">
+            <nav aria-label="Top bar links" className="hidden items-center gap-4 lg:flex">
+              {topbarLinks.map((link) => (
+                <Link key={`${link.href}-${link.label}`} href={link.href} className="whitespace-nowrap transition hover:text-cream">
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+            <a href={`tel:${phone.replace(/-/g, '')}`} className="inline-flex items-center gap-1.5 whitespace-nowrap font-semibold transition hover:text-cream">
               <PhoneIcon className="h-3.5 w-3.5" /> {phone}
             </a>
           </div>
@@ -85,7 +100,7 @@ export function Header({ menu, announcement, phone }: { menu: MenuNode[]; announ
             <button type="button" aria-label="Search" className="rounded-full p-2.5 text-ink-dark transition hover:bg-cream-soft lg:hidden" onClick={() => setSearchOpen((v) => !v)}>
               <SearchIcon className="h-5.5 w-5.5" />
             </button>
-            <Link href="/pages/contact" aria-label="Account" className="hidden rounded-full p-2.5 text-ink-dark transition hover:bg-cream-soft sm:block">
+            <Link href="/account/login" aria-label="Login / Account" title="Login" className="hidden rounded-full p-2.5 text-ink-dark transition hover:bg-cream-soft sm:block">
               <UserIcon className="h-5.5 w-5.5" />
             </Link>
             <Link href="/cart" aria-label="Cart" className="relative rounded-full p-2.5 text-ink-dark transition hover:bg-cream-soft">

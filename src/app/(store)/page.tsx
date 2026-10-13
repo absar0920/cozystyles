@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ChevronRight } from '@/components/icons';
+import { prisma } from '@/lib/db';
 import {
   getBanners,
   getFeaturedCollections,
@@ -8,6 +9,7 @@ import {
   listProducts,
 } from '@/lib/queries';
 import { HeroSlider } from '@/components/home/HeroSlider';
+import { MarqueeStrip } from '@/components/home/MarqueeStrip';
 import { TrustStrip } from '@/components/home/TrustStrip';
 import { ProductCarousel } from '@/components/home/ProductCarousel';
 import { CategoryTiles } from '@/components/home/CategoryTiles';
@@ -16,16 +18,44 @@ import { Testimonials } from '@/components/home/Testimonials';
 
 export const dynamic = 'force-dynamic';
 
+/** Curated Shopify collection powering the "Hot Selling Products" row. */
+const HOT_SELLING_COLLECTION = 'hot-selling-items-homepage';
+
 /** Category rows shown mid-page, mirroring the real store's home sections. */
 const CATEGORY_SECTIONS = [
   { handle: 'bedroom', title: 'Bedroom Furniture' },
-  { handle: 'living', title: 'Living Room' },
-  { handle: 'dining', title: 'Dining Sets' },
-  { handle: 'kids', title: 'Kids Furniture' },
-  { handle: 'office', title: 'Office Furniture' },
-  { handle: 'kitchens', title: 'Kitchen Designs' },
-  { handle: 'wardrobes-1', title: 'Wardrobes' },
+  { handle: 'sofas-all', title: 'Sofas' },
+  { handle: 'office-chairs', title: 'Office Chairs' },
+  { handle: 'beds', title: 'Beds' },
+  { handle: 'dining-table-sets', title: 'Dining Table Sets' },
+  { handle: 'kids', title: 'Kids' },
+  { handle: 'decor-acc', title: 'Decor' },
 ] as const;
+
+/** Collections used for the "Shop by Category" tiles, in live-site order. */
+const CATEGORY_TILE_HANDLES = [
+  'coalesce-bedroom',
+  'sofas-all',
+  'office-chairs',
+  'beds',
+  'dining-table-sets',
+  'kids',
+  'decor-acc',
+] as const;
+
+type TileCollection = { handle: string; title: string; image: string | null };
+
+/** Fetch a fixed list of collections by handle, preserving the given order. */
+async function getCollectionsByHandles(handles: readonly string[]): Promise<TileCollection[]> {
+  const rows = await prisma.collection.findMany({
+    where: { handle: { in: [...handles] } },
+    select: { handle: true, title: true, image: true },
+  });
+  const byHandle = new Map(rows.map((r) => [r.handle, r]));
+  return handles
+    .map((h) => byHandle.get(h))
+    .filter((c): c is TileCollection => Boolean(c));
+}
 
 function SectionHeader({ title, href }: { title: string; href: string }) {
   return (
@@ -43,16 +73,23 @@ function SectionHeader({ title, href }: { title: string; href: string }) {
 }
 
 export default async function HomePage() {
-  const [bannerRows, hot, featured, reviewRows, settings] = await Promise.all([
+  const [bannerRows, hotFromCollection, tileCollections, reviewRows, settings] = await Promise.all([
     getBanners('HOME_HERO'),
-    listProducts({ perPage: 12 }),
-    getFeaturedCollections(10),
+    listProducts({ collectionHandle: HOT_SELLING_COLLECTION, perPage: 12 }),
+    getCollectionsByHandles(CATEGORY_TILE_HANDLES),
     getRecentReviews(10),
     getSettingsMap(),
   ]);
   const sectionResults = await Promise.all(
     CATEGORY_SECTIONS.map((s) => listProducts({ collectionHandle: s.handle, perPage: 8 }))
   );
+
+  // Live site curates "Hot Selling Products" from a dedicated collection; fall
+  // back to the default hot-flag listing if that collection has no products.
+  const hot =
+    hotFromCollection.items.length > 0 ? hotFromCollection : await listProducts({ perPage: 12 });
+  const featured =
+    tileCollections.length > 0 ? tileCollections : await getFeaturedCollections(10);
 
   const slides = bannerRows.map((b) => ({
     id: b.id,
@@ -88,6 +125,7 @@ export default async function HomePage() {
         furniture, kitchens &amp; wardrobes.
       </h1>
       <HeroSlider slides={slides} />
+      <MarqueeStrip />
       <TrustStrip />
 
       {/* Hot Selling Products */}

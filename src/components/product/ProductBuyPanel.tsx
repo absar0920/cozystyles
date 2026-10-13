@@ -6,6 +6,8 @@ import { VariantPicker } from './VariantPicker';
 import type { OptionGroup } from './VariantPicker';
 import { QuantityStepper } from './QuantityStepper';
 import { AddToCartBar } from './AddToCartBar';
+import { CubeIcon, PhoneIcon, ShieldIcon, TruckIcon } from '@/components/icons';
+import { SITE } from '@/lib/constants';
 import type { ProductOption, VariantInfo } from './types';
 import { optionAt } from './types';
 
@@ -62,10 +64,14 @@ export function ProductBuyPanel({ product }: { product: BuyPanelProduct }) {
       {/* Price */}
       {activeVariant && (
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span key={activeVariant.id} className="animate-fadeIn font-heading text-[28px] font-bold leading-none text-brand sm:text-3xl">
-            {formatPKR(activeVariant.price)}
-          </span>
-          {activeVariant.compareAtPrice != null && activeVariant.compareAtPrice > activeVariant.price && (
+          {activeVariant.price > 0 ? (
+            <span key={activeVariant.id} className="animate-fadeIn font-heading text-[28px] font-bold leading-none text-brand sm:text-3xl">
+              {formatPKR(activeVariant.price)}
+            </span>
+          ) : (
+            <span className="font-heading text-2xl font-bold leading-none text-ink-dark">Price on Request</span>
+          )}
+          {activeVariant.price > 0 && activeVariant.compareAtPrice != null && activeVariant.compareAtPrice > activeVariant.price && (
             <span className="text-base font-medium text-ink-light line-through">{formatPKR(activeVariant.compareAtPrice)}</span>
           )}
           {off != null && (
@@ -73,6 +79,12 @@ export function ProductBuyPanel({ product }: { product: BuyPanelProduct }) {
           )}
         </div>
       )}
+
+      {/* Delivery promise */}
+      <p className="-mt-2 flex items-center gap-2 text-xs font-semibold text-brand-700">
+        <TruckIcon className="h-4 w-4 shrink-0" />
+        Delivered in 3–4 weeks — Free Delivery &amp; Installation
+      </p>
 
       {/* SKU + stock */}
       {activeVariant && (
@@ -124,6 +136,27 @@ export function ProductBuyPanel({ product }: { product: BuyPanelProduct }) {
             }}
             qty={qty}
           />
+
+          {/* Trust icons */}
+          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <li className="flex flex-col items-center gap-1 rounded-lg border border-cream-border bg-cream-soft/60 px-2 py-2.5 text-center">
+              <TruckIcon className="h-4.5 w-4.5 text-brand" />
+              <span className="text-[11px] font-semibold leading-tight text-ink-dark">Free Delivery</span>
+            </li>
+            <li className="flex flex-col items-center gap-1 rounded-lg border border-cream-border bg-cream-soft/60 px-2 py-2.5 text-center">
+              <ShieldIcon className="h-4.5 w-4.5 text-brand" />
+              <span className="text-[11px] font-semibold leading-tight text-ink-dark">1-Year Warranty</span>
+            </li>
+            <li className="flex flex-col items-center gap-1 rounded-lg border border-cream-border bg-cream-soft/60 px-2 py-2.5 text-center">
+              <CubeIcon className="h-4.5 w-4.5 text-brand" />
+              <span className="text-[11px] font-semibold leading-tight text-ink-dark">View in AR</span>
+            </li>
+            <li className="flex flex-col items-center gap-1 rounded-lg border border-cream-border bg-cream-soft/60 px-2 py-2.5 text-center">
+              <PhoneIcon className="h-4.5 w-4.5 text-brand" />
+              <span className="text-[11px] font-semibold leading-tight text-ink-dark">Expert Support</span>
+              <span className="text-[10px] leading-tight text-ink-muted">{SITE.phone}</span>
+            </li>
+          </ul>
         </>
       )}
     </div>
