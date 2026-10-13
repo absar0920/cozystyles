@@ -124,47 +124,53 @@ export async function listProducts(params: ProductListParams): Promise<ProductLi
       { bodyHtml: { contains: q } },
     ];
   }
-  if (params.minPrice != null || params.maxPrice != null) {
+  if (params.minPrice != null || params.maxPrice != null || params.inStockOnly) {
     where.variants = {
       some: {
         ...(params.minPrice != null ? { price: { gte: params.minPrice } } : {}),
         ...(params.maxPrice != null ? { price: { lte: params.maxPrice } } : {}),
+        ...(params.inStockOnly ? { inventory: { gt: 0 } } : {}),
       },
     };
   }
-  if (params.inStockOnly) {
-    where.variants = { some: { inventory: { gt: 0 } } };
-  }
 
-  let orderBy: Prisma.ProductOrderByWithRelationInput[] = [{ hot: 'desc' }, { id: 'asc' }];
-  switch (params.sort) {
-    case 'price-asc':
-      orderBy = [{ variants: { _min: { price: 'asc' } } }];
-      break;
-    case 'price-desc':
-      orderBy = [{ variants: { _max: { price: 'desc' } } }];
-      break;
-    case 'newest':
-      orderBy = [{ createdAt: 'desc' }];
-      break;
-    case 'title-asc':
-      orderBy = [{ title: 'asc' }];
-      break;
-    case 'best-selling':
-    default:
-      break;
-  }
+  const total = await prisma.product.count({ where });
 
-  const [rows, total] = await Promise.all([
-    prisma.product.findMany({
+  let rows;
+  if (params.sort === 'price-asc' || params.sort === 'price-desc') {
+    // Prisma can't order by a variant aggregate; sort in JS over the full match set (catalog < 1k)
+    const all = await prisma.product.findMany({
+      where,
+      select: { id: true, variants: { select: { price: true } } },
+    });
+    const minPrice = (id: number, prices: { price: number }[]) => ({ id, min: prices.length ? Math.min(...prices.map((v) => v.price)) : Infinity });
+    const priced = all.map((p) => minPrice(p.id, p.variants));
+    priced.sort((a, b) => (params.sort === 'price-asc' ? a.min - b.min : b.min - a.min));
+    const pageIds = priced.slice((page - 1) * perPage, page * perPage).map((p) => p.id);
+    const byId = await prisma.product.findMany({ where: { id: { in: pageIds } }, select: cardSelect });
+    const order = new Map(pageIds.map((id, i) => [id, i]));
+    rows = byId.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+  } else {
+    let orderBy: Prisma.ProductOrderByWithRelationInput[] = [{ hot: 'desc' }, { id: 'asc' }];
+    switch (params.sort) {
+      case 'newest':
+        orderBy = [{ createdAt: 'desc' }];
+        break;
+      case 'title-asc':
+        orderBy = [{ title: 'asc' }];
+        break;
+      case 'best-selling':
+      default:
+        break;
+    }
+    rows = await prisma.product.findMany({
       where,
       orderBy,
       skip: (page - 1) * perPage,
       take: perPage,
       select: cardSelect,
-    }),
-    prisma.product.count({ where }),
-  ]);
+    });
+  }
 
   return {
     items: rows.map(toCard),

@@ -39,6 +39,11 @@ const config: Config = {
         heading: ['var(--font-poppins)', 'sans-serif'],
         body: ['var(--font-work-sans)', 'sans-serif'],
       },
+      spacing: {
+        '4.5': '1.125rem',
+        '5.5': '1.375rem',
+        '13': '3.25rem',
+      },
       fontSize: {
         tiny: ['0.72rem', { lineHeight: '1rem' }],
       },

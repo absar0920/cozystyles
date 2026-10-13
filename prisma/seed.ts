@@ -262,6 +262,30 @@ async function main() {
   }
   console.log(`product-collection links: ${linked}`);
 
+  // umbrella collections referenced by hero banners that don't exist standalone on the live site
+  const umbrellas: { handle: string; title: string; from: string[]; image?: string }[] = [
+    { handle: 'coalesce-office', title: 'Coalesce Office', from: ['coalesce-office-manager-desks', 'coalesce-office-workstations', 'coalesce-office-tables', 'coalesce-office-sofas', 'coalesce-office-storage'] },
+    { handle: 'coalesce-home', title: 'Coalesce Home', from: ['coalesce-living', 'coalesce-dining', 'coalesce-bedroom'] },
+  ];
+  for (const u of umbrellas) {
+    const prods = await prisma.product.findMany({
+      where: { collections: { some: { handle: { in: u.from } } } },
+      select: { id: true, images: { take: 1, select: { src: true }, orderBy: { position: 'asc' } } },
+    });
+    await prisma.collection.create({
+      data: {
+        handle: u.handle,
+        title: u.title,
+        description: `The ${u.title} collection — designed to bring it all together.`,
+        image: prods.map((p) => p.images[0]?.src).find(Boolean) ?? null,
+        position: 300,
+        kind: 'LOOKBOOK',
+        products: { connect: prods.map((p) => ({ id: p.id })) },
+      },
+    });
+    console.log(`umbrella ${u.handle}: ${prods.length} products`);
+  }
+
   // ---------- pages ----------
   const pagesDir = path.join(RAW, 'pages');
   for (const f of readdirSync(pagesDir)) {
@@ -311,9 +335,9 @@ async function main() {
         ]},
         { label: 'Living Room', href: '/collections/living', children: [
           { label: 'Living Room Furniture', href: '/collections/living' },
-          { label: 'Sofas', href: '/collections/sofa-set' },
+          { label: 'Sofas', href: '/collections/sofas-1' },
           { label: '1 Seater Sofa', href: '/collections/sofas-all' },
-          { label: '2 Seater Sofa', href: '/collections/2-seater-sofa' },
+          { label: '2 Seater Sofa', href: '/collections/sofas-all' },
           { label: '3 Seater Sofa', href: '/collections/3-seater-sofa' },
           { label: 'L Shaped Sofa', href: '/collections/l-shaped-sofa' },
           { label: 'Recliners', href: '/collections/recliners' },
@@ -475,6 +499,28 @@ async function main() {
     { label: 'Store Locator', href: '/pages/store-locator' },
   ], 'TOPBAR');
   console.log('menus seeded');
+
+  // ---------- featured category tiles (homepage) ----------
+  const featuredSpecs: { handle: string; fallback?: string }[] = [
+    { handle: 'bedroom' }, { handle: 'living' }, { handle: 'dining' }, { handle: 'kids' },
+    { handle: 'office', fallback: 'office-chairs' }, { handle: 'kitchens' },
+    { handle: 'wardrobes-1' }, { handle: 'doors' }, { handle: 'laminate-flooring' },
+    { handle: 'decor-acc' }, { handle: 'study', fallback: 'study-tables' }, { handle: 'sale' },
+  ];
+  for (const spec of featuredSpecs) {
+    const col = await prisma.collection.findUnique({
+      where: { handle: spec.handle },
+      include: { products: { take: 3, select: { images: { take: 1, select: { src: true }, orderBy: { position: 'asc' } } } } },
+    });
+    if (!col) continue;
+    let image = col.image;
+    if (!image && spec.fallback) {
+      image = (await prisma.collection.findUnique({ where: { handle: spec.fallback }, select: { image: true } }))?.image ?? null;
+    }
+    if (!image) image = col.products.map((p) => p.images[0]?.src).find(Boolean) ?? null;
+    await prisma.collection.update({ where: { handle: spec.handle }, data: { featured: true, ...(image ? { image } : {}) } });
+  }
+  console.log('featured tiles configured');
 
   // ---------- banners (hero slider) ----------
   const heroBannerNames = [
