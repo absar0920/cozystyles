@@ -1,0 +1,42 @@
+[
+ {
+  "label": "Wedding Packages",
+  "href": "/pages/wedding-package-builder",
+  "children": []
+ },
+ {
+  "label": "Home",
+  "href": "/pages/home-furniture",
+  "children": []
+ },
+ {
+  "label": "Office",
+  "href": "/pages/office-furniture",
+  "children": []
+ },
+ {
+  "label": "Kitchens",
+  "href": "/collections/kitchens",
+  "children": []
+ },
+ {
+  "label": "Doors",
+  "href": "/collections/doors",
+  "children": []
+ },
+ {
+  "label": "Wardrobes",
+  "href": "/collections/wardrobes-1",
+  "children": []
+ },
+ {
+  "label": "Decor",
+  "href": "/collections/decor-acc",
+  "children": []
+ },
+ {
+  "label": "Flooring",
+  "href": "/collections/laminate-flooring",
+  "children": []
+ }
+]

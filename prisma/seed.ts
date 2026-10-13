@@ -1,0 +1,560 @@
+/**
+ * Seed the database from data/raw/ (scraped from interwood.pk).
+ * Run: npm run db:seed  (after npm run images so local image paths exist)
+ */
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import path from 'node:path';
+
+const prisma = new PrismaClient();
+const RAW = 'data/raw';
+
+type ShopifyImage = { src: string; alt?: string | null; position?: number };
+type ShopifyVariant = {
+  id: number; title: string; sku?: string | null; price: string; compare_at_price?: string | null;
+  option1?: string | null; option2?: string | null; option3?: string | null;
+  available?: boolean; position?: number; grams?: number; featured_image?: { src: string } | null;
+  inventory_quantity?: number;
+};
+type ShopifyProduct = {
+  id: number; title: string; handle: string; body_html?: string; vendor?: string; product_type?: string;
+  tags?: string | string[]; published_at?: string | null; created_at?: string; options?: { name: string; values: string[] }[];
+  variants: ShopifyVariant[]; images: ShopifyImage[];
+};
+type ShopifyCollection = { id: number; handle: string; title: string; body_html?: string; products_count?: number; image?: { src: string } | null };
+
+const manifest: Record<string, string> = existsSync('data/image-manifest.json')
+  ? JSON.parse(readFileSync('data/image-manifest.json', 'utf8'))
+  : {};
+
+function mapImg(src?: string | null): string | null {
+  if (!src) return null;
+  if (manifest[src]) return manifest[src];
+  // try matching ignoring query strings
+  const base = src.split('?')[0];
+  const hit = Object.keys(manifest).find((k) => k.split('?')[0] === base);
+  return hit ? manifest[hit] : null;
+}
+
+function priceToInt(p?: string | null): number | null {
+  if (p == null || p === '') return null;
+  return Math.round(parseFloat(p));
+}
+
+/** Extract page body HTML between template header and footer. */
+function extractPageBody(html: string): string {
+  let s = html.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<style[\s\S]*?<\/style>/gi, '');
+  // content = from first template section to the footer sections group (first `sections--` AFTER a template section)
+  const firstTemplate = s.search(/<div id="shopify-section-template--/);
+  if (firstTemplate >= 0) {
+    const rest = s.slice(firstTemplate + 10);
+    const footRel = rest.search(/<div id="shopify-section-sections--/);
+    s = footRel > 0 ? s.slice(firstTemplate, firstTemplate + 10 + footRel) : s.slice(firstTemplate);
+  }
+  s = s
+    .replace(/<\/?velcroframe[^>]*>/gi, '')
+    .replace(/https?:\/\/interwood(-pkt)?\.myshopify\.com/g, '')
+    .replace(/https?:\/\/interwood\.pk/g, '')
+    .replace(/\sdata-[a-z-]+="[^"]*"/gi, '')
+    .replace(/<svg[\s\S]*?<\/svg>/gi, '')
+    // Shopify forms are inert on our site; neutralise so they render as content
+    .replace(/<form[^>]*>/gi, '<div class="bg-cream-soft rounded-lg">')
+    .replace(/<\/form>/gi, '</div>')
+    .trim();
+  return s;
+}
+
+function titleFromHtml(html: string): string {
+  const m = html.match(/<title>\s*([\s\S]*?)\s*<\/title>/);
+  return (m ? m[1] : 'Untitled').replace(/\s*[–-]\s*Interwood\s*$/i, '').replace(/\n/g, ' ').trim();
+}
+
+async function main() {
+  console.log('Seeding…');
+
+  // ---------- wipe ----------
+  await prisma.$transaction([
+    prisma.orderItem.deleteMany(), prisma.order.deleteMany(), prisma.review.deleteMany(),
+    prisma.contactSubmission.deleteMany(), prisma.banner.deleteMany(), prisma.menuItem.deleteMany(),
+    prisma.productImage.deleteMany(), prisma.variant.deleteMany(),
+    prisma.$executeRawUnsafe('DELETE FROM _ProductCollections'),
+    prisma.collection.deleteMany(), prisma.product.deleteMany(),
+    prisma.page.deleteMany(), prisma.siteSetting.deleteMany(), prisma.adminUser.deleteMany(),
+  ]);
+
+  // ---------- admin ----------
+  await prisma.adminUser.create({
+    data: {
+      email: (process.env.ADMIN_EMAIL ?? 'admin@interwood.local').toLowerCase(),
+      passwordHash: await bcrypt.hash(process.env.ADMIN_PASSWORD ?? 'Interwood@2026', 10),
+      name: 'Interwood Admin',
+      role: 'SUPERADMIN',
+    },
+  });
+
+  // ---------- products ----------
+  const productFiles = readdirSync(path.join(RAW, 'products')).filter((f) => f.endsWith('.json')).sort();
+  const allProducts = new Map<string, ShopifyProduct>();
+  for (const f of productFiles) {
+    const parsed = JSON.parse(readFileSync(path.join(RAW, 'products', f), 'utf8'));
+    for (const p of parsed.products ?? []) allProducts.set(p.handle, p);
+  }
+  console.log(`products found: ${allProducts.size}`);
+
+  // hot-selling handles (from homepage campaign collections)
+  const hotHandles = new Set<string>();
+  for (const h of ['hot-selling-items-homepage', 'wedding-campaign-products', 'best-sellers', 'offer-of-the-week', 'exclusive-flash-deals']) {
+    const fp = path.join(RAW, 'collections', `${h}.json`);
+    if (existsSync(fp)) for (const x of JSON.parse(readFileSync(fp, 'utf8'))) hotHandles.add(x);
+  }
+
+  let imgMiss = 0;
+  for (const p of allProducts.values()) {
+    const variants = p.variants ?? [];
+    const images = (p.images ?? [])
+      .map((img, i) => ({ ...img, position: img.position ?? i + 1 }))
+      .map((img) => ({ src: mapImg(img.src), alt: img.alt ?? p.title, position: img.position }))
+      .filter((img): img is { src: string; alt: string; position: number } => !!img.src);
+    if (!images.length) imgMiss++;
+
+    const tags = Array.isArray(p.tags) ? p.tags.join(',') : (p.tags ?? '');
+    const opts = (p.options ?? []).filter((o) => o.name !== 'Title' && o.values?.length > 1);
+
+    await prisma.product.create({
+      data: {
+        handle: p.handle,
+        title: p.title,
+        bodyHtml: p.body_html ?? '',
+        vendor: p.vendor ?? 'Interwood',
+        productType: p.product_type ?? '',
+        status: 'ACTIVE',
+        hot: hotHandles.has(p.handle),
+        tags,
+        options: JSON.stringify(opts),
+        createdAt: p.created_at ? new Date(p.created_at) : new Date(),
+        variants: {
+          create: variants.map((v, i) => ({
+            title: v.title && v.title !== 'Default Title' ? v.title : 'Default Title',
+            sku: v.sku ?? null,
+            price: priceToInt(v.price) ?? 0,
+            compareAtPrice: priceToInt(v.compare_at_price),
+            option1: v.option1 && v.option1 !== 'Default Title' ? v.option1 : null,
+            option2: v.option2 ?? null,
+            option3: v.option3 ?? null,
+            inventory: v.available === false ? 0 : (v.inventory_quantity ?? 25 > 0 ? Math.max(5, v.inventory_quantity ?? 25) : 25),
+            position: v.position ?? i + 1,
+            weightGrams: v.grams ?? 0,
+          })),
+        },
+        images: { create: images },
+      },
+    });
+  }
+  console.log(`products seeded (${imgMiss} without local images)`);
+
+  // ---------- collections ----------
+  const collectionDefs: ShopifyCollection[] = [];
+  for (const f of ['collections.json', 'collections-extra-2.json', 'collections-extra-3.json', 'collections-extra-4.json', 'collections-extra-5.json']) {
+    const fp = path.join(RAW, f);
+    if (existsSync(fp)) collectionDefs.push(...JSON.parse(readFileSync(fp, 'utf8')).collections);
+  }
+  const dedup = new Map<string, ShopifyCollection>();
+  for (const c of collectionDefs) if (!dedup.has(c.handle)) dedup.set(c.handle, c);
+
+  const parentIdFor: Record<string, string> = {
+    // bedroom children
+    'bed-set': 'bedroom', 'double-bed-set': 'bedroom', 'king-size-beds': 'bedroom', 'queen-size-beds': 'bedroom',
+    'single-beds': 'bedroom', 'bed-side-tables': 'bedroom', 'dressing-tables': 'bedroom', 'bedroom-chairs': 'bedroom',
+    'wall-mirrors': 'bedroom', 'beds': 'bedroom', 'bed-sets-offer-homepage': 'bedroom',
+    // living children
+    'sofas-1': 'living', 'sofa-set': 'living', 'sofas-all': 'living', '2-seater-sofa': 'living', '3-seater-sofa': 'living',
+    'l-shaped-sofa': 'living', 'ottoman': 'living', 'benches': 'living', 'recliners': 'living', 'sofa-cum-bed': 'living',
+    'center-table': 'living', 'coffee-tables': 'living', 'side-end-tables': 'living', 'nested-tables': 'living',
+    'tv-units': 'living', 'living-storage': 'living', 'living-chairs': 'living', 'seating-chairs': 'living',
+    'occasional-chairs': 'living', 'relax-chairs': 'living', 'lounge-chairs': 'living', 'stools': 'living',
+    'accent-chairs': 'living', 'sofa-chair': 'living', 'tables': 'living',
+    // dining children
+    'dining-tables': 'dining', 'dining-table-sets': 'dining', 'dining-chairs': 'dining', 'bar-stools': 'dining',
+    // kids children
+    'kids-bed-sets': 'kids', 'kids-single-beds': 'kids', 'bunk-beds': 'kids', 'kids-wardrobe': 'kids',
+    'kids-study-tables': 'kids', 'kids-study-chairs': 'kids', 'kids-beds': 'kids', 'kids-storage': 'kids',
+    'kids-seating-chairs': 'kids', 'kids-study-tables-and-chairs': 'kids',
+    // study/home-office
+    'study-tables': 'study', 'study-chairs': 'study', 'ergonomic-study-chairs': 'study', 'computer-tables': 'study',
+    'study-bookshelves': 'study', 'wall-shelves': 'study', 'study-table-sets': 'study', 'home-office-desks': 'study',
+    // decor children
+    'cushions': 'decor-acc', 'table-runners': 'decor-acc', 'lamps-and-lighting': 'decor-acc', 'clocks': 'decor-acc',
+    'art-frames': 'decor-acc', 'picture-frames': 'decor-acc', 'candles': 'decor-acc', 'candle-holders': 'decor-acc',
+    'accent-mirrors': 'decor-acc', 'trays': 'decor-acc', 'trash-can': 'decor-acc', 'wall-paintings': 'decor-acc',
+    'soft-furnishing': 'decor-acc', 'home-accessories': 'decor-acc', 'all-decor': 'decor-acc',
+    // office children
+    'office-tables': 'office', 'manager-tables': 'office', 'executive-tables': 'office', 'workstations': 'office',
+    'workstations-layout-linear': 'office', 'workstations-layout-y': 'office', 'workstations-layout-grid': 'office',
+    'office-desks': 'office', 'office-chairs': 'office', 'office-chairs-1': 'office', 'manager-chairs': 'office',
+    'executive-chairs': 'office', 'ceo-chairs': 'office', 'high-back-chairs': 'office',
+    'office-chairs-visitor-chairs': 'office', 'cafeteria-chairs': 'office', 'ergonomic-study-chairs-x': 'office',
+    'office-sofas': 'office', 'office-sofa-set': 'office', 'office-executive-furniture-sets': 'office',
+    'office-executive-furniture-sets-traditional': 'office', 'meeting-tables': 'office', 'reception-counters': 'office',
+    'office-storage': 'office', 'office-storage-1': 'office', 'drawer-pedestals': 'office', 'filing-cabinets': 'office',
+    'office-center-tables': 'office', 'sofa-side-tables': 'office', 'office-accessories': 'office',
+    'meeting-tables-pods': 'office', 'meeting-phone-pods': 'office', 'co-working-spaces': 'office',
+    'seating': 'office', 'office-seating-lounge-chairs': 'office', 'co-working-spaces-stools-chairs': 'office',
+    'bean-bags': 'office',
+    // kitchen children
+    'kitchen-designs': 'kitchens', 'small-kitchen-design': 'kitchens', 'modern-kitchen-design-1': 'kitchens',
+    'traditional-kitchen-design-1': 'kitchens', 'kitchen-accessories': 'kitchens', 'kitchen-accessories-1': 'kitchens',
+    'kitchen-appliances': 'kitchens', 'kitchen-sink': 'kitchens', 'column-system-1': 'kitchens', 'basket-rack-system-2': 'kitchens',
+    // wardrobes children
+    'built-in-wardrobes': 'wardrobes-1', 'sliding-wardrobes': 'wardrobes-1', '2-doors-wardrobes': 'wardrobes-1',
+    '3-doors-wardrobes': 'wardrobes-1', '4-doors-wardrobes': 'wardrobes-1', 'wardrobe-accessories': 'wardrobes-1',
+    // doors children
+    'main-doors': 'doors', 'panel-doors': 'doors', 'glass-door': 'doors', 'veneer-door': 'doors',
+    'thermoset-doors': 'doors', 'painted-door': 'doors', 'laminated-door': 'doors', 'sliding-door': 'doors',
+    // furniture umbrella
+    'bedroom': 'furniture', 'living': 'furniture', 'dining': 'furniture', 'kids': 'furniture', 'study': 'furniture',
+  };
+
+  const handlesByTitle = new Map<string, string>();
+  for (const c of dedup.values()) handlesByTitle.set(c.title.trim().toLowerCase(), c.handle);
+
+  const collectionIdByHandle = new Map<string, number>();
+  let pos = 0;
+  for (const c of dedup.values()) {
+    if (c.handle === 'all' || c.handle === 'frontpage' || c.handle === 'all-1') continue;
+    const parentHandle = parentIdFor[c.handle];
+    const parent = parentHandle ? collectionIdByHandle.get(parentHandle) : null;
+    const img = mapImg(c.image?.src);
+    const created = await prisma.collection.create({
+      data: {
+        handle: c.handle,
+        title: c.title.trim(),
+        description: c.body_html ?? '',
+        image: img,
+        parentId: parent ?? null,
+        position: pos++,
+        kind: parentHandle ? 'CATEGORY' : (['furniture', 'office', 'kitchens', 'wardrobes-1', 'doors', 'decor-acc', 'laminate-flooring'].includes(c.handle) ? 'CATEGORY' : 'HELPER'),
+        showInNav: true,
+      },
+    });
+    collectionIdByHandle.set(c.handle, created.id);
+  }
+  console.log(`collections seeded: ${collectionIdByHandle.size}`);
+
+  // product <-> collection links
+  const colDir = path.join(RAW, 'collections');
+  let linked = 0;
+  for (const f of readdirSync(colDir)) {
+    if (!f.endsWith('.json')) continue;
+    const handle = f.replace('.json', '');
+    const cid = collectionIdByHandle.get(handle);
+    if (!cid) continue;
+    const productHandles: string[] = JSON.parse(readFileSync(path.join(colDir, f), 'utf8'));
+    const ids: number[] = [];
+    for (const h of productHandles) {
+      const p = await prisma.product.findUnique({ where: { handle: h }, select: { id: true } });
+      if (p) ids.push(p.id);
+    }
+    if (ids.length) {
+      await prisma.collection.update({ where: { id: cid }, data: { products: { connect: ids.map((id) => ({ id })) } } });
+      linked += ids.length;
+    }
+  }
+  console.log(`product-collection links: ${linked}`);
+
+  // ---------- pages ----------
+  const pagesDir = path.join(RAW, 'pages');
+  for (const f of readdirSync(pagesDir)) {
+    if (!f.endsWith('.html')) continue;
+    const html = readFileSync(path.join(pagesDir, f), 'utf8');
+    const handle = f.replace('.html', '');
+    await prisma.page.create({
+      data: {
+        handle,
+        title: titleFromHtml(html),
+        bodyHtml: extractPageBody(html),
+        isBlogPost: false,
+      },
+    });
+  }
+  // blog posts
+  const blogsDir = path.join(RAW, 'blogs', 'news');
+  if (existsSync(blogsDir)) {
+    for (const f of readdirSync(blogsDir)) {
+      if (!f.endsWith('.html')) continue;
+      const html = readFileSync(path.join(blogsDir, f), 'utf8');
+      const handle = f.replace('.html', '');
+      await prisma.page.create({
+        data: { handle: `news-${handle}`, title: titleFromHtml(html), bodyHtml: extractPageBody(html), isBlogPost: true },
+      });
+    }
+  }
+  console.log('pages seeded');
+
+  // ---------- menus ----------
+  type MenuSpec = { label: string; href: string; children?: MenuSpec[]; badge?: string };
+  const MAIN: MenuSpec[] = [
+    { label: 'Wedding Packages', href: '/pages/wedding-package-builder', badge: 'NEW' },
+    {
+      label: 'Home', href: '/pages/home-furniture',
+      children: [
+        { label: 'Bedroom', href: '/collections/bedroom', children: [
+          { label: 'Bedroom Furniture', href: '/collections/bedroom' },
+          { label: 'Bed Sets', href: '/collections/bed-set' },
+          { label: 'Double Bed Set', href: '/collections/double-bed-set' },
+          { label: 'Queen Size Beds', href: '/collections/queen-size-beds' },
+          { label: 'King Size Beds', href: '/collections/king-size-beds' },
+          { label: 'Bedsides', href: '/collections/bed-side-tables' },
+          { label: 'Dressing Tables', href: '/collections/dressing-tables' },
+          { label: 'Bedroom Chairs', href: '/collections/bedroom-chairs' },
+          { label: 'Wall Mirrors', href: '/collections/wall-mirrors' },
+        ]},
+        { label: 'Living Room', href: '/collections/living', children: [
+          { label: 'Living Room Furniture', href: '/collections/living' },
+          { label: 'Sofas', href: '/collections/sofa-set' },
+          { label: '1 Seater Sofa', href: '/collections/sofas-all' },
+          { label: '2 Seater Sofa', href: '/collections/2-seater-sofa' },
+          { label: '3 Seater Sofa', href: '/collections/3-seater-sofa' },
+          { label: 'L Shaped Sofa', href: '/collections/l-shaped-sofa' },
+          { label: 'Recliners', href: '/collections/recliners' },
+          { label: 'Sofa Cum Bed', href: '/collections/sofa-cum-bed' },
+          { label: 'Center & Side Tables', href: '/collections/center-table' },
+          { label: 'Coffee Tables', href: '/collections/coffee-tables' },
+          { label: 'TV Units', href: '/collections/tv-units' },
+          { label: 'Living Storage', href: '/collections/living-storage' },
+        ]},
+        { label: 'Dining', href: '/collections/dining', children: [
+          { label: 'Dining Table Set', href: '/collections/dining-table-sets' },
+          { label: 'Dining Tables', href: '/collections/dining-tables' },
+          { label: 'Dining Chairs', href: '/collections/dining-chairs' },
+          { label: 'Bar Stools', href: '/collections/bar-stools' },
+        ]},
+        { label: 'Kids', href: '/collections/kids', children: [
+          { label: 'Kids Furniture', href: '/collections/kids' },
+          { label: 'Bunk Beds', href: '/collections/bunk-beds' },
+          { label: 'Single Beds', href: '/collections/single-beds' },
+          { label: 'Kids Wardrobe', href: '/collections/kids-wardrobe' },
+          { label: 'Kids Study Tables', href: '/collections/kids-study-tables' },
+          { label: 'Kids Study Chairs', href: '/collections/kids-study-chairs' },
+        ]},
+        { label: 'Study & Home Office', href: '/collections/study', children: [
+          { label: 'Study Furniture', href: '/collections/study' },
+          { label: 'Study Tables', href: '/collections/study-tables' },
+          { label: 'Study Chairs', href: '/collections/study-chairs' },
+          { label: 'Ergonomic Chairs', href: '/collections/ergonomic-study-chairs' },
+          { label: 'Computer Tables', href: '/collections/computer-tables' },
+        ]},
+        { label: 'Chairs & Seating', href: '/collections/seating-chairs', children: [
+          { label: 'Occasional Chairs', href: '/collections/occasional-chairs' },
+          { label: 'Rocking Chairs', href: '/collections/relax-chairs' },
+          { label: 'Lounge Chairs', href: '/collections/lounge-chairs' },
+          { label: 'Stools', href: '/collections/stools' },
+          { label: 'Ottomans', href: '/collections/ottoman' },
+          { label: 'Benches', href: '/collections/benches' },
+        ]},
+      ],
+    },
+    {
+      label: 'Office', href: '/pages/office-furniture',
+      children: [
+        { label: 'Office Tables', href: '/collections/office-tables', children: [
+          { label: 'Manager Tables', href: '/collections/manager-tables' },
+          { label: 'Executive Tables', href: '/collections/executive-tables' },
+          { label: 'Workstations', href: '/collections/workstations' },
+          { label: 'Reception Counters', href: '/collections/reception-counters' },
+          { label: 'Meeting Tables', href: '/collections/meeting-tables' },
+        ]},
+        { label: 'Office Chairs', href: '/collections/office-chairs', children: [
+          { label: 'Manager Chairs', href: '/collections/manager-chairs' },
+          { label: 'Executive Chairs', href: '/collections/executive-chairs' },
+          { label: 'CEO Chairs', href: '/collections/ceo-chairs' },
+          { label: 'High Back Chairs', href: '/collections/high-back-chairs' },
+          { label: 'Visitor Chairs', href: '/collections/office-chairs-visitor-chairs' },
+          { label: 'Cafe Chairs', href: '/collections/cafeteria-chairs' },
+        ]},
+        { label: 'Office Sofas', href: '/collections/office-sofas', children: [
+          { label: 'Office Sofa Set', href: '/collections/office-sofa-set' },
+          { label: 'Office Executive Furniture', href: '/collections/office-executive-furniture-sets' },
+        ]},
+        { label: 'Office Storage', href: '/collections/office-storage', children: [
+          { label: 'Filing Cabinets', href: '/collections/filing-cabinets' },
+          { label: 'Drawer Pedestals', href: '/collections/drawer-pedestals' },
+        ]},
+        { label: 'Co-working Spaces', href: '/collections/co-working-spaces' },
+      ],
+    },
+    {
+      label: 'Kitchens', href: '/collections/kitchens',
+      children: [
+        { label: 'Kitchen Design', href: '/collections/kitchen-designs' },
+        { label: 'Kitchen Cabinets', href: '/collections/kitchens' },
+        { label: 'Small Kitchen Design', href: '/collections/small-kitchen-design' },
+        { label: 'Kitchen Accessories', href: '/collections/kitchen-accessories' },
+        { label: 'Kitchen Sink', href: '/collections/kitchen-sink' },
+        { label: 'Kitchen Appliances', href: '/collections/kitchen-appliances' },
+      ],
+    },
+    {
+      label: 'Doors', href: '/collections/doors',
+      children: [
+        { label: 'Main Doors', href: '/collections/main-doors' },
+        { label: 'Panel Doors', href: '/collections/panel-doors' },
+        { label: 'Glass Doors', href: '/collections/glass-door' },
+        { label: 'Veneer Doors', href: '/collections/veneer-door' },
+        { label: 'Thermoset Doors', href: '/collections/thermoset-doors' },
+        { label: 'Sliding Doors', href: '/collections/sliding-door' },
+      ],
+    },
+    {
+      label: 'Wardrobes', href: '/collections/wardrobes-1',
+      children: [
+        { label: 'Wardrobe Design', href: '/collections/wardrobes-1' },
+        { label: 'Sliding Wardrobes', href: '/collections/sliding-wardrobes' },
+        { label: 'Built-in Wardrobes', href: '/collections/built-in-wardrobes' },
+        { label: '2 Door Wardrobes', href: '/collections/2-doors-wardrobes' },
+        { label: '3 Door Wardrobes', href: '/collections/3-doors-wardrobes' },
+        { label: '4 Door Wardrobes', href: '/collections/4-doors-wardrobes' },
+      ],
+    },
+    {
+      label: 'Decor', href: '/collections/decor-acc',
+      children: [
+        { label: 'Cushions', href: '/collections/cushions' },
+        { label: 'Table Runners', href: '/collections/table-runners' },
+        { label: 'Lamps & Lighting', href: '/collections/lamps-and-lighting' },
+        { label: 'Wall Clocks', href: '/collections/clocks' },
+        { label: 'Paintings', href: '/collections/art-frames' },
+        { label: 'Candles & Holders', href: '/collections/candles' },
+        { label: 'Accent Mirrors', href: '/collections/accent-mirrors' },
+      ],
+    },
+    { label: 'Flooring', href: '/collections/laminate-flooring' },
+    { label: 'Sale', href: '/collections/sale', badge: 'SALE' },
+  ];
+
+  async function createMenu(items: MenuSpec[], location: string, parentId: number | null = null) {
+    let i = 0;
+    for (const it of items) {
+      const created = await prisma.menuItem.create({
+        data: { label: it.label, href: it.href, location, parentId, position: i++, badge: it.badge ?? null },
+      });
+      if (it.children?.length) await createMenu(it.children, location, created.id);
+    }
+  }
+  await createMenu(MAIN, 'MAIN');
+
+  const FOOTER_ABOUT: MenuSpec[] = [
+    { label: 'About Us', href: '/pages/about-us' }, { label: 'Store Locator', href: '/pages/store-locator' },
+    { label: 'Product Catalogues', href: '/pages/catalogues' }, { label: 'Blog', href: '/blogs/news' },
+    { label: 'Payments', href: '/pages/payment' }, { label: 'Shipping', href: '/pages/shipping-and-delivery' },
+    { label: 'Authorized Dealers', href: '/pages/authorized' }, { label: 'Careers', href: 'https://careers.interwood.pk/' },
+    { label: 'Terms of Offers for Sale', href: '/pages/terms-of-offers-for-sale' },
+    { label: 'Terms of Use', href: '/pages/terms-of-use' }, { label: 'Privacy Policy', href: '/pages/privacy-policy' },
+  ];
+  const FOOTER_SUPPORT: MenuSpec[] = [
+    { label: 'Contact Us', href: '/pages/contact' }, { label: 'Corporate', href: 'https://corporate.interwood.pk/' },
+    { label: 'Information/Lead Form', href: '/pages/lead-form' }, { label: 'Rewards', href: '/pages/rewards' },
+    { label: 'Loyalty Form', href: '/pages/loyalty-form' }, { label: 'Customer Service', href: '/pages/support-complaint-form' },
+    { label: 'Track My Ticket', href: '/pages/track-your-ticket' }, { label: 'Track Your Order', href: '/track' },
+    { label: 'Buy Now Pay Later', href: '/pages/buy-now-pay-later' },
+  ];
+  const FOOTER_SHOP: MenuSpec[] = [
+    { label: 'Bedroom Furniture', href: '/collections/bedroom' }, { label: 'Living Room Furniture', href: '/collections/living' },
+    { label: 'Dining Furniture', href: '/collections/dining' }, { label: 'Office Furniture', href: '/collections/office' },
+    { label: 'Kitchen Design', href: '/collections/kitchen-designs' }, { label: 'Wardrobes', href: '/collections/wardrobes-1' },
+    { label: 'Doors', href: '/collections/doors' }, { label: 'Flooring', href: '/collections/laminate-flooring' },
+    { label: 'Kids Furniture', href: '/collections/kids' }, { label: 'Sale', href: '/collections/sale' },
+  ];
+  await createMenu(FOOTER_ABOUT, 'FOOTER_1');
+  await createMenu(FOOTER_SUPPORT, 'FOOTER_2');
+  await createMenu(FOOTER_SHOP, 'FOOTER_3');
+  await createMenu([
+    { label: 'Free Delivery & Installation Nationwide', href: '/pages/shipping-and-delivery' },
+    { label: 'Wedding Packages', href: '/pages/wedding-package-builder' },
+    { label: 'Buy Now, Pay Later', href: '/pages/buy-now-pay-later' },
+    { label: 'Store Locator', href: '/pages/store-locator' },
+  ], 'TOPBAR');
+  console.log('menus seeded');
+
+  // ---------- banners (hero slider) ----------
+  const heroBannerNames = [
+    { n: 'home-02', m: 'home-03', title: 'Wedding Season Sale', subtitle: 'Up to 40% Off — Complete packages for your new home', href: '/collections/wedding-campaign-products', cta: 'Shop Wedding Packages' },
+    { n: 'home-06', m: 'home-07', title: 'Free Nationwide Delivery', subtitle: 'Free delivery & installation across Pakistan', href: '/collections/all', cta: 'Start Shopping' },
+    { n: 'home-10', m: 'home-11', title: 'Spaces Evolve — New Arrivals', subtitle: 'Elevate your space with the all-new Evolve collection', href: '/collections/new-arrivals', cta: 'Explore Now' },
+    { n: 'home-14', m: 'home-15', title: 'Coalesce Office', subtitle: 'Next-generation workspace solutions', href: '/collections/coalesce-office', cta: 'Shop Office' },
+    { n: 'home-18', m: 'home-19', title: 'Berlin Collection', subtitle: 'German-inspired design, crafted for Pakistan', href: '/collections/berlin', cta: 'Discover Berlin' },
+    { n: 'home-22', m: 'home-23', title: 'Cushions Collection', subtitle: 'Soft furnishings to style every room', href: '/collections/cushions', cta: 'Shop Cushions' },
+    { n: 'home-26', m: 'home-27', title: 'Coalesce Home', subtitle: 'Design that brings it all together', href: '/collections/coalesce-home', cta: 'Explore Coalesce' },
+  ];
+  let bpos = 0;
+  for (const b of heroBannerNames) {
+    const local = Object.values(manifest).find((v) => v.includes(b.n));
+    const mob = Object.values(manifest).find((v) => v.includes(b.m));
+    if (!local) { console.log('banner image missing:', b.n); continue; }
+    await prisma.banner.create({
+      data: { location: 'HOME_HERO', title: b.title, subtitle: b.subtitle, ctaLabel: b.cta, href: b.href, image: local, mobileImage: mob ?? null, position: bpos++ },
+    });
+  }
+  console.log('banners seeded');
+
+  // ---------- reviews ----------
+  const names = ['Ayesha K.', 'Hamza R.', 'Fatima S.', 'Ali R.', 'Zainab M.', 'Bilal A.', 'Sana T.', 'Usman G.', 'Maryam N.', 'Ahmed D.', 'Hira B.', 'Omar F.'];
+  const cities = ['Lahore', 'Karachi', 'Islamabad', 'Faisalabad', 'Multan', 'Rawalpindi'];
+  const bodies = [
+    'Excellent quality, exactly as shown on the website. Delivery was quick and installation team was very professional.',
+    'Very sturdy and beautiful finish. Completely transformed my room. Highly recommended!',
+    'Great value for money. The fabric quality exceeded my expectations.',
+    'Outstanding customer service and the product is top-notch. Will definitely buy again.',
+    'Beautiful craftsmanship. The color matches perfectly with my interior.',
+    'Received in perfect condition. Assembly was done by their team, very satisfied overall.',
+    'Premium quality at a reasonable price. The finish looks luxurious.',
+    'Been using it for months now and it still looks brand new. Very durable.',
+  ];
+  const hotProducts = await prisma.product.findMany({ where: { hot: true }, select: { id: true }, take: 120 });
+  let ridx = 0;
+  for (const p of hotProducts) {
+    const n = 2 + (ridx % 3);
+    for (let i = 0; i < n; i++) {
+      const k = ridx * 7 + i * 3;
+      await prisma.review.create({
+        data: {
+          productId: p.id,
+          author: `${names[k % names.length]} — ${cities[(k + 1) % cities.length]}`,
+          rating: 4 + ((k + 2) % 2 === 0 ? 1 : 0),
+          body: bodies[k % bodies.length],
+          approved: true,
+        },
+      });
+    }
+    const revs = await prisma.review.count({ where: { productId: p.id } });
+    const avg = await prisma.review.aggregate({ where: { productId: p.id }, _avg: { rating: true } });
+    await prisma.product.update({ where: { id: p.id }, data: { reviewCount: revs, rating: Math.round((avg._avg.rating ?? 5) * 10) / 10 } });
+    ridx++;
+  }
+  console.log('reviews seeded');
+
+  // ---------- settings ----------
+  const settings: Record<string, string> = {
+    announcement: 'Free Delivery & Installation Nationwide — Pakistan’s Largest Furniture Manufacturer since 1974',
+    phone: '+92-42-111-203-203',
+    email: 'info@interwood.pk',
+    complaintsEmail: 'complaints@interwoodmobel.com',
+    whatsapp: '+9242111203203',
+    address: '12-KM Ferozepur Road, Lahore, Pakistan',
+    facebook: 'https://www.facebook.com/Interwood.pk',
+    instagram: 'https://www.instagram.com/interwood.pk/',
+    youtube: 'https://www.youtube.com/user/InterwoodMobel',
+    linkedin: 'https://www.linkedin.com/company/interwood-mobel-pvt-ltd',
+    shippingFee: '0',
+    freeShippingThreshold: '0',
+    ratingSummary: '4.92',
+    ratingSummaryCount: '2,500+ verified reviews',
+  };
+  for (const [key, value] of Object.entries(settings)) await prisma.siteSetting.create({ data: { key, value } });
+
+  console.log('SEED COMPLETE');
+}
+
+main()
+  .catch((e) => { console.error(e); process.exit(1); })
+  .finally(() => prisma.$disconnect());

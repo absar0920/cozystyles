@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand: #108474;
+  --brand-dark: #103a3a;
+  --terra: #c25b41;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-white font-body text-ink antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @apply font-heading;
+}
+
+.container-iw {
+  @apply mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8;
+}
+
+/* Rich-text content rendered from DB (product descriptions, pages) */
+.rte {
+  @apply text-sm leading-relaxed text-ink;
+}
+.rte h1 { @apply mb-3 text-2xl font-semibold text-ink-dark; }
+.rte h2 { @apply mb-2.5 mt-6 text-xl font-semibold text-ink-dark; }
+.rte h3 { @apply mb-2 mt-5 text-lg font-semibold text-ink-dark; }
+.rte h4 { @apply mb-2 mt-4 font-semibold text-ink-dark; }
+.rte p { @apply mb-3; }
+.rte ul { @apply mb-3 list-disc space-y-1.5 pl-5; }
+.rte ol { @apply mb-3 list-decimal space-y-1.5 pl-5; }
+.rte a { @apply text-brand underline underline-offset-2; }
+.rte img { @apply my-4 h-auto max-w-full rounded-lg; }
+.rte table { @apply my-4 w-full border-collapse text-xs; }
+.rte th { @apply border border-cream-border bg-cream px-2 py-1.5 text-left font-semibold; }
+.rte td { @apply border border-cream-border px-2 py-1.5; }
+.rte strong { @apply font-semibold text-ink-dark; }
+.rte blockquote { @apply my-3 border-l-4 border-brand pl-4 italic text-ink-muted; }
+.rte hr { @apply my-6 border-cream-border; }
+.rte iframe { @apply my-4 aspect-video w-full rounded-lg; }
+
+/* horizontal scroll carousels */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* form controls shared look */
+.input {
+  @apply w-full rounded-md border border-cream-border bg-white px-3.5 py-2.5 text-sm text-ink-dark outline-none transition placeholder:text-ink-light focus:border-brand focus:ring-2 focus:ring-brand/20;
+}
+.label {
+  @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted;
+}
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-md bg-brand px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand/40 disabled:cursor-not-allowed disabled:opacity-50;
+}
+.btn-outline {
+  @apply inline-flex items-center justify-center gap-2 rounded-md border-2 border-brand bg-white px-6 py-2.5 text-sm font-semibold text-brand transition hover:bg-brand hover:text-white disabled:opacity-50;
+}
+.btn-dark {
+  @apply inline-flex items-center justify-center gap-2 rounded-md bg-brand-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-black;
+}
