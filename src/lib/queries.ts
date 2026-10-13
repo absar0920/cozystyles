@@ -214,3 +214,21 @@ export async function listBlogPosts(limit = 12) {
 export async function getReviewsForProduct(productId: number) {
   return prisma.review.findMany({ where: { productId, approved: true }, orderBy: { createdAt: 'desc' }, take: 20 });
 }
+
+export async function getRecentReviews(limit = 12) {
+  return prisma.review.findMany({
+    where: { approved: true },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+    include: { product: { select: { handle: true, title: true } } },
+  });
+}
+
+export async function getFeaturedCollections(limit = 10) {
+  return prisma.collection.findMany({
+    where: { featured: true, image: { not: null } },
+    orderBy: { position: 'asc' },
+    take: limit,
+    select: { handle: true, title: true, image: true },
+  });
+}
