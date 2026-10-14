@@ -56,17 +56,17 @@ h1, h2, h3, h4, h5, h6 {
 
 /* form controls shared look */
 .input {
-  @apply w-full rounded-md border border-cream-border bg-white px-3.5 py-2.5 text-sm text-ink-dark outline-none transition placeholder:text-ink-light focus:border-brand focus:ring-2 focus:ring-brand/20;
+  @apply w-full rounded-xl border border-cream-border bg-white px-4 py-2.5 text-sm text-ink-dark outline-none transition placeholder:text-ink-light focus:border-brand focus:ring-2 focus:ring-brand/20;
 }
 .label {
   @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted;
 }
 .btn-primary {
-  @apply inline-flex items-center justify-center gap-2 rounded-md bg-brand px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand/40 disabled:cursor-not-allowed disabled:opacity-50;
+  @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand px-7 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand/40 disabled:cursor-not-allowed disabled:opacity-50;
 }
 .btn-outline {
-  @apply inline-flex items-center justify-center gap-2 rounded-md border-2 border-brand bg-white px-6 py-2.5 text-sm font-semibold text-brand transition hover:bg-brand hover:text-white disabled:opacity-50;
+  @apply inline-flex items-center justify-center gap-2 rounded-full border-2 border-brand bg-white px-7 py-2.5 text-sm font-semibold text-brand transition hover:bg-brand hover:text-white disabled:opacity-50;
 }
 .btn-dark {
-  @apply inline-flex items-center justify-center gap-2 rounded-md bg-brand-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-black;
+  @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand-900 px-7 py-3 text-sm font-semibold text-white transition hover:bg-black;
 }
