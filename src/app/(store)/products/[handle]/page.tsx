@@ -134,23 +134,33 @@ export default async function ProductPage({ params }: Params) {
       <div className="container-iw pb-4 pt-5">
         {/* Breadcrumb */}
         <nav aria-label="Breadcrumb">
-          <ol className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-ink-muted">
+          <ol className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5 text-xs text-ink-muted">
             <li>
-              <Link href="/" className="transition hover:text-brand">
+              <Link
+                href="/"
+                className="rounded-full bg-cream-soft px-3 py-1 text-ink-muted transition hover:bg-brand hover:text-white"
+              >
                 Home
               </Link>
             </li>
             {firstCollection && (
               <li className="flex items-center gap-1.5">
                 <ChevronRight className="h-3 w-3 text-ink-light" />
-                <Link href={`/collections/${firstCollection.handle}`} className="transition hover:text-brand">
+                <Link
+                  href={`/collections/${firstCollection.handle}`}
+                  className="rounded-full bg-cream-soft px-3 py-1 text-ink-muted transition hover:bg-brand hover:text-white"
+                >
                   {firstCollection.title}
                 </Link>
               </li>
             )}
             <li className="flex min-w-0 items-center gap-1.5">
               <ChevronRight className="h-3 w-3 shrink-0 text-ink-light" />
-              <span aria-current="page" className="truncate font-medium text-ink-dark" title={product.title}>
+              <span
+                aria-current="page"
+                className="truncate rounded-full bg-cream-soft px-3 py-1 font-semibold text-ink-dark"
+                title={product.title}
+              >
                 {product.title}
               </span>
             </li>
@@ -173,7 +183,7 @@ export default async function ProductPage({ params }: Params) {
               {product.title}
             </h1>
             {product.hot && (
-              <span className="rounded-md bg-terra px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white">
+              <span className="rounded-full bg-terra px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
                 Best Seller
               </span>
             )}
@@ -198,7 +208,7 @@ export default async function ProductPage({ params }: Params) {
 
           {/* Delivery / warranty / helpline strip */}
           <ul className="mt-7 grid gap-3 sm:grid-cols-3">
-            <li className="flex items-center gap-3 rounded-xl border border-cream-border bg-cream-soft/70 p-3.5">
+            <li className="flex items-center gap-3 rounded-2xl border-0 bg-cream-soft p-3.5">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
                 <TruckIcon className="h-5 w-5" />
               </span>
@@ -207,7 +217,7 @@ export default async function ProductPage({ params }: Params) {
                 <span className="block text-[11px] leading-snug text-ink-muted">Delivery &amp; installation nationwide</span>
               </span>
             </li>
-            <li className="flex items-center gap-3 rounded-xl border border-cream-border bg-cream-soft/70 p-3.5">
+            <li className="flex items-center gap-3 rounded-2xl border-0 bg-cream-soft p-3.5">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
                 <ShieldIcon className="h-5 w-5" />
               </span>
@@ -216,7 +226,7 @@ export default async function ProductPage({ params }: Params) {
                 <span className="block text-[11px] leading-snug text-ink-muted">Manufacturer&rsquo;s warranty</span>
               </span>
             </li>
-            <li className="flex items-center gap-3 rounded-xl border border-cream-border bg-cream-soft/70 p-3.5">
+            <li className="flex items-center gap-3 rounded-2xl border-0 bg-cream-soft p-3.5">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
                 <PhoneIcon className="h-5 w-5" />
               </span>
@@ -231,7 +241,7 @@ export default async function ProductPage({ params }: Params) {
 
       {/* Accordions */}
       <section className="container-iw pb-10">
-        <div className="border-t border-cream-border">
+        <div className="space-y-3">
           <ProductAccordion title="Description" defaultOpen>
             {product.bodyHtml.trim() ? (
               <div dangerouslySetInnerHTML={{ __html: product.bodyHtml }} />
@@ -289,7 +299,7 @@ export default async function ProductPage({ params }: Params) {
             {testimonials.map((t) => (
               <figure
                 key={t.id}
-                className="flex flex-col gap-2.5 rounded-xl border border-cream-border bg-white p-5 shadow-card"
+                className="flex flex-col gap-2.5 rounded-2xl border-0 bg-cream-soft p-5 shadow-card"
               >
                 <Stars rating={t.rating} />
                 <blockquote className="text-[13px] leading-relaxed text-ink">
@@ -309,9 +319,12 @@ export default async function ProductPage({ params }: Params) {
       {/* Related products */}
       {related.length > 0 && (
         <section aria-labelledby="related-heading" className="container-iw border-t border-cream-border py-9 lg:py-12">
-          <h2 id="related-heading" className="mb-6 font-heading text-xl font-semibold text-ink-dark sm:text-2xl">
-            You May Also Like
-          </h2>
+          <div className="mb-7 text-center">
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-brand">Related Products</p>
+            <h2 id="related-heading" className="mt-1.5 font-heading text-xl font-semibold text-ink-dark sm:text-2xl">
+              You May Also Like
+            </h2>
+          </div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {related.map((item) => (
               <ProductCard key={item.id} product={item} />

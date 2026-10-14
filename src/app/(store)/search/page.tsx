@@ -57,7 +57,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Search' }]} />
 
       <section className="rounded-2xl bg-cream p-6 sm:p-8">
-        <h1 className="text-2xl font-bold text-ink-dark sm:text-3xl">
+        <p className="text-xs font-semibold uppercase tracking-widest text-brand">Search</p>
+        <h1 className="mt-1.5 text-2xl font-bold text-ink-dark sm:text-3xl">
           Search results for <span className="text-brand">“{q}”</span>
         </h1>
         <p className="mt-1.5 text-sm text-ink-muted">

@@ -18,7 +18,7 @@ export function CategoryTile({
   return (
     <Link
       href={href}
-      className="group flex flex-col overflow-hidden rounded-xl border border-cream-border bg-white shadow-card transition duration-200 hover:-translate-y-0.5 hover:shadow-hover"
+      className="group flex flex-col overflow-hidden rounded-2xl border-0 bg-white shadow-card transition duration-200 hover:-translate-y-0.5 hover:shadow-hover"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-cream-soft">
         {image ? (
@@ -37,7 +37,7 @@ export function CategoryTile({
           </div>
         )}
         {count != null && count > 0 && (
-          <span className="absolute bottom-2 right-2 rounded-md bg-white/90 px-2 py-0.5 text-[11px] font-semibold text-ink-dark shadow-sm backdrop-blur-sm">
+          <span className="absolute bottom-2 right-2 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-ink-dark shadow-sm backdrop-blur-sm">
             {count} {count === 1 ? 'product' : 'products'}
           </span>
         )}

@@ -1,8 +1,20 @@
 import { Logo } from '@/components/brand/Logo';
 import Link from 'next/link';
-import Image from 'next/image';
 import type { MenuNode } from '@/lib/queries';
-import { PhoneIcon, MailIcon, MapPinIcon, FacebookIcon, InstagramIcon, YoutubeIcon, LinkedinIcon, WhatsappIcon } from '@/components/icons';
+import {
+  PhoneIcon,
+  MailIcon,
+  MapPinIcon,
+  FacebookIcon,
+  InstagramIcon,
+  YoutubeIcon,
+  LinkedinIcon,
+  WhatsappIcon,
+  TruckIcon,
+  StarIcon,
+  ShieldIcon,
+  CheckIcon,
+} from '@/components/icons';
 import { NewsletterForm } from '@/components/layout/NewsletterForm';
 
 type FooterProps = {
@@ -19,49 +31,69 @@ export function Footer({ columns, settings }: FooterProps) {
   ].filter((s) => s.href && s.href !== '#');
 
   return (
-    <footer className="mt-16 bg-brand-900 text-white">
-      {/* top strip */}
-      <div className="border-b border-white/10">
-        <div className="container-iw grid grid-cols-1 gap-6 py-8 sm:grid-cols-3">
-          <FooterFeature title="Free Nationwide Delivery" desc="Free delivery & installation across Pakistan" />
-          <FooterFeature title="Since 1974" desc="Pakistan’s largest furniture manufacturer" />
-          <FooterFeature title="Lifelong Service" desc="Dedicated after-sales support" />
+    <footer className="mt-16 bg-cream text-ink">
+      {/* features strip — white borderless cards above the footer body */}
+      <div className="container-iw pt-10 sm:pt-12">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <FooterFeature
+            icon={TruckIcon}
+            title="Free Nationwide Delivery"
+            desc="Free delivery & installation across Pakistan"
+          />
+          <FooterFeature icon={StarIcon} title="Since 1974" desc="Pakistan’s largest furniture manufacturer" />
+          <FooterFeature icon={ShieldIcon} title="Lifelong Service" desc="Dedicated after-sales support" />
         </div>
       </div>
 
-      <div className="container-iw grid grid-cols-2 gap-8 py-12 md:grid-cols-3 lg:grid-cols-6">
+      <div className="container-iw grid grid-cols-2 gap-8 border-t border-cream-border py-12 md:grid-cols-3 lg:grid-cols-6">
         <div className="col-span-2">
-          <Logo variant="light" size="lg" withTagline className="mb-4" />
-          <p className="mb-5 max-w-sm text-[13px] leading-relaxed text-white/70">
+          <Logo size="lg" withTagline className="mb-4" />
+          <p className="mb-5 max-w-sm text-[13px] leading-relaxed text-ink-muted">
             {settings.legalBlurb ?? 'Cozy Furnitures offers an exciting and affordable range of bedroom, living and office furniture, kitchens, doors, wardrobes, flooring and home décor — to suit every style & space.'}
           </p>
-          <ul className="space-y-2.5 text-[13px] text-white/80">
+          <ul className="space-y-2.5 text-[13px] text-ink">
             <li className="flex items-start gap-2.5">
-              <PhoneIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-300" />
-              <a href={`tel:${(settings.phone ?? '').replace(/-/g, '')}`} className="hover:text-white">{settings.phone}</a>
+              <PhoneIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+              <a href={`tel:${(settings.phone ?? '').replace(/-/g, '')}`} className="transition hover:text-brand">
+                {settings.phone}
+              </a>
             </li>
             <li className="flex items-start gap-2.5">
-              <MailIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-300" />
-              <a href={`mailto:${settings.email}`} className="hover:text-white">{settings.email}</a>
+              <MailIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+              <a href={`mailto:${settings.email}`} className="transition hover:text-brand">
+                {settings.email}
+              </a>
             </li>
             <li className="flex items-start gap-2.5">
-              <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-300" />
+              <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
               <span>{settings.address}</span>
             </li>
           </ul>
           <div className="mt-5 flex gap-2.5">
             {socials.map(({ href, label, Icon }) => (
-              <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label} className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 transition hover:bg-brand">
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={label}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-white shadow-sm transition hover:bg-brand-600 hover:shadow-md"
+              >
                 <Icon className="h-4.5 w-4.5" />
               </a>
             ))}
           </div>
           <NewsletterForm />
           <div className="mt-6">
-            <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-white/60">Certified by</p>
             <div className="flex flex-wrap gap-2">
-              {['FSC', 'IAS', 'EIAC', 'BMTF'].map((c) => (
-                <span key={c} className="rounded border border-white/20 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white/75">{c}</span>
+              {['Quality You Can Trust', '1-Year Warranty', 'Lifelong Service'].map((c) => (
+                <span
+                  key={c}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold text-ink shadow-sm"
+                >
+                  <CheckIcon className="h-3.5 w-3.5 text-brand" aria-hidden />
+                  {c}
+                </span>
               ))}
             </div>
           </div>
@@ -69,11 +101,11 @@ export function Footer({ columns, settings }: FooterProps) {
 
         {columns.map((col) => (
           <nav key={col.title} aria-label={col.title}>
-            <h3 className="mb-4 text-[13px] font-bold uppercase tracking-wider text-white">{col.title}</h3>
+            <h3 className="mb-4 text-[13px] font-bold uppercase tracking-wider text-ink-dark">{col.title}</h3>
             <ul className="space-y-2.5">
               {col.items.map((item) => (
                 <li key={item.id}>
-                  <Link href={item.href} className="text-[13px] text-white/70 transition hover:text-white">
+                  <Link href={item.href} className="text-[13px] text-ink-muted transition hover:text-brand">
                     {item.label}
                   </Link>
                 </li>
@@ -83,7 +115,7 @@ export function Footer({ columns, settings }: FooterProps) {
         ))}
       </div>
 
-      <div className="border-t border-white/10">
+      <div className="bg-brand-900">
         <div className="container-iw flex flex-col items-center gap-4 py-5 text-[12px] text-white/60 sm:flex-row sm:justify-between">
           <p>© {new Date().getFullYear()} Cozy Furnitures (Pvt.) Ltd. All rights reserved.</p>
           <div className="text-center">
@@ -92,7 +124,9 @@ export function Footer({ columns, settings }: FooterProps) {
             </p>
             <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
               {['VISA', 'Mastercard', 'Amex', 'Bank Transfer', 'COD', 'Baadmay'].map((m) => (
-                <span key={m} className="rounded border border-white/20 px-2 py-1 text-[10px] font-semibold text-white/70">{m}</span>
+                <span key={m} className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold text-white/70">
+                  {m}
+                </span>
               ))}
             </div>
           </div>
@@ -102,11 +136,24 @@ export function Footer({ columns, settings }: FooterProps) {
   );
 }
 
-function FooterFeature({ title, desc }: { title: string; desc: string }) {
+function FooterFeature({
+  icon: Icon,
+  title,
+  desc,
+}: {
+  icon: (p: React.SVGProps<SVGSVGElement>) => React.ReactElement;
+  title: string;
+  desc: string;
+}) {
   return (
-    <div className="text-center sm:text-left">
-      <h3 className="font-heading text-sm font-bold">{title}</h3>
-      <p className="mt-1 text-[12.5px] text-white/60">{desc}</p>
+    <div className="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-card">
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
+        <Icon className="h-5 w-5" />
+      </span>
+      <div>
+        <h3 className="font-heading text-sm font-bold text-ink-dark">{title}</h3>
+        <p className="mt-0.5 text-[12.5px] text-ink-muted">{desc}</p>
+      </div>
     </div>
   );
 }

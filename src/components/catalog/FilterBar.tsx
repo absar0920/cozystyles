@@ -14,6 +14,10 @@ const SORT_OPTIONS = [
   { value: 'title-desc', label: 'Alphabetical: Z–A' },
 ];
 
+/** Shared pill-chip control look: borderless cream pill. */
+const pillInput =
+  'rounded-full border-0 bg-cream-soft px-4 py-2 text-sm text-ink-dark outline-none transition placeholder:text-ink-light hover:bg-cream focus:outline-none focus:ring-2 focus:ring-brand/30';
+
 export type FilterBarProps = {
   /** Path the GET form submits to, e.g. `/collections/bedroom` or `/search`. */
   basePath: string;
@@ -35,7 +39,7 @@ export function FilterBar({ basePath, q, sort, min, max, stock }: FilterBarProps
   const clearHref = catalogHref(basePath, q ? { q } : {});
 
   return (
-    <form method="get" action={basePath} className="rounded-xl border border-cream-border bg-white p-4 shadow-card sm:p-5">
+    <form method="get" action={basePath} className="rounded-2xl border-0 bg-white p-4 shadow-card sm:p-5">
       {q ? <input type="hidden" name="q" value={q} /> : null}
       <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
         <div className="flex items-center gap-2 pb-2.5">
@@ -43,7 +47,7 @@ export function FilterBar({ basePath, q, sort, min, max, stock }: FilterBarProps
           <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">Filter &amp; Sort</span>
         </div>
 
-        <div className="w-full sm:w-52">
+        <div className="w-full sm:w-56">
           <label htmlFor="filter-sort" className="label">
             Sort by
           </label>
@@ -52,7 +56,7 @@ export function FilterBar({ basePath, q, sort, min, max, stock }: FilterBarProps
             name="sort"
             defaultValue={sort ?? ''}
             onChange={(e) => e.currentTarget.form?.requestSubmit()}
-            className="input cursor-pointer !py-2"
+            className={`${pillInput} w-full cursor-pointer`}
           >
             {SORT_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -76,7 +80,7 @@ export function FilterBar({ basePath, q, sort, min, max, stock }: FilterBarProps
               defaultValue={min ?? ''}
               placeholder="Min"
               aria-label="Minimum price in rupees"
-              className="input w-24 !py-2"
+              className={`${pillInput} w-24`}
             />
             <span className="pb-1.5 text-ink-light">–</span>
             <input
@@ -88,18 +92,19 @@ export function FilterBar({ basePath, q, sort, min, max, stock }: FilterBarProps
               defaultValue={max ?? ''}
               placeholder="Max"
               aria-label="Maximum price in rupees"
-              className="input w-24 !py-2"
+              className={`${pillInput} w-24`}
             />
           </div>
         </div>
 
-        <label className="flex cursor-pointer select-none items-center gap-2 pb-2.5 text-sm text-ink-dark">
+        {/* In-stock pill toggle: whole chip fills brand when checked */}
+        <label className="mb-0.5 flex cursor-pointer select-none items-center gap-2.5 rounded-full border-0 bg-cream-soft px-4 py-2.5 text-sm font-medium text-ink-dark transition hover:bg-cream has-[:checked]:bg-brand has-[:checked]:text-white has-[:checked]:hover:bg-brand-600">
           <input
             type="checkbox"
             name="stock"
             value="1"
             defaultChecked={stock}
-            className="h-4 w-4 cursor-pointer rounded accent-brand"
+            className="h-4 w-4 cursor-pointer appearance-none rounded-full bg-white/50 outline-none transition checked:bg-white focus-visible:ring-2 focus-visible:ring-brand/40"
           />
           In stock only
         </label>
@@ -111,7 +116,7 @@ export function FilterBar({ basePath, q, sort, min, max, stock }: FilterBarProps
           {hasFilters && (
             <Link
               href={clearHref}
-              className="text-xs font-semibold text-ink-muted underline underline-offset-2 transition hover:text-brand"
+              className="rounded-full border-0 bg-cream-soft px-4 py-2 text-xs font-semibold text-ink-muted transition hover:bg-brand hover:text-white"
             >
               Clear all
             </Link>

@@ -14,7 +14,7 @@ export function QuickAdd({ product }: { product: ProductCardData }) {
     return (
       <a
         href="/pages/contact"
-        className="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-cream-border bg-white px-3 py-2 text-xs font-semibold text-ink-dark transition hover:border-brand hover:bg-brand hover:text-white"
+        className="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-full border-0 bg-cream-soft px-3 py-2 text-xs font-semibold text-ink-dark transition hover:bg-brand hover:text-white"
       >
         Enquire Now
       </a>
@@ -38,8 +38,8 @@ export function QuickAdd({ product }: { product: ProductCardData }) {
         setAdded(true);
         setTimeout(() => setAdded(false), 1400);
       }}
-      className={`mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-xs font-semibold transition ${
-        added ? 'border-brand bg-brand text-white' : 'border-cream-border bg-white text-ink-dark hover:border-brand hover:bg-brand hover:text-white'
+      className={`mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-full border-0 px-3 py-2 text-xs font-semibold transition ${
+        added ? 'bg-brand text-white' : 'bg-cream-soft text-ink-dark hover:bg-brand hover:text-white'
       }`}
     >
       {added ? <CheckIcon className="h-3.5 w-3.5" /> : <CartIcon className="h-3.5 w-3.5" />}

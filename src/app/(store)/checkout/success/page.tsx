@@ -36,7 +36,7 @@ export default async function CheckoutSuccessPage({
   return (
     <div className="bg-cream-soft py-12 sm:py-16">
       <div className="container-iw">
-        <div className="mx-auto max-w-2xl animate-fadeIn overflow-hidden rounded-2xl border border-cream-border bg-white shadow-card">
+        <div className="mx-auto max-w-2xl animate-fadeIn overflow-hidden rounded-2xl bg-white shadow-card">
           <div className="bg-brand px-6 py-10 text-center text-white sm:py-12">
             <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-white/15 ring-4 ring-white/25">
               <CheckIcon className="h-10 w-10" strokeWidth={2.4} />
@@ -53,7 +53,7 @@ export default async function CheckoutSuccessPage({
               )}
             </p>
             {orderNumber && (
-              <p className="mx-auto mt-5 inline-block rounded-lg bg-brand-900/60 px-5 py-2.5 font-mono text-sm font-semibold tracking-wider">
+              <p className="mx-auto mt-5 inline-block rounded-full bg-brand-900/60 px-5 py-2.5 font-mono text-sm font-semibold tracking-wider">
                 {orderNumber}
               </p>
             )}
@@ -79,7 +79,7 @@ export default async function CheckoutSuccessPage({
               ))}
             </ol>
 
-            <p className="mt-7 flex items-start gap-2 rounded-lg bg-cream px-4 py-3 text-xs leading-relaxed text-ink">
+            <p className="mt-7 flex items-start gap-2 rounded-xl bg-cream px-4 py-3 text-xs leading-relaxed text-ink">
               <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
               Questions in the meantime? Call us at +92-42-111-203-203 — Pakistan&rsquo;s largest furniture
               manufacturer is at your service.

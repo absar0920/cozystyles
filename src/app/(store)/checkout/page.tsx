@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/lib/cart';
 import { PAKISTAN_CITIES, PAKISTAN_PROVINCES } from '@/lib/constants';
 import { CartIcon, ShieldIcon } from '@/components/icons';
+import { Breadcrumbs } from '@/components/catalog/Breadcrumbs';
 import { OrderSummary } from '@/components/checkout/OrderSummary';
 import { PaymentSelector } from '@/components/checkout/PaymentSelector';
 import { validateCheckout, type CheckoutCustomer } from '@/components/checkout/validation';
@@ -78,19 +79,19 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="bg-cream-soft py-8 sm:py-12">
+    <div className="bg-white py-8 sm:py-12">
       <div className="container-iw">
-        <nav aria-label="Breadcrumb" className="mb-4 text-xs text-ink-muted">
-          <Link href="/cart" className="transition hover:text-brand">
-            Cart
-          </Link>
-          <span className="mx-1.5">/</span>
-          <span className="font-medium text-ink-dark">Checkout</span>
-        </nav>
+        <Breadcrumbs
+          items={[{ label: 'Home', href: '/' }, { label: 'Cart', href: '/cart' }, { label: 'Checkout' }]}
+          className="mb-4"
+        />
 
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-          <h1 className="font-heading text-2xl font-bold text-ink-dark sm:text-3xl">Checkout</h1>
-          <p className="flex items-center gap-1.5 text-xs text-ink-muted">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-brand">Secure Checkout</p>
+            <h1 className="mt-1 font-heading text-2xl font-bold text-ink-dark sm:text-3xl">Checkout</h1>
+          </div>
+          <p className="flex items-center gap-1.5 pb-0.5 text-xs text-ink-muted">
             <ShieldIcon className="h-4 w-4 text-brand" />
             Secure checkout — your details stay private
           </p>
@@ -98,16 +99,16 @@ export default function CheckoutPage() {
 
         {!hydrated ? (
           <div className="grid animate-pulse gap-6 lg:grid-cols-5 lg:gap-8" aria-hidden>
-            <div className="space-y-4 rounded-xl bg-cream p-6 lg:col-span-3">
-              <div className="h-5 w-40 rounded bg-cream-border" />
+            <div className="space-y-4 rounded-2xl bg-cream-soft p-6 lg:col-span-3">
+              <div className="h-5 w-40 rounded-full bg-cream" />
               {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="h-11 rounded bg-cream-border/70" />
+                <div key={i} className="h-11 rounded-full bg-cream" />
               ))}
             </div>
-            <div className="h-96 rounded-xl bg-cream lg:col-span-2" />
+            <div className="h-96 rounded-2xl bg-cream-soft lg:col-span-2" />
           </div>
         ) : items.length === 0 ? (
-          <div className="mx-auto max-w-md rounded-xl border border-cream-border bg-white px-6 py-14 text-center shadow-card">
+          <div className="mx-auto max-w-md rounded-2xl bg-white px-6 py-14 text-center shadow-card">
             <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-brand-50 text-brand">
               <CartIcon className="h-9 w-9" />
             </span>
@@ -123,7 +124,7 @@ export default function CheckoutPage() {
           <form onSubmit={handleSubmit} noValidate className="grid items-start gap-6 lg:grid-cols-5 lg:gap-8">
             {/* Left: customer + payment */}
             <div className="space-y-6 lg:col-span-3">
-              <section className="rounded-xl border border-cream-border bg-white p-5 shadow-card sm:p-6">
+              <section className="rounded-2xl bg-white p-5 shadow-card sm:p-6">
                 <h2 className="font-heading text-base font-semibold text-ink-dark">Delivery Details</h2>
                 <p className="mt-0.5 text-xs text-ink-muted">
                   We deliver and install free of charge, nationwide.
@@ -247,7 +248,7 @@ export default function CheckoutPage() {
                 </div>
               </section>
 
-              <section className="rounded-xl border border-cream-border bg-white p-5 shadow-card sm:p-6">
+              <section className="rounded-2xl bg-white p-5 shadow-card sm:p-6">
                 <h2 className="font-heading text-base font-semibold text-ink-dark">Payment Method</h2>
                 <div className="mt-4">
                   <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
@@ -272,7 +273,7 @@ export default function CheckoutPage() {
                 savings={savings}
               >
                 {formError && (
-                  <p role="alert" className="mt-4 rounded-md border border-sale/30 bg-sale/5 px-3 py-2.5 text-xs font-medium text-sale">
+                  <p role="alert" className="mt-4 rounded-xl border border-sale/30 bg-sale/5 px-3 py-2.5 text-xs font-medium text-sale">
                     {formError}
                   </p>
                 )}

@@ -57,17 +57,56 @@ async function getCollectionsByHandles(handles: readonly string[]): Promise<Tile
     .filter((c): c is TileCollection => Boolean(c));
 }
 
-function SectionHeader({ title, href }: { title: string; href: string }) {
+/** Eyebrow labels cycled across hero slides. */
+const HERO_EYEBROWS = ['Limited Time', 'Featured Collection', 'New Season', 'Curated Picks'];
+
+/**
+ * Resolve the art for a hero slide. The seeded banner artwork carries the old
+ * brand's logo baked into it, so every slide is re-illustrated from the
+ * banner's destination instead: the target collection's image, then that
+ * collection's first product image, then any product image at all. Null means
+ * the slide renders as a full-bleed gradient panel.
+ */
+async function resolveHeroImage(href: string | null): Promise<string | null> {
+  const handle = href?.startsWith('/collections/') ? href.split('/').filter(Boolean).pop() : null;
+  if (handle) {
+    const col = await prisma.collection.findUnique({
+      where: { handle },
+      select: {
+        image: true,
+        products: {
+          take: 1,
+          orderBy: { id: 'asc' },
+          select: { images: { orderBy: { position: 'asc' }, take: 1, select: { src: true } } },
+        },
+      },
+    });
+    if (col?.image) return col.image;
+    const inCollection = col?.products[0]?.images[0]?.src;
+    if (inCollection) return inCollection;
+  }
+  const any = await prisma.product.findFirst({
+    where: { status: 'ACTIVE', images: { some: {} } },
+    orderBy: { hot: 'desc' },
+    select: { images: { orderBy: { position: 'asc' }, take: 1, select: { src: true } } },
+  });
+  return any?.images[0]?.src ?? null;
+}
+
+function SectionHeader({ eyebrow, title, href }: { eyebrow: string; title: string; href?: string }) {
   return (
-    <div className="mb-4 flex items-end justify-between gap-4">
+    <div className="mb-5 flex flex-col items-center gap-1.5 text-center">
+      <p className="text-xs font-semibold uppercase tracking-widest text-brand">{eyebrow}</p>
       <h2 className="font-heading text-xl font-semibold text-ink-dark sm:text-2xl">{title}</h2>
-      <Link
-        href={href}
-        className="group inline-flex shrink-0 items-center gap-1 pb-0.5 text-sm font-medium text-brand transition hover:text-brand-600"
-      >
-        View All
-        <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-      </Link>
+      {href && (
+        <Link
+          href={href}
+          className="group mt-1 inline-flex items-center gap-1 text-sm font-medium text-brand transition hover:text-brand-600"
+        >
+          View All
+          <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+        </Link>
+      )}
     </div>
   );
 }
@@ -83,6 +122,7 @@ export default async function HomePage() {
   const sectionResults = await Promise.all(
     CATEGORY_SECTIONS.map((s) => listProducts({ collectionHandle: s.handle, perPage: 8 }))
   );
+  const slideArt = await Promise.all(bannerRows.map((b) => resolveHeroImage(b.href)));
 
   // Live site curates "Hot Selling Products" from a dedicated collection; fall
   // back to the default hot-flag listing if that collection has no products.
@@ -91,16 +131,14 @@ export default async function HomePage() {
   const featured =
     tileCollections.length > 0 ? tileCollections : await getFeaturedCollections(10);
 
-  const slides = bannerRows.map((b) => ({
+  const slides = bannerRows.map((b, i) => ({
     id: b.id,
+    eyebrow: HERO_EYEBROWS[i % HERO_EYEBROWS.length],
     title: b.title,
     subtitle: b.subtitle,
     ctaLabel: b.ctaLabel,
     href: b.href,
-    image: b.image,
-    mobileImage: b.mobileImage,
-    textColor: b.textColor,
-    overlay: b.overlay,
+    image: slideArt[i],
   }));
 
   const categoryRows = CATEGORY_SECTIONS.map((s, i) => ({
@@ -131,7 +169,7 @@ export default async function HomePage() {
       {/* Hot Selling Products */}
       {hot.items.length > 0 && (
         <section className="container-iw py-9 lg:py-12">
-          <SectionHeader title="Hot Selling Products" href="/collections/all" />
+          <SectionHeader eyebrow="Trending Now" title="Hot Selling Products" href="/collections/all" />
           <ProductCarousel products={hot.items} label="Hot selling products" />
         </section>
       )}
@@ -140,11 +178,7 @@ export default async function HomePage() {
       {featured.length > 0 && (
         <section className="bg-cream">
           <div className="container-iw py-9 lg:py-12">
-            <div className="mb-4 flex items-end justify-between gap-4">
-              <h2 className="font-heading text-xl font-semibold text-ink-dark sm:text-2xl">
-                Shop by Category
-              </h2>
-            </div>
+            <SectionHeader eyebrow="Explore" title="Shop by Category" />
             <CategoryTiles collections={featured} />
           </div>
         </section>
@@ -155,7 +189,7 @@ export default async function HomePage() {
       {/* Per-category product rows */}
       {categoryRows.map((row) => (
         <section key={row.handle} className="container-iw py-9 lg:py-12">
-          <SectionHeader title={row.title} href={`/collections/${row.handle}`} />
+          <SectionHeader eyebrow="Collection" title={row.title} href={`/collections/${row.handle}`} />
           <ProductCarousel products={row.products} label={row.title} />
         </section>
       ))}

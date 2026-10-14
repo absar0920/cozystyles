@@ -16,8 +16,8 @@ export function PaymentSelector({ value, onChange }: { value: string; onChange: 
           return (
             <label
               key={m.value}
-              className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3.5 transition ${
-                selected ? 'border-brand bg-brand-50' : 'border-cream-border bg-white hover:border-brand-200'
+              className={`flex cursor-pointer items-center gap-3 rounded-2xl border-2 p-3.5 transition ${
+                selected ? 'border-brand bg-brand-50' : 'border-transparent bg-cream-soft hover:bg-cream'
               }`}
             >
               <input
@@ -46,20 +46,20 @@ export function PaymentSelector({ value, onChange }: { value: string; onChange: 
       </div>
 
       {value === 'COD' && (
-        <p className="mt-3 rounded-lg bg-cream px-4 py-3 text-xs leading-relaxed text-ink">
+        <p className="mt-3 rounded-xl bg-cream px-4 py-3 text-xs leading-relaxed text-ink">
           Pay in cash when our team delivers and installs your furniture at your doorstep.
         </p>
       )}
 
       {value === 'CARD' && (
-        <p className="mt-3 flex items-start gap-2 rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 text-xs leading-relaxed text-ink">
+        <p className="mt-3 flex items-start gap-2 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-xs leading-relaxed text-ink">
           <ShieldIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
           You will receive a secure payment link after order confirmation.
         </p>
       )}
 
       {value === 'BANK_TRANSFER' && (
-        <div className="mt-3 rounded-lg border border-cream-border bg-cream px-4 py-3.5 text-xs leading-relaxed text-ink">
+        <div className="mt-3 rounded-xl bg-cream px-4 py-3.5 text-xs leading-relaxed text-ink">
           <p className="mb-2 text-sm font-semibold text-ink-dark">Cozy Furnitures Bank Details</p>
           <dl className="grid grid-cols-1 gap-x-4 gap-y-1.5 sm:grid-cols-[auto_1fr]">
             <dt className="text-ink-muted">Bank</dt>
@@ -81,7 +81,7 @@ export function PaymentSelector({ value, onChange }: { value: string; onChange: 
       )}
 
       {value === 'INSTALLMENTS' && (
-        <p className="mt-3 rounded-lg border border-terra/30 bg-terra/5 px-4 py-3 text-xs leading-relaxed text-ink">
+        <p className="mt-3 rounded-xl border border-terra/30 bg-terra/5 px-4 py-3 text-xs leading-relaxed text-ink">
           <span className="font-semibold text-terra">Baadmay:</span> buy now and pay later in 3 easy monthly installments
           with 0% markup — available on orders above Rs. 50,000. You will receive a Baadmay checkout link after order
           confirmation.

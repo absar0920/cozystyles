@@ -104,6 +104,7 @@ export default async function CollectionPage({
           }`}
         />
         <div className="relative flex min-h-[190px] flex-col justify-end gap-1.5 p-6 sm:min-h-[250px] sm:p-10">
+          <p className="text-xs font-semibold uppercase tracking-widest text-brand-200">Collection</p>
           <h1 className="text-2xl font-bold text-white sm:text-4xl">{title}</h1>
           <p className="text-sm text-white/80">
             {result.total} {result.total === 1 ? 'product' : 'products'} · Free Delivery &amp; Installation
@@ -112,7 +113,7 @@ export default async function CollectionPage({
       </section>
 
       {description.trim() !== '' && (
-        <section className="rounded-xl border border-cream-border bg-white p-5 sm:p-6">
+        <section className="rounded-2xl bg-white p-5 shadow-card sm:p-6">
           <ExpandableRte html={description} />
         </section>
       )}

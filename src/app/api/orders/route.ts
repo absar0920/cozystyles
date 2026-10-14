@@ -192,7 +192,7 @@ export async function POST(req: Request) {
       },
     });
 
-    const orderNumber = `IW-${100000 + created.id}`;
+    const orderNumber = `CF-${100000 + created.id}`;
     const final = await prisma.order.update({
       where: { id: created.id },
       data: { orderNumber },

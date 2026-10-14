@@ -63,7 +63,7 @@ export function ProductCarousel({ products, label }: { products: ProductCardData
             onClick={() => scroll(-1)}
             aria-label={`Scroll ${label} backward`}
             disabled={!canPrev}
-            className={`absolute -left-3 top-[38%] z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-cream-border bg-white text-ink-dark shadow-hover transition md:flex ${
+            className={`absolute -left-3 top-[38%] z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white text-ink-dark shadow-hover transition md:flex ${
               canPrev ? 'hover:bg-brand hover:text-white' : 'pointer-events-none opacity-0'
             }`}
           >
@@ -74,7 +74,7 @@ export function ProductCarousel({ products, label }: { products: ProductCardData
             onClick={() => scroll(1)}
             aria-label={`Scroll ${label} forward`}
             disabled={!canNext}
-            className={`absolute -right-3 top-[38%] z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-cream-border bg-white text-ink-dark shadow-hover transition md:flex ${
+            className={`absolute -right-3 top-[38%] z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white text-ink-dark shadow-hover transition md:flex ${
               canNext ? 'hover:bg-brand hover:text-white' : 'pointer-events-none opacity-0'
             }`}
           >

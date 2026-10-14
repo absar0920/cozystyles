@@ -47,7 +47,7 @@ export function ContactForm() {
 
   if (status === 'sent') {
     return (
-      <div className="flex flex-col items-center rounded-2xl border border-brand/30 bg-cream-soft px-6 py-12 text-center">
+      <div className="flex flex-col items-center rounded-2xl bg-cream-soft px-6 py-12 text-center">
         <span className="flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white">
           <CheckIcon className="h-7 w-7" />
         </span>
@@ -87,7 +87,7 @@ export function ContactForm() {
         <input
           id="contact-name"
           name="name"
-          className="input"
+          className="input rounded-full"
           placeholder="e.g. Ahmed Raza"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -103,7 +103,7 @@ export function ContactForm() {
           id="contact-email"
           name="email"
           type="email"
-          className="input"
+          className="input rounded-full"
           placeholder="you@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -118,7 +118,7 @@ export function ContactForm() {
           id="contact-phone"
           name="phone"
           type="tel"
-          className="input"
+          className="input rounded-full"
           placeholder="03XX-XXXXXXX"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
@@ -132,7 +132,7 @@ export function ContactForm() {
         <select
           id="contact-subject"
           name="subject"
-          className="input"
+          className="input rounded-full"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
         >
@@ -150,7 +150,7 @@ export function ContactForm() {
         <textarea
           id="contact-message"
           name="message"
-          className="input min-h-36 resize-y"
+          className="input min-h-36 resize-y rounded-2xl"
           placeholder="How can we help you?"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
@@ -161,7 +161,7 @@ export function ContactForm() {
       </div>
 
       {status === 'error' && (
-        <p role="alert" className="rounded-md bg-sale/10 px-4 py-3 text-sm font-medium text-sale sm:col-span-2">
+        <p role="alert" className="rounded-xl bg-sale/10 px-4 py-3 text-sm font-medium text-sale sm:col-span-2">
           {error}
         </p>
       )}

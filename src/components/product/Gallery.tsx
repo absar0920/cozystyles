@@ -31,8 +31,8 @@ export function Gallery({ images, title }: { images: GalleryImage[]; title: stri
 
   if (count === 0) {
     return (
-      <div className="flex aspect-square w-full items-center justify-center rounded-xl border border-cream-border bg-cream-soft">
-        <span className="font-heading text-5xl font-semibold text-cream-border">IW</span>
+      <div className="flex aspect-square w-full items-center justify-center rounded-2xl border-0 bg-cream-soft shadow-card">
+        <span className="font-heading text-5xl font-semibold text-cream-border">CF</span>
       </div>
     );
   }
@@ -67,7 +67,7 @@ export function Gallery({ images, title }: { images: GalleryImage[]; title: stri
         onMouseEnter={() => canHover && count > 0 && setZoom(true)}
         onMouseLeave={() => setZoom(false)}
         onMouseMove={onMouseMove}
-        className="relative aspect-square w-full cursor-zoom-in overflow-hidden rounded-xl border border-cream-border bg-cream-soft outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
+        className="relative aspect-square w-full cursor-zoom-in overflow-hidden rounded-2xl border-0 bg-cream-soft shadow-card outline-none transition-shadow duration-200 focus-visible:ring-2 focus-visible:ring-brand/50"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -102,14 +102,14 @@ export function Gallery({ images, title }: { images: GalleryImage[]; title: stri
             >
               <ChevronRight className="h-4 w-4" />
             </button>
-            <span className="absolute bottom-3 right-3 rounded-md bg-ink-dark/70 px-2 py-0.5 text-[11px] font-medium text-white">
+            <span className="absolute bottom-3 right-3 rounded-full bg-ink-dark/70 px-2.5 py-1 text-[11px] font-medium text-white">
               {active + 1} / {count}
             </span>
           </>
         )}
 
         {canHover && (
-          <span className="pointer-events-none absolute bottom-3 left-3 rounded-md bg-white/90 px-2 py-0.5 text-[11px] font-medium text-ink-muted shadow-card">
+          <span className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-medium text-ink-muted shadow-card">
             Hover to zoom
           </span>
         )}
@@ -129,8 +129,10 @@ export function Gallery({ images, title }: { images: GalleryImage[]; title: stri
                 setActive(i);
                 frameRef.current?.focus();
               }}
-              className={`relative h-[74px] w-[74px] shrink-0 overflow-hidden rounded-lg border-2 bg-cream-soft transition sm:h-20 sm:w-20 ${
-                i === active ? 'border-brand shadow-card' : 'border-cream-border hover:border-brand-300'
+              className={`relative h-[74px] w-[74px] shrink-0 overflow-hidden rounded-xl border-0 bg-cream-soft transition sm:h-20 sm:w-20 ${
+                i === active
+                  ? 'shadow-card ring-2 ring-brand'
+                  : 'ring-1 ring-cream-border hover:ring-brand-300'
               }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
