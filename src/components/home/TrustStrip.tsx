@@ -26,7 +26,7 @@ const FEATURES = [
 /** Thin trust strip directly below the hero slider. */
 export function TrustStrip() {
   return (
-    <section aria-label="Why shop with Interwood" className="bg-brand-900 text-white">
+    <section aria-label="Why shop with Cozy Furnitures" className="bg-brand-900 text-white">
       <div className="container-iw grid grid-cols-2 gap-x-4 gap-y-4 py-4 lg:grid-cols-4 lg:py-5">
         {FEATURES.map((f) => (
           <div key={f.title} className="flex items-center gap-3">

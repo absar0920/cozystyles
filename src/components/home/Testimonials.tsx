@@ -50,7 +50,7 @@ export function Testimonials({ reviews }: { reviews: Testimonial[] }) {
             <h2 className="font-heading text-xl font-semibold text-ink-dark sm:text-2xl">
               Our customer speaks for us
             </h2>
-            <p className="mt-1 text-sm text-ink-muted">Real reviews from verified Interwood customers</p>
+            <p className="mt-1 text-sm text-ink-muted">Real reviews from verified Cozy Furnitures customers</p>
           </div>
           <div className="flex shrink-0 gap-2">
             <button

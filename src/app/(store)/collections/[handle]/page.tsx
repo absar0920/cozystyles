@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
     return {
       title: 'All Products',
       description:
-        'Browse the complete Interwood catalogue — bedroom, living, dining and office furniture, doors, kitchens and decor.',
+        'Browse the complete Cozy Furnitures catalogue — bedroom, living, dining and office furniture, doors, kitchens and decor.',
     };
   }
   const collection = await getCollectionByHandle(handle);
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
     title: collection.title,
     description: desc
       ? desc.slice(0, 160)
-      : `Shop ${collection.title} at Interwood — Pakistan's largest furniture manufacturer. Free delivery & installation nationwide.`,
+      : `Shop ${collection.title} at Cozy Furnitures — Pakistan's largest furniture manufacturer. Free delivery & installation nationwide.`,
   };
 }
 

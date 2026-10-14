@@ -58,7 +58,7 @@ export default async function BlogPostPage({ params }: { params: PageParams }) {
       <div className="rte mx-auto max-w-3xl" dangerouslySetInnerHTML={{ __html: post.bodyHtml }} />
 
       <div className="mx-auto mt-12 flex max-w-3xl flex-col items-center gap-4 border-t border-cream-border pt-8">
-        <p className="text-sm text-ink-muted">Enjoyed this story? Explore more from the Interwood Journal.</p>
+        <p className="text-sm text-ink-muted">Enjoyed this story? Explore more from the Cozy Journal.</p>
         <Link href="/blogs" className="btn-outline">
           <ChevronLeft className="h-4 w-4" aria-hidden />
           Back to News &amp; Stories

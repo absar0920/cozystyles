@@ -1,3 +1,4 @@
+import { Logo } from '@/components/brand/Logo';
 import Link from 'next/link';
 import Image from 'next/image';
 import { SearchIcon, ChevronRight, TruckIcon, MailIcon, PackageIcon } from '@/components/icons';
@@ -12,7 +13,7 @@ const POPULAR = [
 export default function NotFound() {
   return (
     <div className="container-iw flex flex-col items-center py-14 text-center sm:py-20">
-      <Image src="/images/logo.png" alt="Interwood" width={180} height={24} priority className="h-9 w-auto" />
+      <Logo size="lg" withTagline />
 
       <p className="mt-10 font-heading text-[88px] font-bold leading-none tracking-tight text-brand-900/10 sm:text-[128px]">
         404

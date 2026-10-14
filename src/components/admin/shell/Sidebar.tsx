@@ -1,5 +1,6 @@
 'use client';
 
+import { Logo } from '@/components/brand/Logo';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, type ComponentType } from 'react';
@@ -122,7 +123,7 @@ export function Sidebar({
         <div className="flex h-16 shrink-0 items-center border-b border-white/10 px-6">
           <Link href="/admin" className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/logo.png" alt="Interwood" className="h-7 w-auto brightness-0 invert" width={120} height={28} />
+            <Logo variant="light" size="sm" />
             <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/70">
               Admin
             </span>
@@ -144,7 +145,7 @@ export function Sidebar({
         </button>
         <Link href="/admin" className="flex items-center gap-2" onClick={() => setOpen(false)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/logo.png" alt="Interwood" className="h-6 w-auto brightness-0 invert" width={110} height={24} />
+          <Logo variant="light" size="sm" />
           <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/70">
             Admin
           </span>
@@ -175,7 +176,7 @@ export function Sidebar({
       >
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-white/10 px-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/logo.png" alt="Interwood" className="h-6 w-auto brightness-0 invert" width={110} height={24} />
+          <Logo variant="light" size="sm" />
           <button
             type="button"
             onClick={() => setOpen(false)}

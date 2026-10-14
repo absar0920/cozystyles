@@ -1,5 +1,6 @@
 'use client';
 
+import { Logo } from '@/components/brand/Logo';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
@@ -77,8 +78,8 @@ export function Header({
             <MenuIcon className="h-6 w-6" />
           </button>
 
-          <Link href="/" className="shrink-0" aria-label="Interwood home">
-            <Image src="/images/logo.png" alt="Interwood" width={165} height={22} priority className="h-9 w-auto" />
+          <Link href="/" className="shrink-0" aria-label="Cozy Furnitures home">
+            <Logo size="md" withTagline />
           </Link>
 
           {/* desktop search */}
@@ -169,7 +170,7 @@ export function Header({
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
           <div className="absolute left-0 top-0 flex h-full w-[86%] max-w-sm flex-col bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-cream-border p-4">
-              <Image src="/images/logo.png" alt="Interwood" width={140} height={19} className="h-8 w-auto" />
+              <Logo size="sm" withTagline />
               <button type="button" aria-label="Close menu" onClick={() => setMobileOpen(false)} className="rounded-md p-2 text-ink-dark">
                 <XIcon className="h-5 w-5" />
               </button>

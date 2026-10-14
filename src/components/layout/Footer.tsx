@@ -1,3 +1,4 @@
+import { Logo } from '@/components/brand/Logo';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { MenuNode } from '@/lib/queries';
@@ -30,9 +31,9 @@ export function Footer({ columns, settings }: FooterProps) {
 
       <div className="container-iw grid grid-cols-2 gap-8 py-12 md:grid-cols-3 lg:grid-cols-6">
         <div className="col-span-2">
-          <Image src="/images/logo.png" alt="Interwood" width={180} height={24} className="mb-4 h-10 w-auto brightness-0 invert" />
+          <Logo variant="light" size="lg" withTagline className="mb-4" />
           <p className="mb-5 max-w-sm text-[13px] leading-relaxed text-white/70">
-            {settings.legalBlurb ?? 'Interwood offers an exciting and affordable range of bedroom, living and office furniture, kitchens, doors, wardrobes, flooring and home décor — to suit every style & space.'}
+            {settings.legalBlurb ?? 'Cozy Furnitures offers an exciting and affordable range of bedroom, living and office furniture, kitchens, doors, wardrobes, flooring and home décor — to suit every style & space.'}
           </p>
           <ul className="space-y-2.5 text-[13px] text-white/80">
             <li className="flex items-start gap-2.5">
@@ -84,7 +85,7 @@ export function Footer({ columns, settings }: FooterProps) {
 
       <div className="border-t border-white/10">
         <div className="container-iw flex flex-col items-center gap-4 py-5 text-[12px] text-white/60 sm:flex-row sm:justify-between">
-          <p>© {new Date().getFullYear()} Interwood Mobel (Pvt.) Ltd. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Cozy Furnitures (Pvt.) Ltd. All rights reserved.</p>
           <div className="text-center">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/50">
               Installment Plans &amp; Payment Gateway

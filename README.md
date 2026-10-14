@@ -1,11 +1,11 @@
-# Interwood.pk Clone — Full-Stack Next.js E-Commerce
+# Cozy Furnitures — Full-Stack Next.js E-Commerce
 
-A faithful full-stack clone of [interwood.pk](https://interwood.pk/) (Pakistan's largest furniture manufacturer): storefront + backend + admin panel, seeded with the real catalog scraped from the live site.
+A faithful full-stack clone of the original site (a rebranded furniture store): storefront + backend + admin panel, seeded with the real catalog scraped from the live site.
 
 ## Stack
 
 - **Next.js 15** (App Router, TypeScript, server components + server actions)
-- **Tailwind CSS 3.4** — Interwood design tokens (`#108474` teal, Poppins/Work Sans)
+- **Tailwind CSS 3.4** — teal palette (`#108474`), Nunito + Work Sans
 - **Prisma + SQLite** (`prisma/dev.db`) — swappable to Postgres by changing `datasource`
 - **NextAuth-free auth** — HMAC-signed httpOnly cookie sessions (admin)
 
@@ -14,7 +14,7 @@ A faithful full-stack clone of [interwood.pk](https://interwood.pk/) (Pakistan's
 ```bash
 npm install
 npm run db:push        # create schema
-npm run db:seed        # seed from data/raw (scraped from interwood.pk)
+npm run db:seed        # seed from data/raw (scraped source catalog, rebranded to Cozy Furnitures)
 npm run build
 npm start              # http://localhost:3000
 ```
@@ -25,7 +25,7 @@ Product/collection/banner images are already downloaded under `public/images/` (
 
 - URL: `http://localhost:3000/admin`
 - Credentials (from `.env`): `ADMIN_EMAIL` / `ADMIN_PASSWORD`
-  - defaults: `admin@interwood.local` / `Interwood@2026`
+  - defaults: `admin@cozyfurnitures.pk` / `CozyAdmin@2026`
 - Controls **everything**: products (variants, images, options, collections), collections, orders (status workflow), banners (hero slider), navigation menus, static pages/blog, reviews moderation, contact-message inbox, site settings (phone/email/social/announcement), admin session.
 
 ## Data pipeline (how the seed was produced)

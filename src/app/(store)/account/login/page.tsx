@@ -80,7 +80,7 @@ export default function AccountLoginPage() {
               Sign In
             </button>
             <p className="text-center text-xs leading-relaxed text-ink-muted">
-              New to Interwood? Continue shopping as a guest — no account needed at checkout.
+              New to Cozy Furnitures? Continue shopping as a guest — no account needed at checkout.
             </p>
           </form>
         )}

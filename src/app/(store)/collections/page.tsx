@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'All Categories',
   description:
-    'Browse every Interwood category — bedroom, living and dining furniture, office chairs and desks, wardrobes, doors, kitchens, kids furniture and home decor.',
+    'Browse every Cozy Furnitures category — bedroom, living and dining furniture, office chairs and desks, wardrobes, doors, kitchens, kids furniture and home decor.',
 };
 
 type NavCollection = Awaited<ReturnType<typeof getAllNavCollections>>[number];

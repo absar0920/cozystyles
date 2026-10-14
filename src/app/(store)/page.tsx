@@ -121,7 +121,7 @@ export default async function HomePage() {
   return (
     <>
       <h1 className="sr-only">
-        Interwood — Pakistan&rsquo;s Largest Furniture Manufacturer. Bedroom, living, dining, office
+        Cozy Furnitures — Pakistan&rsquo;s Largest Furniture Manufacturer. Bedroom, living, dining, office
         furniture, kitchens &amp; wardrobes.
       </h1>
       <HeroSlider slides={slides} />

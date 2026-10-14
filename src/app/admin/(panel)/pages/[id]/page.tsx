@@ -99,7 +99,7 @@ export default async function PageEditorPage({
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Title">
-                  <TextInput name="title" defaultValue={page?.title ?? ''} required placeholder="About Interwood" />
+                  <TextInput name="title" defaultValue={page?.title ?? ''} required placeholder="About Cozy Furnitures" />
                 </Field>
                 <Field label="Handle" hint="URL slug. Leave empty to generate it from the title.">
                   <TextInput
@@ -126,7 +126,7 @@ export default async function PageEditorPage({
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="SEO title" hint="Shown in search results and browser tabs.">
-                  <TextInput name="seoTitle" defaultValue={page?.seoTitle ?? ''} placeholder="About Interwood — Pakistan’s Largest Furniture Manufacturer" />
+                  <TextInput name="seoTitle" defaultValue={page?.seoTitle ?? ''} placeholder="About Cozy Furnitures" />
                 </Field>
                 <Field label="SEO description">
                   <TextArea name="seoDescription" rows={3} defaultValue={page?.seoDescription ?? ''} placeholder="A short summary of this page for search engines." />

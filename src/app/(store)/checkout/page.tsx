@@ -284,7 +284,7 @@ export default function CheckoutPage() {
                       : 'Place Order'}
                 </button>
                 <p className="mt-3 text-center text-[11px] leading-relaxed text-ink-muted">
-                  By placing your order you agree to Interwood&rsquo;s Terms of Sale. No payment is charged now unless
+                  By placing your order you agree to Cozy Furnitures&rsquo;s Terms of Sale. No payment is charged now unless
                   you choose Card or Installments.
                 </p>
               </OrderSummary>

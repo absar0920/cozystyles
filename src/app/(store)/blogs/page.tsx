@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'News & Stories',
   description:
-    'Interior design ideas, buying guides, seasonal looks and company news from Interwood — Pakistan’s largest furniture manufacturer.',
+    'Interior design ideas, buying guides, seasonal looks and company news from Cozy Furnitures.',
 };
 
 export default async function BlogsPage() {
@@ -26,7 +26,7 @@ export default async function BlogsPage() {
       <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-600 px-6 py-10 sm:px-10 sm:py-14">
         <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-white/10 blur-2xl" aria-hidden />
         <div className="relative max-w-2xl">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-200">Interwood Journal</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-200">Cozy Journal</p>
           <h1 className="mt-2 text-3xl font-bold text-white sm:text-4xl lg:text-5xl">News &amp; Stories</h1>
           <p className="mt-3 text-sm leading-relaxed text-white/80 sm:text-base">
             Interior ideas, buying guides, seasonal inspirations and updates from Pakistan&rsquo;s largest furniture

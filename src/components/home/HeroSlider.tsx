@@ -77,7 +77,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={slide.image}
-                  alt={slide.title || 'Interwood promotion'}
+                  alt={slide.title || 'Cozy Furnitures promotion'}
                   width={1200}
                   height={462}
                   draggable={false}

@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { CheckIcon, CubeIcon, MapPinIcon, PhoneIcon, TruckIcon } from '@/components/icons';
 
 export const metadata: Metadata = {
-  title: 'Order Confirmed | Interwood',
-  description: 'Thank you for your order — Interwood will confirm your order by phone shortly.',
+  title: 'Order Confirmed | Cozy Furnitures',
+  description: 'Thank you for your order — Cozy Furnitures will confirm your order by phone shortly.',
 };
 
 const NEXT_STEPS = [

@@ -3,8 +3,8 @@ import { TruckIcon } from '@/components/icons';
 import { TrackForm } from '@/components/checkout/TrackForm';
 
 export const metadata: Metadata = {
-  title: 'Track Your Order | Interwood',
-  description: 'Track your Interwood order status — from production to delivery and free installation.',
+  title: 'Track Your Order | Cozy Furnitures',
+  description: 'Track your Cozy Furnitures order status — from production to delivery and free installation.',
 };
 
 export default async function TrackPage({

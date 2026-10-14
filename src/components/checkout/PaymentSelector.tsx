@@ -60,12 +60,12 @@ export function PaymentSelector({ value, onChange }: { value: string; onChange: 
 
       {value === 'BANK_TRANSFER' && (
         <div className="mt-3 rounded-lg border border-cream-border bg-cream px-4 py-3.5 text-xs leading-relaxed text-ink">
-          <p className="mb-2 text-sm font-semibold text-ink-dark">Interwood Bank Details</p>
+          <p className="mb-2 text-sm font-semibold text-ink-dark">Cozy Furnitures Bank Details</p>
           <dl className="grid grid-cols-1 gap-x-4 gap-y-1.5 sm:grid-cols-[auto_1fr]">
             <dt className="text-ink-muted">Bank</dt>
             <dd className="font-medium text-ink-dark">Meezan Bank Limited</dd>
             <dt className="text-ink-muted">Account Title</dt>
-            <dd className="font-medium text-ink-dark">Interwood Mobel (Pvt.) Ltd.</dd>
+            <dd className="font-medium text-ink-dark">Cozy Furnitures (Pvt.) Ltd.</dd>
             <dt className="text-ink-muted">Account Number</dt>
             <dd className="font-mono font-medium text-ink-dark">0123-0101234567</dd>
             <dt className="text-ink-muted">IBAN</dt>
