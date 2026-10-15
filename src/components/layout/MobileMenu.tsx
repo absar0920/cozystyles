@@ -1,0 +1,125 @@
+'use client';
+
+import Link from 'next/link';
+import { useLayoutEffect, useRef, useState } from 'react';
+import type { MenuNode } from '@/lib/queries';
+import { ChevronDown, ThemeAccountIcon } from '@/components/icons';
+import { isSpacer, megaColumns } from '@/components/layout/menu';
+
+/**
+ * Live mobile menu (<1068px): a full-width white panel that opens in place directly under the
+ * header (no side drawer). 51px Work Sans rows with #eee rules, maroon first row, chevron
+ * accordions, and a pinned "Login" footer.
+ */
+export function MobileMenu({ menu, open, onClose }: { menu: MenuNode[]; open: boolean; onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | undefined>(undefined);
+  const [expanded, setExpanded] = useState<number | null>(null);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const measure = () => {
+      const header = ref.current?.parentElement;
+      if (header) setHeight(window.innerHeight - header.getBoundingClientRect().bottom);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [open]);
+
+  return (
+    <div
+      ref={ref}
+      className={`absolute left-0 top-full z-[1] flex w-full flex-col overflow-hidden bg-white lg:hidden ${open ? 'visible' : 'invisible'}`}
+      style={{ height: height ?? 'calc(100dvh - 95px)' }}
+      aria-hidden={!open}
+    >
+      <nav aria-label="Mobile navigation" className="min-h-0 flex-1 overflow-y-auto font-nav">
+        <ul>
+          {menu.map((item, i) => {
+            const hasDrop = item.children.length > 0;
+            const isOpen = expanded === item.id;
+            return (
+              <li key={item.id} className="relative">
+                <div className="relative">
+                  <Link
+                    href={item.href}
+                    onClick={onClose}
+                    tabIndex={open ? 0 : -1}
+                    className={`flex border-b border-line px-5 py-[15px] text-[16px] font-medium leading-[21px] ${
+                      i === 0 ? 'bg-maroon text-white hover:text-white' : 'text-black hover:text-black'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                  {hasDrop && (
+                    <button
+                      type="button"
+                      aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${item.label}`}
+                      aria-expanded={isOpen}
+                      tabIndex={open ? 0 : -1}
+                      onClick={() => setExpanded(isOpen ? null : item.id)}
+                      className="absolute right-0 top-0 flex h-full w-[70px] items-center justify-end pr-5 text-black"
+                    >
+                      <ChevronDown className={`h-[22px] w-[22px] transition-transform ${isOpen ? 'rotate-180' : ''}`} strokeWidth={2} />
+                    </button>
+                  )}
+                </div>
+                {hasDrop && isOpen && <MobileDropdown item={item} onNavigate={onClose} />}
+              </li>
+            );
+          })}
+        </ul>
+        <ul className="px-[12.5px] py-[30px]" aria-hidden />
+      </nav>
+      <div className="flex h-[50px] shrink-0 items-center justify-between border-t border-line px-[19px]">
+        <div />
+        <Link
+          href="/account/login"
+          onClick={onClose}
+          tabIndex={open ? 0 : -1}
+          className="flex h-full items-center gap-2 border-l border-line pl-[19px] text-[13px] text-accent"
+        >
+          <ThemeAccountIcon className="h-3.5 w-[13px]" />
+          Login
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function MobileDropdown({ item, onNavigate }: { item: MenuNode; onNavigate: () => void }) {
+  const columns = megaColumns(item);
+  return (
+    <ul className="border border-megaline bg-white">
+      {columns.flat().map((group, gi) => (
+        <li key={group.heading?.id ?? `flat-${gi}`} className="px-[15px] py-3">
+          {group.heading && (
+            <Link
+              href={group.heading.href}
+              onClick={onNavigate}
+              className="mb-[7px] block border-b border-cream-border pb-3 text-[14px] font-semibold leading-[23.8px] text-menuRed hover:text-menuRed"
+            >
+              <span className="block bg-black/[.03] p-[10px]">{group.heading.label}</span>
+            </Link>
+          )}
+          <ul>
+            {group.links.map((link) =>
+              isSpacer(link) ? null : (
+                <li key={link.id}>
+                  <Link
+                    href={link.href}
+                    onClick={onNavigate}
+                    className="flex border-b border-line py-[5px] text-[13px] font-normal leading-5 text-ink-dark hover:text-black"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ),
+            )}
+          </ul>
+        </li>
+      ))}
+    </ul>
+  );
+}

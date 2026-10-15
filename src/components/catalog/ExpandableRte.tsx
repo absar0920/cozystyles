@@ -1,51 +1,41 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { ChevronDown } from '@/components/icons';
+import { useState } from 'react';
 
 /**
- * Renders a plain-text DB description (e.g. collection `description`) inside
- * `.rte` typography, collapsing behind a gradient fade with a "Read more"
- * toggle when the content is taller than `collapsedHeight`. The string is
- * rendered as TEXT ONLY — never interpreted as HTML (prop keeps the historic
- * `html` name for callers).
+ * Live collection description read-more: the collapsed state shows the first 500 characters of
+ * the HTML + "...", and a green underlined "Show more" / "Show less" toggle sits centred below.
+ * Both strings must already be sanitised (see `./rte`).
  */
-export function ExpandableRte({ html, collapsedHeight = 176 }: { html: string; collapsedHeight?: number }) {
-  const contentRef = useRef<HTMLDivElement>(null);
+export function ExpandableRte({ full, preview, className = '' }: { full: string; preview: string; className?: string }) {
   const [expanded, setExpanded] = useState(false);
-  const [needsToggle, setNeedsToggle] = useState(false);
-
-  useEffect(() => {
-    const el = contentRef.current;
-    if (!el) return;
-    setNeedsToggle(el.scrollHeight > collapsedHeight + 20);
-  }, [collapsedHeight, html]);
-
+  const truncated = preview !== full;
   return (
-    <div>
-      <div className="relative">
-        <div
-          ref={contentRef}
-          className="rte overflow-hidden transition-[max-height] duration-300"
-          style={expanded ? undefined : { maxHeight: collapsedHeight }}
-        >
-          <p className="whitespace-pre-line text-sm leading-relaxed text-ink">{html}</p>
-        </div>
-        {!expanded && needsToggle && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white via-white/80 to-transparent" />
-        )}
-      </div>
-      {needsToggle && (
-        <button
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          aria-expanded={expanded}
-          className="mt-3 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-brand transition hover:text-brand-600"
-        >
-          {expanded ? 'Show less' : 'Read more'}
-          <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
-        </button>
-      )}
-    </div>
+    <>
+      <div className={className} dangerouslySetInnerHTML={{ __html: expanded || !truncated ? full : preview }} />
+      {truncated && <ShowMoreButton expanded={expanded} onClick={() => setExpanded((v) => !v)} className="mt-5 self-center" />}
+    </>
+  );
+}
+
+/** Live `.read-more-btn`: transparent, 18px, #21b259, underlined, line-height 1. */
+export function ShowMoreButton({
+  expanded,
+  onClick,
+  className = '',
+}: {
+  expanded: boolean;
+  onClick: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={expanded}
+      className={`cursor-pointer border-0 bg-transparent p-0 text-[18px] leading-none text-leaf underline ${className}`}
+    >
+      {expanded ? 'Show less' : 'Show more'}
+    </button>
   );
 }

@@ -1,88 +1,75 @@
 import type { Metadata } from 'next';
-import { listProducts } from '@/lib/queries';
-import { Breadcrumbs } from '@/components/catalog/Breadcrumbs';
 import { FilterBar } from '@/components/catalog/FilterBar';
-import { CatalogResults } from '@/components/catalog/CatalogResults';
+import { ProductGrid } from '@/components/catalog/ProductGrid';
+import { Pagination } from '@/components/catalog/Pagination';
 import { EmptyState } from '@/components/catalog/EmptyState';
-import {
-  activeFilterParams,
-  firstValue,
-  hasActiveFilters,
-  parseCatalogFilters,
-  type RawSearchParams,
-} from '@/components/catalog/filters';
+import { SearchHeader } from '@/components/catalog/SearchHeader';
+import { getCatalog } from '@/components/catalog/catalog-data';
+import { SEARCH_PER_PAGE } from '@/components/catalog/constants';
+import { filterParams, parseCatalogFilters, SEARCH_SORTS, type RawSearchParams } from '@/components/catalog/filters';
 
 export const dynamic = 'force-dynamic';
 
-export async function generateMetadata({ searchParams }: { searchParams: Promise<RawSearchParams> }): Promise<Metadata> {
-  const sp = await searchParams;
-  const q = (firstValue(sp.q) ?? '').trim();
-  return {
-    title: q ? `Search results for “${q}”` : 'Search Products',
-    robots: { index: false },
-  };
+function search(filters: ReturnType<typeof parseCatalogFilters>) {
+  return getCatalog({ q: filters.q, filters, perPage: SEARCH_PER_PAGE, defaultSort: 'relevance' });
 }
 
+export async function generateMetadata({ searchParams }: { searchParams: Promise<RawSearchParams> }): Promise<Metadata> {
+  const filters = parseCatalogFilters(await searchParams);
+  if (!filters.q) return { title: 'Search', robots: { index: false } };
+  const { total } = await search(filters);
+  return { title: `Search: ${total} results found for "${filters.q}"`, robots: { index: false } };
+}
+
+/**
+ * Live search template: page header (title, field, read-more toggle) → facets toolbar → 4-up
+ * grid, 12 per page, numbered circle pagination. No results (even when caused by filters) →
+ * illustration + one sentence, no toolbar.
+ */
 export default async function SearchPage({ searchParams }: { searchParams: Promise<RawSearchParams> }) {
   const filters = parseCatalogFilters(await searchParams);
   const q = filters.q;
 
   if (!q) {
     return (
-      <div className="container-iw py-8 sm:py-12">
-        <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Search' }]} className="mb-6" />
-        <EmptyState
-          title="Search our store"
-          message="Type a keyword — like “sofa”, “wardrobe” or “dining table” — in the search bar above, or browse our full catalogue by category."
-          action={{ href: '/collections', label: 'Browse all categories' }}
-        />
+      <div className="container-iw">
+        <SearchHeader q="" summary={null} />
       </div>
     );
   }
 
-  const result = await listProducts({
-    q,
-    sort: filters.sort,
-    page: filters.page,
-    perPage: 24,
-    minPrice: filters.min,
-    maxPrice: filters.max,
-    inStockOnly: filters.inStock,
-  });
+  const result = await search(filters);
+  const summary = `${result.total} ${result.total === 1 ? 'result' : 'results'} found for “${q}”`;
 
-  const filtered = hasActiveFilters(filters);
+  // Live: zero results — from the query or from the active filters — drops the toolbar and shows only
+  // the illustration + sentence; the section keeps its bottom spacing (50px mobile / 100px desktop).
+  if (result.total === 0) {
+    return (
+      <div className="container-iw mb-[50px] md:mb-[100px]">
+        <SearchHeader q={q} summary={summary} />
+        <EmptyState>
+          <p>No results found for “{q}”. Check the spelling or use a different word or phrase.</p>
+        </EmptyState>
+      </div>
+    );
+  }
 
   return (
-    <div className="container-iw space-y-5 py-5 sm:space-y-6 sm:py-8">
-      <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Search' }]} />
-
-      <section className="rounded-2xl bg-cream p-6 sm:p-8">
-        <p className="text-xs font-semibold uppercase tracking-widest text-brand">Search</p>
-        <h1 className="mt-1.5 text-2xl font-bold text-ink-dark sm:text-3xl">
-          Search results for <span className="text-brand">“{q}”</span>
-        </h1>
-        <p className="mt-1.5 text-sm text-ink-muted">
-          {result.total} {result.total === 1 ? 'product' : 'products'} found for “{q}”
-        </p>
-      </section>
-
-      <FilterBar basePath="/search" q={q} sort={filters.sort} min={filters.min} max={filters.max} stock={filters.inStock} />
-
-      <CatalogResults
-        result={result}
+    <div className="container-iw md:mb-[38px]">
+      <SearchHeader q={q} summary={summary} />
+      <FilterBar
         basePath="/search"
-        params={activeFilterParams(filters)}
-        empty={{
-          title: `No products found for “${q}”`,
-          message: filtered
-            ? 'No products match your filters. Try clearing them or widening the price range.'
-            : 'Check the spelling or try a more general keyword — e.g. “bed” instead of “king size bed frame”.',
-          action: filtered
-            ? { href: `/search?q=${encodeURIComponent(q)}`, label: 'Clear filters' }
-            : { href: '/collections', label: 'Browse all categories' },
-          secondary: filtered ? { href: '/collections', label: 'Browse categories' } : undefined,
-        }}
+        filters={filters}
+        sortOptions={SEARCH_SORTS}
+        defaultSort="relevance"
+        noun="results"
+        total={result.total}
+        inStockCount={result.inStockCount}
+        outOfStockCount={result.outOfStockCount}
+        maxPrice={result.maxPrice}
       />
+      <ProductGrid items={result.items} />
+      <Pagination page={result.page} pages={result.pages} basePath="/search" params={filterParams(filters)} />
     </div>
   );
 }

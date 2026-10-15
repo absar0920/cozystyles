@@ -1,0 +1,2025 @@
+{
+ "office-products": [
+  {
+   "kind": "overlay",
+   "image": "/images/pdp/1920_x_600_Office.jpg",
+   "subheading": null,
+   "heading": "Elevate Your Workspace with Executive Excellence",
+   "headingClass": "h3",
+   "html": "<p>Give your office space a commanding and stately ambiance with our premium range of executive and manager desks, designed for refined productivity and presence.</p>"
+  },
+  {
+   "kind": "imageText",
+   "size": "medium",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/1268_x_1028_Office.jpg",
+   "ratio": 81.0726,
+   "headingClass": "h3",
+   "heading": "Embrace Ergonomic Excellence",
+   "headingThin": null,
+   "html": "<p>Keep everything well within reach with our exquisite office furniture range. Complete with the latest ergonomic designs, our office furniture features efficient storage, built-in cable management, multimedia inputs, wireless charging, and more, ensuring maximum productivity in the office.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "icons",
+   "blocks": [
+    {
+     "title": "Doorstep Delivery",
+     "text": "Receive purchases at your doorstep\nthroughout all major cities in Pakistan"
+    },
+    {
+     "title": "After Sale Support",
+     "text": "All our products come with our promise of long-term after sales service"
+    },
+    {
+     "title": "International Standard",
+     "text": "Our products are created locally and adhere to global manufacturing standards"
+    },
+    {
+     "title": "Assembly Assistance",
+     "text": "After delivery, our team of experts help\nyou assemble your products in your location for maximum ease"
+    }
+   ]
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": false,
+   "disableBottom": true,
+   "image": "/images/pdp/1320_x_600_Office.jpg",
+   "ratio": 31.25,
+   "headingClass": "h4",
+   "heading": "Make Space for Inspiration",
+   "headingThin": null,
+   "html": "<p>Stay inspired during office hours with our contemporary range of office furniture. Designed to optimize and elevate any workspace, our selection of versatile office furniture offers optimal workspace to strategize, innovate and stay refreshed for long hours. </p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/1462_x_842_Office.jpg",
+   "ratio": 57.5923,
+   "headingClass": "h4",
+   "heading": "Surround Yourself with Exquisite Excellence",
+   "headingThin": null,
+   "html": "<p>Create an office environment that boosts productivity with our versatile range of office sets. Our complete sets feature matching desks, side racks credenzas, and more, providing ample workspace and storage for a harmonious ambiance that inspires greatness.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "testimonials",
+   "subheading": null,
+   "heading": "We take pride in our work and our customer testimonials reflect that",
+   "size": "text-small",
+   "items": [
+    {
+     "quote": "\"I was really impressed with the timely delivery and good packaging of my bedroom set from Cozy Furnitures. The furniture was delivered on the promised date and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Saad Arain"
+    },
+    {
+     "quote": "\"I was very happy with the quick delivery and nice packaging of my furniture from Cozy Furnitures. The furniture was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Ramisha Rameez"
+    },
+    {
+     "quote": "\"I have been a customer of Cozy Furnitures for many years and I have always been happy with the service. The furniture is always delivered on time and is well-packed. The assembly team is also very professional and they do a great job of assembling the furniture. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Rahat Raja"
+    },
+    {
+     "quote": "\"I was really impressed with the fast delivery and good packing of my sofa set from Cozy Furnitures. The sofa set was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Asif Hasan"
+    },
+    {
+     "quote": "\"I had a great experience shopping with Cozy Furnitures. The shopping experience was a breeze and the service was excellent. I made the payment online and Cozy Furnitures delivered the table on time. As per their promise, their team came the next day for fitting of the table. Great service.\"",
+     "author": "Waqas Ashraf"
+    },
+    {
+     "quote": "\"I was very happy with the product I purchased from Cozy Furnitures. The product was delivered on time and a professional team came to assemble it at my residence. Thanks Cozy Furnitures.\"",
+     "author": "Mazhar Awan"
+    },
+    {
+     "quote": "\"I was really impressed with the customer service from Cozy Furnitures. The staff was very helpful and answered all of my questions. The delivery time was also very impressive. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Maleeha Awais"
+    }
+   ]
+  },
+  {
+   "kind": "recommendations"
+  },
+  {
+   "kind": "reviews"
+  }
+ ],
+ "default": [
+  {
+   "kind": "overlay",
+   "image": "/images/pdp/h05_1920x600_crop_center_b725c271-b610-42dc-a5a1-27dbeb566ed8.jpg",
+   "subheading": "Your dream home",
+   "heading": "Future of Furniture",
+   "headingClass": "h3",
+   "html": "<p>Discover our fantastic range of design furniture and homeware combining quality and affordability.</p>"
+  },
+  {
+   "kind": "imageText",
+   "size": "medium",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/h02_1268x1028_crop_center_1a7d3033-8360-497d-bbf3-2a1fb11443e5.jpg",
+   "ratio": 81.0726,
+   "headingClass": "h3",
+   "heading": "Collection has a chic modern profile and proportions.",
+   "headingThin": null,
+   "html": "<p>With lofty lumbar pillows that add even more comfort and support, this deep-seat version of our bestselling sofa collection is crafted. Sutter Street factory with partially recycled metal and plant-based foam.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": false,
+   "disableBottom": true,
+   "image": "/images/pdp/hb4_1320x600_crop_center_fc119dd3-f937-4273-b542-75d7d2c8822d.jpg",
+   "ratio": 45.4545,
+   "headingClass": "h3",
+   "heading": "Design Your Comfort Zone",
+   "headingThin": null,
+   "html": "<p>I believe in comfort. If you don't feel comfortable in your clothes, it's hard to think of anything else. Even Michelangelo got paid for doing the Sistine Chapel.</p>",
+   "button": {
+    "href": "#",
+    "label": "Learn more"
+   },
+   "condensed": false
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/h04_1462x842_crop_center_05bcc719-8dcf-4373-8a5f-138ab3cd002d.jpg",
+   "ratio": 57.5923,
+   "headingClass": "h3",
+   "heading": "We Create Home More Aesthetic",
+   "headingThin": null,
+   "html": "<p>Pair text with an image to focus on your chosen product, collection, or blog post. Add details on availability, style, or even provide a review.</p>",
+   "button": {
+    "href": "#",
+    "label": "Learn more"
+   },
+   "condensed": false
+  },
+  {
+   "kind": "testimonials",
+   "subheading": null,
+   "heading": "We take pride in our work and our customer testimonials reflect that",
+   "size": "text-small",
+   "items": [
+    {
+     "quote": "\"I was really impressed with the timely delivery and good packaging of my bedroom set from Cozy Furnitures. The furniture was delivered on the promised date and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Saad Arain"
+    },
+    {
+     "quote": "\"I was very happy with the quick delivery and nice packaging of my furniture from Cozy Furnitures. The furniture was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Ramisha Rameez"
+    },
+    {
+     "quote": "\"I have been a customer of Cozy Furnitures for many years and I have always been happy with the service. The furniture is always delivered on time and is well-packed. The assembly team is also very professional and they do a great job of assembling the furniture. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Rahat Raja"
+    },
+    {
+     "quote": "\"I was really impressed with the fast delivery and good packing of my sofa set from Cozy Furnitures. The sofa set was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Asif Hasan"
+    },
+    {
+     "quote": "\"I had a great experience shopping with Cozy Furnitures. The shopping experience was a breeze and the service was excellent. I made the payment online and Cozy Furnitures delivered the table on time. As per their promise, their team came the next day for fitting of the table. Great service.\"",
+     "author": "Waqas Ashraf"
+    },
+    {
+     "quote": "\"I was very happy with the product I purchased from Cozy Furnitures. The product was delivered on time and a professional team came to assemble it at my residence. Thanks Cozy Furnitures.\"",
+     "author": "Mazhar Awan"
+    },
+    {
+     "quote": "\"I was really impressed with the customer service from Cozy Furnitures. The staff was very helpful and answered all of my questions. The delivery time was also very impressive. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Maleeha Awais"
+    }
+   ]
+  },
+  {
+   "kind": "recommendations"
+  },
+  {
+   "kind": "reviews"
+  }
+ ],
+ "bedroom-products": [
+  {
+   "kind": "overlay",
+   "image": "/images/pdp/Anniston_1920_x_600.jpg",
+   "subheading": null,
+   "heading": "Elevate Your Living Space with Our Timeless Sofas",
+   "headingClass": "h4",
+   "html": "<p>Transform your space with sophisticated style - explore the luxurious sofa<br>sets for your living room at the most affordable prices</p>"
+  },
+  {
+   "kind": "imageText",
+   "size": "medium",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/Alexa_1268_x_1028.jpg",
+   "ratio": 81.0726,
+   "headingClass": "h4",
+   "heading": "Make the Most of Every Nook",
+   "headingThin": null,
+   "html": "<p>Create cozy corners with our chic range of accent sofas, designed to provide you with a comfortable spot to sit back and relax for hours with a good book and a warm cup of coffee.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "icons",
+   "blocks": [
+    {
+     "title": "Doorstep Delivery",
+     "text": "Receive purchases at your doorstep\nthroughout all major cities in Pakistan"
+    },
+    {
+     "title": "After Sale Support",
+     "text": "All our products come with our promise of long-term after-sales service"
+    },
+    {
+     "title": "International Standard",
+     "text": "Our products are created locally and adhere to global manufacturing standards"
+    },
+    {
+     "title": "Assembly Assistance",
+     "text": "After delivery, our team of experts help you assemble your products in your location for maximum ease"
+    }
+   ]
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": false,
+   "disableBottom": true,
+   "image": "/images/pdp/Kent_1320_x_600.jpg",
+   "ratio": 45.4545,
+   "headingClass": "h4",
+   "heading": "Discover Your Comfort Zone",
+   "headingThin": null,
+   "html": "<p>Create plush and inviting seating spaces with our premium range of sofa sets. Available in a variety of styles and designs with unmatched comfort that flawlessly blend into any living room, lounge and more.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/Accessories_Setup_1462_x_842.jpg",
+   "ratio": 57.5923,
+   "headingClass": "h4",
+   "heading": "Accent Your Space with Our Exciting Range Home Décor Accessories",
+   "headingThin": null,
+   "html": "<p>Embrace the art of tasteful living with our striking home decor accessories and breathe a new life into any space. From mesmerizing accents to charming embellishments, discover the secret to infusing allure into every corner of your living space. </p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "testimonials",
+   "subheading": null,
+   "heading": "We take pride in our work and our customer testimonials reflect that",
+   "size": "text-small",
+   "items": [
+    {
+     "quote": "\"I was really impressed with the timely delivery and good packaging of my bedroom set from Cozy Furnitures. The furniture was delivered on the promised date and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Saad Arain"
+    },
+    {
+     "quote": "\"I was very happy with the quick delivery and nice packaging of my furniture from Cozy Furnitures. The furniture was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Ramisha Rameez"
+    },
+    {
+     "quote": "\"I have been a customer of Cozy Furnitures for many years and I have always been happy with the service. The furniture is always delivered on time and is well-packed. The assembly team is also very professional and they do a great job of assembling the furniture. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Rahat Raja"
+    },
+    {
+     "quote": "\"I was really impressed with the fast delivery and good packing of my sofa set from Cozy Furnitures. The sofa set was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Asif Hasan"
+    },
+    {
+     "quote": "\"I had a great experience shopping with Cozy Furnitures. The shopping experience was a breeze and the service was excellent. I made the payment online and Cozy Furnitures delivered the table on time. As per their promise, their team came the next day for fitting of the table. Great service.\"",
+     "author": "Waqas Ashraf"
+    },
+    {
+     "quote": "\"I was very happy with the product I purchased from Cozy Furnitures. The product was delivered on time and a professional team came to assemble it at my residence. Thanks Cozy Furnitures.\"",
+     "author": "Mazhar Awan"
+    },
+    {
+     "quote": "\"I was really impressed with the customer service from Cozy Furnitures. The staff was very helpful and answered all of my questions. The delivery time was also very impressive. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Maleeha Awais"
+    }
+   ]
+  },
+  {
+   "kind": "recommendations"
+  },
+  {
+   "kind": "reviews"
+  }
+ ],
+ "bed-sets": [
+  {
+   "kind": "overlay",
+   "image": "/images/pdp/ALPEN_BED_1920X600_d94cdfdf-6cd4-49d9-9048-8963c19a3258.webp",
+   "subheading": null,
+   "heading": "Comfort that Welcomes You Home",
+   "headingClass": "h4",
+   "html": "<p>Experience exquisite comfort with our range of contemporary and traditional bed sets, perfect for bedrooms of every size and style.</p>"
+  },
+  {
+   "kind": "imageText",
+   "size": "medium",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/Homestead_Dining_1268_x_1028_46117af8-b4d2-4a03-acac-7a895f5ddbdc.jpg",
+   "ratio": 81.0726,
+   "headingClass": "h3",
+   "heading": "Dine in Style",
+   "headingThin": null,
+   "html": "<p>Make memorable moments by bringing everyone together with our range of trademarked dining tables. From compact, to extendable and full-size, find that perfect one for your breakfast or dining room.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "icons",
+   "blocks": [
+    {
+     "title": "Doorstep Delivery",
+     "text": "Receive purchases at your doorstep\nthroughout all major cities in Pakistan"
+    },
+    {
+     "title": "After Sale Support",
+     "text": "All our products come with our promise of\nlong-term after sales service"
+    },
+    {
+     "title": "International Standard",
+     "text": "Our products are created locally and adhere\nto global manufacturing standards"
+    },
+    {
+     "title": "Assembly Assistance",
+     "text": "After delivery, our team of experts help\nyou assemble your products in your location for maximum ease"
+    }
+   ]
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": false,
+   "disableBottom": true,
+   "image": "/images/pdp/Chelsea_1320_x_600_5b10392b-3122-4330-9aa3-1f0af87276f4.jpg",
+   "ratio": 45.4545,
+   "headingClass": "h4",
+   "heading": "Timeless Beauty – Designed to Rest & Refresh",
+   "headingThin": null,
+   "html": "<p>Experience supreme relaxation and tranquility with our elegant range of bedroom sets, designed for every bedroom with unparalleled comfort without compromising on durability. </p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/Morris_Dining.webp",
+   "ratio": 57.5923,
+   "headingClass": "h4",
+   "heading": "Gather in Style: Discover Exquisite Dining Tables",
+   "headingThin": null,
+   "html": "<p>Elevate your dining experience with our stunning collection of dining tables. Our range of exquisite dining tables offer space, style and durability to bring everyone together for years to come.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "testimonials",
+   "subheading": null,
+   "heading": "We take pride in our work and our customer testimonials reflect that",
+   "size": "text-small",
+   "items": [
+    {
+     "quote": "\"I was really impressed with the timely delivery and good packaging of my bedroom set from Cozy Furnitures. The furniture was delivered on the promised date and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Saad Arain"
+    },
+    {
+     "quote": "\"I was very happy with the quick delivery and nice packaging of my furniture from Cozy Furnitures. The furniture was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Ramisha Rameez"
+    },
+    {
+     "quote": "\"I have been a customer of Cozy Furnitures for many years and I have always been happy with the service. The furniture is always delivered on time and is well-packed. The assembly team is also very professional and they do a great job of assembling the furniture. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Rahat Raja"
+    },
+    {
+     "quote": "\"I was really impressed with the fast delivery and good packing of my sofa set from Cozy Furnitures. The sofa set was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Asif Hasan"
+    },
+    {
+     "quote": "\"I had a great experience shopping with Cozy Furnitures. The shopping experience was a breeze and the service was excellent. I made the payment online and Cozy Furnitures delivered the table on time. As per their promise, their team came the next day for fitting of the table. Great service.\"",
+     "author": "Waqas Ashraf"
+    },
+    {
+     "quote": "\"I was very happy with the product I purchased from Cozy Furnitures. The product was delivered on time and a professional team came to assemble it at my residence. Thanks Cozy Furnitures.\"",
+     "author": "Mazhar Awan"
+    },
+    {
+     "quote": "\"I was really impressed with the customer service from Cozy Furnitures. The staff was very helpful and answered all of my questions. The delivery time was also very impressive. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Maleeha Awais"
+    }
+   ]
+  },
+  {
+   "kind": "recommendations"
+  },
+  {
+   "kind": "reviews"
+  }
+ ],
+ "dining-products": [
+  {
+   "kind": "overlay",
+   "image": "/images/pdp/Royal_Cocoa_1920_x_600.jpg",
+   "subheading": null,
+   "heading": "Future of Furniture",
+   "headingClass": "h3",
+   "html": "<p>Discover our fantastic range of design furniture and homeware combining</p><p>quality and affordability.</p>"
+  },
+  {
+   "kind": "imageText",
+   "size": "medium",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/Homestead_Dining_1268_x_1028.jpg",
+   "ratio": 81.0726,
+   "headingClass": "h4",
+   "heading": "The Art of Stylish Living: Where Creativity Meets Timeless Elegance",
+   "headingThin": null,
+   "html": "<p>Turn your home into a stunning reflection of your unique personality. Discover the perfect fusion of aesthetics and functionality with these striking dining sets that will redefine the way you experience your living spaces.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "icons",
+   "blocks": [
+    {
+     "title": "Doorstep Delivery",
+     "text": "Receive purchases at your doorstep\nthroughout all major cities in Pakistan"
+    },
+    {
+     "title": "After Sale Support",
+     "text": "All our products come with our promise of\nlong-term after sales service"
+    },
+    {
+     "title": "International Standard",
+     "text": "Our products are created locally and adhere\nto global manufacturing standards"
+    },
+    {
+     "title": "Assembly Assistance",
+     "text": "After delivery, our team of experts help\nyou assemble your products in your location for maximum ease"
+    }
+   ]
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": false,
+   "disableBottom": true,
+   "image": "/images/pdp/Chelsea_1320_x_600.jpg",
+   "ratio": 45.4545,
+   "headingClass": "h4",
+   "heading": "Timeless Beauty, Luxurious Rest",
+   "headingThin": null,
+   "html": "<p>Experience opulence and tranquility with our elegant bed collections, designed to provide a classic touch and unparalleled comfort without compromising on durability.<br></p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/Rivet_Dining_Table_1462_x_842_87858760-18e8-4e45-8c62-de1a5cec3787.jpg",
+   "ratio": 57.5923,
+   "headingClass": "h3",
+   "heading": "Gather in Style: Discover Exquisite Dining Tables",
+   "headingThin": null,
+   "html": "<p>Elevate your dining experience with our stunning collection of dining tables. From scrumptious dinners to cherished family gatherings, our range of exquisite tables provide the perfect centerpiece for memorable moments.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "testimonials",
+   "subheading": null,
+   "heading": "We take pride in our work and our customer testimonials reflect that",
+   "size": "text-small",
+   "items": [
+    {
+     "quote": "\"I was really impressed with the timely delivery and good packaging of my bedroom set from Cozy Furnitures. The furniture was delivered on the promised date and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Saad Arain"
+    },
+    {
+     "quote": "\"I was very happy with the quick delivery and nice packaging of my furniture from Cozy Furnitures. The furniture was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Ramisha Rameez"
+    },
+    {
+     "quote": "\"I have been a customer of Cozy Furnitures for many years and I have always been happy with the service. The furniture is always delivered on time and is well-packed. The assembly team is also very professional and they do a great job of assembling the furniture. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Rahat Raja"
+    },
+    {
+     "quote": "\"I was really impressed with the fast delivery and good packing of my sofa set from Cozy Furnitures. The sofa set was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Asif Hasan"
+    },
+    {
+     "quote": "\"I had a great experience shopping with Cozy Furnitures. The shopping experience was a breeze and the service was excellent. I made the payment online and Cozy Furnitures delivered the table on time. As per their promise, their team came the next day for fitting of the table. Great service.\"",
+     "author": "Waqas Ashraf"
+    },
+    {
+     "quote": "\"I was very happy with the product I purchased from Cozy Furnitures. The product was delivered on time and a professional team came to assemble it at my residence. Thanks Cozy Furnitures.\"",
+     "author": "Mazhar Awan"
+    },
+    {
+     "quote": "\"I was really impressed with the customer service from Cozy Furnitures. The staff was very helpful and answered all of my questions. The delivery time was also very impressive. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Maleeha Awais"
+    }
+   ]
+  },
+  {
+   "kind": "recommendations"
+  },
+  {
+   "kind": "reviews"
+  }
+ ],
+ "study-products": [
+  {
+   "kind": "overlay",
+   "image": "/images/pdp/Rocco_Dining_1920_x_600.jpg",
+   "subheading": null,
+   "heading": "Bring Everyone Together",
+   "headingClass": "h3",
+   "html": "<p>Make room for everyone with our dynamic collection of dining tables, available in a variety of sizes and styles to suit your dining area.</p>"
+  },
+  {
+   "kind": "imageText",
+   "size": "medium",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/Nobel_Sofa_1268_x_1028.jpg",
+   "ratio": 81.0726,
+   "headingClass": "h3",
+   "heading": "Go Back in Time",
+   "headingThin": null,
+   "html": "<p>Step into a world of nostalgic elegance with our range of classic sofa sets, designed with comforting curves and inviting silhouettes that exude timeless class.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "icons",
+   "blocks": [
+    {
+     "title": "Doorstep Delivery",
+     "text": "Receive purchases at your doorstep\nthroughout all major cities in Pakistan"
+    },
+    {
+     "title": "After Sale Support",
+     "text": "All our products come with our promise of\nlong-term after sales service"
+    },
+    {
+     "title": "International Standard",
+     "text": "Our products are created locally and adhere\nto global manufacturing standards"
+    },
+    {
+     "title": "Assembly Assistance",
+     "text": "After delivery, our team of experts help\nyou assemble your products in your location for maximum ease"
+    }
+   ]
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": false,
+   "disableBottom": true,
+   "image": "/images/pdp/Wade_Coffee_Table_1320_x_600.jpg",
+   "ratio": 45.4545,
+   "headingClass": "h4",
+   "heading": "Style that Serves: Furniture with a Purpose",
+   "headingThin": null,
+   "html": "<p>Experience the ideal balance of style and practicality with our collection of coffee tables. Designed to enhance your décor while providing a space for serving and storing essential items for easy retrieval. </p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/Willa_Dining_Table_1462_x_842.jpg",
+   "ratio": 57.5923,
+   "headingClass": "h3",
+   "heading": "Redefine Your Dining Experience",
+   "headingThin": null,
+   "html": "<p>Revamp your dining room with our exquisite range of dining tables, available in a variety of styles to complement your decor. Experience the perfect blend of elegance and functionality while creating a comfortable and captivating ambiance.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "testimonials",
+   "subheading": null,
+   "heading": "Testimonials",
+   "size": "text-medium",
+   "items": [
+    {
+     "quote": "Outstanding customer service. We purchased 7 items for our office, including chairs, filing cabinets, & a bench.",
+     "author": "Testimonial author"
+    },
+    {
+     "quote": "Outstanding customer service. We purchased 7 items for our office, including chairs, filing cabinets, & a bench.",
+     "author": "Testimonial author"
+    },
+    {
+     "quote": "Outstanding customer service. We purchased 7 items for our office, including chairs, filing cabinets, & a bench.",
+     "author": "Testimonial author"
+    }
+   ]
+  },
+  {
+   "kind": "recommendations"
+  },
+  {
+   "kind": "reviews"
+  }
+ ],
+ "door-products": [
+  {
+   "kind": "overlay",
+   "image": "/images/pdp/1920_x_600_Doors.jpg",
+   "subheading": null,
+   "heading": "Make a Lasting Impression with Our Exquisite Collection of Doors",
+   "headingClass": "h4",
+   "html": "<p>Choose from a diverse range of door styles, finishes and sizes to find<br>the perfect match that complements your interior aesthetics. From classic<br>elegance to modern opulence, we have it all!</p>"
+  },
+  {
+   "kind": "imageText",
+   "size": "medium",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/1268_x_1028_Doors.jpg",
+   "ratio": 81.0726,
+   "headingClass": "h3",
+   "heading": "Every Detail Matters",
+   "headingThin": null,
+   "html": "<p>Add finishing touches with the sleek and timeless design elements of our<br>elegant handles. Explore our exciting range of doors and transform your interiors into works of art while leaving a lasting impression.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "icons",
+   "blocks": [
+    {
+     "title": "Doorstep Delivery",
+     "text": "Receive purchases at your doorstep\nthroughout all major cities in Pakistan"
+    },
+    {
+     "title": "After Sale Support",
+     "text": "All our products come with our promise of\nlong-term after sales service"
+    },
+    {
+     "title": "International Standard",
+     "text": "Our products are created locally and adhere\nto global manufacturing standards"
+    },
+    {
+     "title": "Assembly Assistance",
+     "text": "After delivery, our team of experts help\nyou assemble your products in your location for maximum ease"
+    }
+   ]
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": false,
+   "disableBottom": true,
+   "image": "/images/pdp/1320_x_600_Doors.jpg",
+   "ratio": 31.25,
+   "headingClass": "h4",
+   "heading": "Where Timeless Beauty Meets Modern Innovation",
+   "headingThin": null,
+   "html": "<p>Keep unwanted elements outside while maintaining a peaceful environment inside. Our doors are designed to offer excellent insulation against noise and weather, creating a serene and peaceful ambiance within your living space.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/1462_x_842_Doors.jpg",
+   "ratio": 57.5923,
+   "headingClass": "h4",
+   "heading": "Step into a World of Distinctive Style Beyond Imagination",
+   "headingThin": null,
+   "html": "<p>Experience the perfect blend of style and elegance with our range of visually striking doors. Crafted with the finest materials and cutting-edge<br>technology, our doors can be tailored to match your unique style, offering<br>limitless possibilities for any home or office space.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "testimonials",
+   "subheading": null,
+   "heading": "We take pride in our work and our customer testimonials reflect that",
+   "size": "text-small",
+   "items": [
+    {
+     "quote": "\"I was really impressed with the timely delivery and good packaging of my bedroom set from Cozy Furnitures. The furniture was delivered on the promised date and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Saad Arain"
+    },
+    {
+     "quote": "\"I was very happy with the quick delivery and nice packaging of my furniture from Cozy Furnitures. The furniture was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Ramisha Rameez"
+    },
+    {
+     "quote": "\"I have been a customer of Cozy Furnitures for many years and I have always been happy with the service. The furniture is always delivered on time and is well-packed. The assembly team is also very professional and they do a great job of assembling the furniture. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Rahat Raja"
+    },
+    {
+     "quote": "\"I was really impressed with the fast delivery and good packing of my sofa set from Cozy Furnitures. The sofa set was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Asif Hasan"
+    },
+    {
+     "quote": "\"I had a great experience shopping with Cozy Furnitures. The shopping experience was a breeze and the service was excellent. I made the payment online and Cozy Furnitures delivered the table on time. As per their promise, their team came the next day for fitting of the table. Great service.\"",
+     "author": "Waqas Ashraf"
+    },
+    {
+     "quote": "\"I was very happy with the product I purchased from Cozy Furnitures. The product was delivered on time and a professional team came to assemble it at my residence. Thanks Cozy Furnitures.\"",
+     "author": "Mazhar Awan"
+    },
+    {
+     "quote": "\"I was really impressed with the customer service from Cozy Furnitures. The staff was very helpful and answered all of my questions. The delivery time was also very impressive. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Maleeha Awais"
+    }
+   ]
+  },
+  {
+   "kind": "recommendations"
+  }
+ ],
+ "coalesce-living": [
+  {
+   "kind": "recommendations"
+  },
+  {
+   "kind": "slideshow",
+   "desktop": "/images/pdp/CAOLESCE-HP-WEB-BANNER.jpg",
+   "mobile": "/images/pdp/CAOLESCE-HP-MOB-BANNER.jpg",
+   "desktopRatio": 0.385,
+   "mobileRatio": 1.5555555555555556
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": true,
+   "disableBottom": true,
+   "image": "/images/pdp/Bedroom.jpg",
+   "ratio": 76.087,
+   "headingClass": "h4",
+   "heading": null,
+   "headingThin": [
+    "comfort",
+    " reimagined"
+   ],
+   "html": "<p>Transform your bedroom into a haven of tranquillity and style. With sleek, minimal designs and a focus on modern elegance, our range invites you to relax, recharge, and rediscover the joy of a beautifully curated space.<br></p><p><a href=\"/collections/coalesce-bedroom\">explore now</a></p>",
+   "button": null,
+   "condensed": true
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": false,
+   "center": true,
+   "disableBottom": true,
+   "image": "/images/pdp/Living.jpg",
+   "ratio": 76.0417,
+   "headingClass": "h4",
+   "heading": null,
+   "headingThin": [
+    "living",
+    " reimagined"
+   ],
+   "html": "<p>Breathe new life into your living area with furniture that combines simplicity and sophistication. Designed for both comfort and style, these pieces redefine modern living, creating a space where memories are made and moments are cherished.<br></p><p><a href=\"/collections/coalesce-living\">explore now</a></p>",
+   "button": null,
+   "condensed": true
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": true,
+   "disableBottom": false,
+   "image": "/images/pdp/Dining.jpg",
+   "ratio": 76.087,
+   "headingClass": "h4",
+   "heading": null,
+   "headingThin": [
+    "gatherings",
+    " reimagined"
+   ],
+   "html": "<p>Set the stage for meaningful connections with a dining range that brings style and functionality to every meal. From quiet family dinners to festive celebrations, create a dining space that feels inviting, refined, and uniquely yours.<br></p><p><a href=\"/collections/coalesce-dining\">explore now</a></p>",
+   "button": null,
+   "condensed": true
+  },
+  {
+   "kind": "icons",
+   "blocks": [
+    {
+     "title": "Doorstep Delivery",
+     "text": "Receive purchases at your doorstep\nthroughout all major cities in Pakistan"
+    },
+    {
+     "title": "After Sale Support",
+     "text": "All our products come with our promise of\nlong-term after sales service"
+    },
+    {
+     "title": "International Standard",
+     "text": "Our products are created locally and adhere\nto global manufacturing standards"
+    },
+    {
+     "title": "Assembly Assistance",
+     "text": "After delivery, our team of experts help\nyou assemble your products in your location for maximum ease"
+    }
+   ]
+  },
+  {
+   "kind": "testimonials",
+   "subheading": null,
+   "heading": "We take pride in our work and our customer testimonials reflect that",
+   "size": "text-small",
+   "items": [
+    {
+     "quote": "\"I was really impressed with the timely delivery and good packaging of my bedroom set from Cozy Furnitures. The furniture was delivered on the promised date and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Saad Arain"
+    },
+    {
+     "quote": "\"I was very happy with the quick delivery and nice packaging of my furniture from Cozy Furnitures. The furniture was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Ramisha Rameez"
+    },
+    {
+     "quote": "\"I have been a customer of Cozy Furnitures for many years and I have always been happy with the service. The furniture is always delivered on time and is well-packed. The assembly team is also very professional and they do a great job of assembling the furniture. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Rahat Raja"
+    },
+    {
+     "quote": "\"I was really impressed with the fast delivery and good packing of my sofa set from Cozy Furnitures. The sofa set was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Asif Hasan"
+    },
+    {
+     "quote": "\"I had a great experience shopping with Cozy Furnitures. The shopping experience was a breeze and the service was excellent. I made the payment online and Cozy Furnitures delivered the table on time. As per their promise, their team came the next day for fitting of the table. Great service.\"",
+     "author": "Waqas Ashraf"
+    },
+    {
+     "quote": "\"I was very happy with the product I purchased from Cozy Furnitures. The product was delivered on time and a professional team came to assemble it at my residence. Thanks Cozy Furnitures.\"",
+     "author": "Mazhar Awan"
+    },
+    {
+     "quote": "\"I was really impressed with the customer service from Cozy Furnitures. The staff was very helpful and answered all of my questions. The delivery time was also very impressive. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Maleeha Awais"
+    }
+   ]
+  },
+  {
+   "kind": "reviews"
+  }
+ ],
+ "coalesce-dining": [
+  {
+   "kind": "recommendations"
+  },
+  {
+   "kind": "slideshow",
+   "desktop": "/images/pdp/CAOLESCE-HP-WEB-BANNER.jpg",
+   "mobile": "/images/pdp/CAOLESCE-HP-MOB-BANNER.jpg",
+   "desktopRatio": 0.385,
+   "mobileRatio": 1.5555555555555556
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": true,
+   "disableBottom": true,
+   "image": "/images/pdp/Bedroom.jpg",
+   "ratio": 76.087,
+   "headingClass": "h4",
+   "heading": null,
+   "headingThin": [
+    "comfort",
+    " reimagined"
+   ],
+   "html": "<p>Transform your bedroom into a haven of tranquillity and style. With sleek, minimal designs and a focus on modern elegance, our range invites you to relax, recharge, and rediscover the joy of a beautifully curated space.<br></p><p><a href=\"/collections/coalesce-bedroom\">explore now</a></p>",
+   "button": null,
+   "condensed": true
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": false,
+   "center": true,
+   "disableBottom": true,
+   "image": "/images/pdp/Living.jpg",
+   "ratio": 76.0417,
+   "headingClass": "h4",
+   "heading": null,
+   "headingThin": [
+    "living",
+    " reimagined"
+   ],
+   "html": "<p>Breathe new life into your living area with furniture that combines simplicity and sophistication. Designed for both comfort and style, these pieces redefine modern living, creating a space where memories are made and moments are cherished.<br></p><p><a href=\"/collections/coalesce-living\">explore now</a></p>",
+   "button": null,
+   "condensed": true
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": true,
+   "disableBottom": false,
+   "image": "/images/pdp/Dining.jpg",
+   "ratio": 76.087,
+   "headingClass": "h4",
+   "heading": null,
+   "headingThin": [
+    "gatherings",
+    " reimagined"
+   ],
+   "html": "<p>Set the stage for meaningful connections with a dining range that brings style and functionality to every meal. From quiet family dinners to festive celebrations, create a dining space that feels inviting, refined, and uniquely yours.<br></p><p><a href=\"/collections/coalesce-dining\">explore now</a></p>",
+   "button": null,
+   "condensed": true
+  },
+  {
+   "kind": "icons",
+   "blocks": [
+    {
+     "title": "Doorstep Delivery",
+     "text": "Receive purchases at your doorstep\nthroughout all major cities in Pakistan"
+    },
+    {
+     "title": "After Sale Support",
+     "text": "All our products come with our promise of\nlong-term after sales service"
+    },
+    {
+     "title": "International Standard",
+     "text": "Our products are created locally and adhere\nto global manufacturing standards"
+    },
+    {
+     "title": "Assembly Assistance",
+     "text": "After delivery, our team of experts help\nyou assemble your products in your location for maximum ease"
+    }
+   ]
+  },
+  {
+   "kind": "testimonials",
+   "subheading": null,
+   "heading": "We take pride in our work and our customer testimonials reflect that",
+   "size": "text-small",
+   "items": [
+    {
+     "quote": "\"I was really impressed with the timely delivery and good packaging of my bedroom set from Cozy Furnitures. The furniture was delivered on the promised date and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Saad Arain"
+    },
+    {
+     "quote": "\"I was very happy with the quick delivery and nice packaging of my furniture from Cozy Furnitures. The furniture was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Ramisha Rameez"
+    },
+    {
+     "quote": "\"I have been a customer of Cozy Furnitures for many years and I have always been happy with the service. The furniture is always delivered on time and is well-packed. The assembly team is also very professional and they do a great job of assembling the furniture. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Rahat Raja"
+    },
+    {
+     "quote": "\"I was really impressed with the fast delivery and good packing of my sofa set from Cozy Furnitures. The sofa set was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Asif Hasan"
+    },
+    {
+     "quote": "\"I had a great experience shopping with Cozy Furnitures. The shopping experience was a breeze and the service was excellent. I made the payment online and Cozy Furnitures delivered the table on time. As per their promise, their team came the next day for fitting of the table. Great service.\"",
+     "author": "Waqas Ashraf"
+    },
+    {
+     "quote": "\"I was very happy with the product I purchased from Cozy Furnitures. The product was delivered on time and a professional team came to assemble it at my residence. Thanks Cozy Furnitures.\"",
+     "author": "Mazhar Awan"
+    },
+    {
+     "quote": "\"I was really impressed with the customer service from Cozy Furnitures. The staff was very helpful and answered all of my questions. The delivery time was also very impressive. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Maleeha Awais"
+    }
+   ]
+  },
+  {
+   "kind": "reviews"
+  }
+ ],
+ "kitchens-products": [
+  {
+   "kind": "overlay",
+   "image": "/images/pdp/1920_x_600_Kitchen.jpg",
+   "subheading": null,
+   "heading": "The Perfect Blend of Innovation and Functionality",
+   "headingClass": "h4",
+   "html": "<p>Enjoy a delightful and effortless cooking experience with our customizable designer kitchens. From elegant finishes to sleek countertops, ample storage, and the latest state-of-the-art appliances, our kitchens are designed to elevate your home while delivering an enhanced culinary experience.</p>"
+  },
+  {
+   "kind": "imageText",
+   "size": "medium",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/1268_x_1028_Kitchen.jpg",
+   "ratio": 81.0726,
+   "headingClass": "h4",
+   "heading": "Timeless Beauty Meets Modern Convenience",
+   "headingThin": null,
+   "html": "<p>Experience the timeless beauty of our kitchen designs while enjoying the best in modern convenience. From innovative designs to cutting-edge fixtures and features, our kitchens cater to your modern-day lifestyle without ever going out of style.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "icons",
+   "blocks": [
+    {
+     "title": "Doorstep Delivery",
+     "text": "Receive purchases at your doorstep\nthroughout all major cities in Pakistan"
+    },
+    {
+     "title": "After Sale Support",
+     "text": "All our products come with our promise of\nlong-term after sales service"
+    },
+    {
+     "title": "International Standard",
+     "text": "Our products are created locally and adhere\nto global manufacturing standards"
+    },
+    {
+     "title": "Assembly Assistance",
+     "text": "After delivery, our team of experts help\nyou assemble your products in your location for maximum ease"
+    }
+   ]
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": false,
+   "disableBottom": true,
+   "image": "/images/pdp/1320_x_600_Kitchen.jpg",
+   "ratio": 31.25,
+   "headingClass": "h4",
+   "heading": "Everything in its Place",
+   "headingThin": null,
+   "html": "<p>A clutter-free space equals a clear and creative mind. Our kitchens<br>feature innovative storage solutions and a range of unique features to keep your utensils, tools, and ingredients organized and within reach, ensuring an easy, seamless, and joyful cooking experience every time.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/1462_x_842_Kitchen.jpg",
+   "ratio": 57.5923,
+   "headingClass": "h3",
+   "heading": "A Recipe for Creativity",
+   "headingThin": null,
+   "html": "<p>Your kitchen should be unique to your space and style. Our team of<br>design experts works with you to customize your kitchen to meet your specific needs. From the overall layout to specific details like shutters, handles,countertops, lights, appliances, and more, we assist you in creating a kitchen that is uniquely yours</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "testimonials",
+   "subheading": null,
+   "heading": "We take pride in our work and our customer testimonials reflect that",
+   "size": "text-small",
+   "items": [
+    {
+     "quote": "\"I was really impressed with the timely delivery and good packaging of my bedroom set from Cozy Furnitures. The furniture was delivered on the promised date and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Saad Arain"
+    },
+    {
+     "quote": "\"I was very happy with the quick delivery and nice packaging of my furniture from Cozy Furnitures. The furniture was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Ramisha Rameez"
+    },
+    {
+     "quote": "\"I have been a customer of Cozy Furnitures for many years and I have always been happy with the service. The furniture is always delivered on time and is well-packed. The assembly team is also very professional and they do a great job of assembling the furniture. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Rahat Raja"
+    },
+    {
+     "quote": "\"I was really impressed with the fast delivery and good packing of my sofa set from Cozy Furnitures. The sofa set was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Asif Hasan"
+    },
+    {
+     "quote": "\"I had a great experience shopping with Cozy Furnitures. The shopping experience was a breeze and the service was excellent. I made the payment online and Cozy Furnitures delivered the table on time. As per their promise, their team came the next day for fitting of the table. Great service.\"",
+     "author": "Waqas Ashraf"
+    },
+    {
+     "quote": "\"I was very happy with the product I purchased from Cozy Furnitures. The product was delivered on time and a professional team came to assemble it at my residence. Thanks Cozy Furnitures.\"",
+     "author": "Mazhar Awan"
+    },
+    {
+     "quote": "\"I was really impressed with the customer service from Cozy Furnitures. The staff was very helpful and answered all of my questions. The delivery time was also very impressive. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Maleeha Awais"
+    }
+   ]
+  },
+  {
+   "kind": "recommendations"
+  }
+ ],
+ "sofas": [
+  {
+   "kind": "overlay",
+   "image": "/images/pdp/Anniston_1920_x_600.jpg",
+   "subheading": null,
+   "heading": "Elevate Your Living Space with Our Timeless Sofas",
+   "headingClass": "h3",
+   "html": "<p>Transform your space with sophisticated style - explore the luxurious sofa sets for your living room at the most affordable prices</p>"
+  },
+  {
+   "kind": "imageText",
+   "size": "medium",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/Alexa_1268_x_1028.jpg",
+   "ratio": 81.0726,
+   "headingClass": "h4",
+   "heading": "Make the Most of Every Nook",
+   "headingThin": null,
+   "html": "<p>Create cozy corners with our chic range of accent sofas, designed to provide you with a comfortable spot to sit back and relax for hours with a good book and a warm cup of coffee.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "icons",
+   "blocks": [
+    {
+     "title": "Doorstep Delivery",
+     "text": "Receive purchases at your doorstep\nthroughout all major cities in Pakistan"
+    },
+    {
+     "title": "After Sale Support",
+     "text": "All our products come with our promise of long-term after-sales service"
+    },
+    {
+     "title": "International Standard",
+     "text": "Our products are created locally and adhere to global manufacturing standards"
+    },
+    {
+     "title": "Assembly Assistance",
+     "text": "After delivery, our team of experts help you assemble your products in your location for maximum ease"
+    }
+   ]
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": false,
+   "disableBottom": true,
+   "image": "/images/pdp/Kent_1320_x_600.jpg",
+   "ratio": 45.4545,
+   "headingClass": "h4",
+   "heading": "Discover Your Comfort Zone",
+   "headingThin": null,
+   "html": "<p>Create plush and inviting seating spaces with our premium range of sofa sets. Available in a variety of styles and designs with unmatched comfort that flawlessly blend into any living room, lounge and more.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/Accessories_Setup_1462_x_842.jpg",
+   "ratio": 57.5923,
+   "headingClass": "h4",
+   "heading": "Accent Your Space with Our Exciting Range Home Décor Accessories",
+   "headingThin": null,
+   "html": "<p>Embrace the art of tasteful living with our striking home decor accessories and breathe a new life into any space. From mesmerizing accents to charming embellishments, discover the secret to infusing allure into every corner of your living space. </p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "testimonials",
+   "subheading": null,
+   "heading": "We take pride in our work and our customer testimonials reflect that",
+   "size": "text-small",
+   "items": [
+    {
+     "quote": "\"I was really impressed with the timely delivery and good packaging of my bedroom set from Cozy Furnitures. The furniture was delivered on the promised date and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Saad Arain"
+    },
+    {
+     "quote": "\"I was very happy with the quick delivery and nice packaging of my furniture from Cozy Furnitures. The furniture was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Ramisha Rameez"
+    },
+    {
+     "quote": "\"I have been a customer of Cozy Furnitures for many years and I have always been happy with the service. The furniture is always delivered on time and is well-packed. The assembly team is also very professional and they do a great job of assembling the furniture. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Rahat Raja"
+    },
+    {
+     "quote": "\"I was really impressed with the fast delivery and good packing of my sofa set from Cozy Furnitures. The sofa set was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Asif Hasan"
+    },
+    {
+     "quote": "\"I had a great experience shopping with Cozy Furnitures. The shopping experience was a breeze and the service was excellent. I made the payment online and Cozy Furnitures delivered the table on time. As per their promise, their team came the next day for fitting of the table. Great service.\"",
+     "author": "Waqas Ashraf"
+    },
+    {
+     "quote": "\"I was very happy with the product I purchased from Cozy Furnitures. The product was delivered on time and a professional team came to assemble it at my residence. Thanks Cozy Furnitures.\"",
+     "author": "Mazhar Awan"
+    },
+    {
+     "quote": "\"I was really impressed with the customer service from Cozy Furnitures. The staff was very helpful and answered all of my questions. The delivery time was also very impressive. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Maleeha Awais"
+    }
+   ]
+  },
+  {
+   "kind": "recommendations"
+  },
+  {
+   "kind": "reviews"
+  }
+ ],
+ "decor-products": [
+  {
+   "kind": "overlay",
+   "image": "/images/pdp/1920x600.jpg",
+   "subheading": null,
+   "heading": "ElevateYour Interior with Captivating Home Decor Accessories",
+   "headingClass": "h4",
+   "html": "<p>Discover a world of enchanting home decor accessories that will elevate<br>your living space to new heights of beauty and charm. Each accessory is<br>thoughtfully crafted to add a touch of unique style to every nook and corner of your home.</p>"
+  },
+  {
+   "kind": "imageText",
+   "size": "medium",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/1268x1028.jpg",
+   "ratio": 81.0726,
+   "headingClass": "h4",
+   "heading": "Adda Dash of Personality to Every Nook",
+   "headingThin": null,
+   "html": "<p>Infuse a touch of elegance into your living space with our eye-catching decor items. From decorative figurines to stylish clocks and centerpieces, our diverse range of home décor accessories will add character to any space. Mix and match them with your existing decor to create attractive combinations that complement your living space.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "icons",
+   "blocks": [
+    {
+     "title": "Doorstep Delivery",
+     "text": "Receive purchases at your doorstep\nthroughout all major cities in Pakistan"
+    },
+    {
+     "title": "After Sale Support",
+     "text": "All our products come with our promise of long-term after sales service"
+    },
+    {
+     "title": "International Standard",
+     "text": "Our products are created locally and adhere\nto global manufacturing standards"
+    },
+    {
+     "title": "Assembly Assistance",
+     "text": "After delivery, our team of experts helps\nyou assemble your products in your location for maximum ease"
+    }
+   ]
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": false,
+   "disableBottom": true,
+   "image": "/images/pdp/1320x600.jpg",
+   "ratio": 45.4545,
+   "headingClass": "h4",
+   "heading": "Artful Harmony with a Stunning Mix of Accessories",
+   "headingThin": null,
+   "html": "<p>From the reflective elegance of our wall mirrors to the sentimental the charm of decorative picture frames, to the functionality of serving trays, our exciting range of home décor accessories allows you to create an artful harmony in every corner of your home or office.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/1462x842.jpg",
+   "ratio": 57.5923,
+   "headingClass": "h4",
+   "heading": "AccentYour Space with Our Exciting Range of Home Décor Accessories",
+   "headingThin": null,
+   "html": "<p>Let your living space reflect the essence of your style and taste. We bring you a captivating range of home decor accessories that breathe life into every corner of your home or office. Embrace the art of tasteful living and transform your home into a captivating masterpiece of your unique taste and style.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "testimonials",
+   "subheading": null,
+   "heading": "We take pride in our work and our customer testimonials reflect that",
+   "size": "text-small",
+   "items": [
+    {
+     "quote": "\"I was really impressed with the timely delivery and good packaging of my bedroom set from Cozy Furnitures. The furniture was delivered on the promised date and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Saad Arain"
+    },
+    {
+     "quote": "\"I was very happy with the quick delivery and nice packaging of my furniture from Cozy Furnitures. The furniture was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Ramisha Rameez"
+    },
+    {
+     "quote": "\"I have been a customer of Cozy Furnitures for many years and I have always been happy with the service. The furniture is always delivered on time and is well-packed. The assembly team is also very professional and they do a great job of assembling the furniture. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Rahat Raja"
+    },
+    {
+     "quote": "\"I was really impressed with the fast delivery and good packing of my sofa set from Cozy Furnitures. The sofa set was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Asif Hasan"
+    },
+    {
+     "quote": "\"I had a great experience shopping with Cozy Furnitures. The shopping experience was a breeze and the service was excellent. I made the payment online and Cozy Furnitures delivered the table on time. As per their promise, their team came the next day for fitting of the table. Great service.\"",
+     "author": "Waqas Ashraf"
+    },
+    {
+     "quote": "\"I was very happy with the product I purchased from Cozy Furnitures. The product was delivered on time and a professional team came to assemble it at my residence. Thanks Cozy Furnitures.\"",
+     "author": "Mazhar Awan"
+    },
+    {
+     "quote": "\"I was really impressed with the customer service from Cozy Furnitures. The staff was very helpful and answered all of my questions. The delivery time was also very impressive. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Maleeha Awais"
+    }
+   ]
+  },
+  {
+   "kind": "recommendations"
+  },
+  {
+   "kind": "reviews"
+  }
+ ],
+ "living-products": [
+  {
+   "kind": "overlay",
+   "image": "/images/pdp/Royal_Cocoa_1920_x_600_6a1b8faa-5928-4fb5-bd85-6d935b1fc9d7.jpg",
+   "subheading": null,
+   "heading": "Comfort that Welcomes You Home",
+   "headingClass": "h4",
+   "html": "<p>Experience exquisite comfort with our range of contemporary and traditional bed sets, perfect for bedrooms of every size and style.</p>"
+  },
+  {
+   "kind": "imageText",
+   "size": "medium",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/Homestead_Dining_1268_x_1028_46117af8-b4d2-4a03-acac-7a895f5ddbdc.jpg",
+   "ratio": 81.0726,
+   "headingClass": "h3",
+   "heading": "Dine in Style",
+   "headingThin": null,
+   "html": "<p>Make memorable moments by bringing everyone together with our range of trademarked dining tables. From compact, to extendable and full-size, find that perfect one for your breakfast or dining room.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "icons",
+   "blocks": [
+    {
+     "title": "Doorstep Delivery",
+     "text": "Receive purchases at your doorstep\nthroughout all major cities in Pakistan"
+    },
+    {
+     "title": "After Sale Support",
+     "text": "All our products come with our promise of\nlong-term after sales service"
+    },
+    {
+     "title": "International Standard",
+     "text": "Our products are created locally and adhere\nto global manufacturing standards"
+    },
+    {
+     "title": "Assembly Assistance",
+     "text": "After delivery, our team of experts help\nyou assemble your products in your location for maximum ease"
+    }
+   ]
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": false,
+   "disableBottom": true,
+   "image": "/images/pdp/Chelsea_1320_x_600_5b10392b-3122-4330-9aa3-1f0af87276f4.jpg",
+   "ratio": 45.4545,
+   "headingClass": "h4",
+   "heading": "Timeless Beauty – Designed to Rest & Refresh",
+   "headingThin": null,
+   "html": "<p>Experience supreme relaxation and tranquility with our elegant range of bedroom sets, designed for every bedroom with unparalleled comfort without compromising on durability. </p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/Rivet_Dining_Table_1462_x_842_4ea13e1b-2ceb-404d-9001-5e9146000cae.jpg",
+   "ratio": 57.5923,
+   "headingClass": "h4",
+   "heading": "Gather in Style: Discover Exquisite Dining Tables",
+   "headingThin": null,
+   "html": "<p>Elevate your dining experience with our stunning collection of dining tables. Our range of exquisite dining tables offer space, style and durability to bring everyone together for years to come.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "testimonials",
+   "subheading": null,
+   "heading": "We take pride in our work and our customer testimonials reflect that",
+   "size": "text-small",
+   "items": [
+    {
+     "quote": "\"I was really impressed with the timely delivery and good packaging of my bedroom set from Cozy Furnitures. The furniture was delivered on the promised date and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Saad Arain"
+    },
+    {
+     "quote": "\"I was very happy with the quick delivery and nice packaging of my furniture from Cozy Furnitures. The furniture was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Ramisha Rameez"
+    },
+    {
+     "quote": "\"I have been a customer of Cozy Furnitures for many years and I have always been happy with the service. The furniture is always delivered on time and is well-packed. The assembly team is also very professional and they do a great job of assembling the furniture. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Rahat Raja"
+    },
+    {
+     "quote": "\"I was really impressed with the fast delivery and good packing of my sofa set from Cozy Furnitures. The sofa set was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Asif Hasan"
+    },
+    {
+     "quote": "\"I had a great experience shopping with Cozy Furnitures. The shopping experience was a breeze and the service was excellent. I made the payment online and Cozy Furnitures delivered the table on time. As per their promise, their team came the next day for fitting of the table. Great service.\"",
+     "author": "Waqas Ashraf"
+    },
+    {
+     "quote": "\"I was very happy with the product I purchased from Cozy Furnitures. The product was delivered on time and a professional team came to assemble it at my residence. Thanks Cozy Furnitures.\"",
+     "author": "Mazhar Awan"
+    },
+    {
+     "quote": "\"I was really impressed with the customer service from Cozy Furnitures. The staff was very helpful and answered all of my questions. The delivery time was also very impressive. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Maleeha Awais"
+    }
+   ]
+  },
+  {
+   "kind": "recommendations"
+  },
+  {
+   "kind": "reviews"
+  }
+ ],
+ "decor-cushions": [
+  {
+   "kind": "featuredCollection",
+   "heading": "You may also like cushion filling",
+   "collection": "cushion-filling",
+   "handles": [
+    "cushion-filling",
+    "cushion-filling-1"
+   ]
+  },
+  {
+   "kind": "featuredCollection",
+   "heading": "Explore more cushion designs",
+   "collection": "cushions",
+   "handles": [
+    "cynosure-cushion-cover",
+    "emerald-cushion",
+    "flore-cushion-cover",
+    "onyx-cushion-cover",
+    "ikat-cushion-cover",
+    "elude-cushion-cover",
+    "fluky-cushion-cover",
+    "underwood-cushion-cover",
+    "hattie-cushion-cover",
+    "supple-cushion-cover",
+    "faune-cushion-cover",
+    "dynasty-cushion-cover"
+   ]
+  },
+  {
+   "kind": "overlay",
+   "image": "/images/pdp/1920x600.jpg",
+   "subheading": null,
+   "heading": "ElevateYour Interior with Captivating Home Decor Accessories",
+   "headingClass": "h4",
+   "html": "<p>Discover a world of enchanting home decor accessories that will elevate<br>your living space to new heights of beauty and charm. Each accessory is<br>thoughtfully crafted to add a touch of unique style to every nook and corner of your home.</p>"
+  },
+  {
+   "kind": "imageText",
+   "size": "medium",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/1268x1028.jpg",
+   "ratio": 81.0726,
+   "headingClass": "h4",
+   "heading": "Adda Dash of Personality to Every Nook",
+   "headingThin": null,
+   "html": "<p>Infuse a touch of elegance into your living space with our eye-catching decor items. From decorative figurines to stylish clocks and centerpieces, our diverse range of home décor accessories will add character to any space. Mix and match them with your existing decor to create attractive combinations that complement your living space.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "icons",
+   "blocks": [
+    {
+     "title": "Doorstep Delivery",
+     "text": "Receive purchases at your doorstep\nthroughout all major cities in Pakistan"
+    },
+    {
+     "title": "After Sale Support",
+     "text": "All our products come with our promise of long-term after sales service"
+    },
+    {
+     "title": "International Standard",
+     "text": "Our products are created locally and adhere\nto global manufacturing standards"
+    },
+    {
+     "title": "Assembly Assistance",
+     "text": "After delivery, our team of experts helps\nyou assemble your products in your location for maximum ease"
+    }
+   ]
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": false,
+   "disableBottom": true,
+   "image": "/images/pdp/1320x600.jpg",
+   "ratio": 45.4545,
+   "headingClass": "h4",
+   "heading": "Artful Harmony with a Stunning Mix of Accessories",
+   "headingThin": null,
+   "html": "<p>From the reflective elegance of our wall mirrors to the sentimental the charm of decorative picture frames, to the functionality of serving trays, our exciting range of home décor accessories allows you to create an artful harmony in every corner of your home or office.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/1462x842.jpg",
+   "ratio": 57.5923,
+   "headingClass": "h4",
+   "heading": "AccentYour Space with Our Exciting Range of Home Décor Accessories",
+   "headingThin": null,
+   "html": "<p>Let your living space reflect the essence of your style and taste. We bring you a captivating range of home decor accessories that breathe life into every corner of your home or office. Embrace the art of tasteful living and transform your home into a captivating masterpiece of your unique taste and style.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "testimonials",
+   "subheading": null,
+   "heading": "We take pride in our work and our customer testimonials reflect that",
+   "size": "text-small",
+   "items": [
+    {
+     "quote": "\"I was really impressed with the timely delivery and good packaging of my bedroom set from Cozy Furnitures. The furniture was delivered on the promised date and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Saad Arain"
+    },
+    {
+     "quote": "\"I was very happy with the quick delivery and nice packaging of my furniture from Cozy Furnitures. The furniture was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Ramisha Rameez"
+    },
+    {
+     "quote": "\"I have been a customer of Cozy Furnitures for many years and I have always been happy with the service. The furniture is always delivered on time and is well-packed. The assembly team is also very professional and they do a great job of assembling the furniture. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Rahat Raja"
+    },
+    {
+     "quote": "\"I was really impressed with the fast delivery and good packing of my sofa set from Cozy Furnitures. The sofa set was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Asif Hasan"
+    },
+    {
+     "quote": "\"I had a great experience shopping with Cozy Furnitures. The shopping experience was a breeze and the service was excellent. I made the payment online and Cozy Furnitures delivered the table on time. As per their promise, their team came the next day for fitting of the table. Great service.\"",
+     "author": "Waqas Ashraf"
+    },
+    {
+     "quote": "\"I was very happy with the product I purchased from Cozy Furnitures. The product was delivered on time and a professional team came to assemble it at my residence. Thanks Cozy Furnitures.\"",
+     "author": "Mazhar Awan"
+    },
+    {
+     "quote": "\"I was really impressed with the customer service from Cozy Furnitures. The staff was very helpful and answered all of my questions. The delivery time was also very impressive. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Maleeha Awais"
+    }
+   ]
+  },
+  {
+   "kind": "reviews"
+  }
+ ],
+ "wardrobes-products": [
+  {
+   "kind": "overlay",
+   "image": "/images/pdp/1920_x_600_Wardrobes.jpg",
+   "subheading": null,
+   "heading": "Add Storage Space & Style to Your Bedroom with Our Customizable Wardrobes",
+   "headingClass": "h4",
+   "html": "<p>Keep essentials neatly organized and stored away with our stunning range<br>of customizable wardrobes. From classic to contemporary designs, create the perfect wardrobe that suits your personal space, needs and style.</p>"
+  },
+  {
+   "kind": "imageText",
+   "size": "medium",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/1268_x_1028_Wardrobes.jpg",
+   "ratio": 81.0726,
+   "headingClass": "h4",
+   "heading": "Customize to Your Style and Taste",
+   "headingThin": null,
+   "html": "<p>From customizable layouts, shutters, and finishes, to materials and accessories such as glass and sensor lights, to your choice of openable or sliding doors, create dynamic wardrobe solutions that suit your unique style and space.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "icons",
+   "blocks": [
+    {
+     "title": "Doorstep Delivery",
+     "text": "Receive purchases at your doorstep\nthroughout all major cities in Pakistan"
+    },
+    {
+     "title": "After Sale Support",
+     "text": "All our products come with our promise of\nlong-term after sales service"
+    },
+    {
+     "title": "International Standard",
+     "text": "Our products are created locally and adhere\nto global manufacturing standards"
+    },
+    {
+     "title": "Assembly Assistance",
+     "text": "After delivery, our team of experts help\nyou assemble your products in your location for maximum ease"
+    }
+   ]
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": false,
+   "disableBottom": true,
+   "image": "/images/pdp/1320_x_600_Wardrobes.jpg",
+   "ratio": 31.25,
+   "headingClass": "h4",
+   "heading": "Optimize Space Maximize Convenience: Your Ultimate Wardrobe Solution",
+   "headingThin": null,
+   "html": "<p>Maximize your bedroom space while keeping everything in its place.Our range of customizable wardrobes is designed to efficiently organize clothes, shoes, linen, accessories and much more, helping you maintain a neat and clutter-free space.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/1462_x_842_Wardrobes.jpg",
+   "ratio": 57.5923,
+   "headingClass": "h4",
+   "heading": "Where Functionality Meets Artistry",
+   "headingThin": null,
+   "html": "<p>Infuse beautiful design sense into everyday living with our stylish wardrobes. Range of designs with ample storage to keep clothes, accessories and other everyday items neatly stored away while adding a touch of urban inspiration to any living space.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "testimonials",
+   "subheading": null,
+   "heading": "We take pride in our work and our customer testimonials reflect that",
+   "size": "text-small",
+   "items": [
+    {
+     "quote": "\"I was really impressed with the timely delivery and good packaging of my bedroom set from Cozy Furnitures. The furniture was delivered on the promised date and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Saad Arain"
+    },
+    {
+     "quote": "\"I was very happy with the quick delivery and nice packaging of my furniture from Cozy Furnitures. The furniture was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Ramisha Rameez"
+    },
+    {
+     "quote": "\"I have been a customer of Cozy Furnitures for many years and I have always been happy with the service. The furniture is always delivered on time and is well-packed. The assembly team is also very professional and they do a great job of assembling the furniture. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Rahat Raja"
+    },
+    {
+     "quote": "\"I was really impressed with the fast delivery and good packing of my sofa set from Cozy Furnitures. The sofa set was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Asif Hasan"
+    },
+    {
+     "quote": "\"I had a great experience shopping with Cozy Furnitures. The shopping experience was a breeze and the service was excellent. I made the payment online and Cozy Furnitures delivered the table on time. As per their promise, their team came the next day for fitting of the table. Great service.\"",
+     "author": "Waqas Ashraf"
+    },
+    {
+     "quote": "\"I was very happy with the product I purchased from Cozy Furnitures. The product was delivered on time and a professional team came to assemble it at my residence. Thanks Cozy Furnitures.\"",
+     "author": "Mazhar Awan"
+    },
+    {
+     "quote": "\"I was really impressed with the customer service from Cozy Furnitures. The staff was very helpful and answered all of my questions. The delivery time was also very impressive. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Maleeha Awais"
+    }
+   ]
+  },
+  {
+   "kind": "recommendations"
+  },
+  {
+   "kind": "reviews"
+  }
+ ],
+ "coalesce-bedroom": [
+  {
+   "kind": "recommendations"
+  },
+  {
+   "kind": "slideshow",
+   "desktop": "/images/pdp/CAOLESCE-HP-WEB-BANNER.jpg",
+   "mobile": "/images/pdp/CAOLESCE-HP-MOB-BANNER.jpg",
+   "desktopRatio": 0.385,
+   "mobileRatio": 1.5555555555555556
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": true,
+   "disableBottom": true,
+   "image": "/images/pdp/Bedroom.jpg",
+   "ratio": 76.087,
+   "headingClass": "h4",
+   "heading": null,
+   "headingThin": [
+    "comfort",
+    " reimagined"
+   ],
+   "html": "<p>Transform your bedroom into a haven of tranquillity and style. With sleek, minimal designs and a focus on modern elegance, our range invites you to relax, recharge, and rediscover the joy of a beautifully curated space.<br></p><p><a href=\"/collections/coalesce-bedroom\">explore now</a></p>",
+   "button": null,
+   "condensed": true
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": false,
+   "center": true,
+   "disableBottom": true,
+   "image": "/images/pdp/Living.jpg",
+   "ratio": 76.0417,
+   "headingClass": "h4",
+   "heading": null,
+   "headingThin": [
+    "living",
+    " reimagined"
+   ],
+   "html": "<p>Breathe new life into your living area with furniture that combines simplicity and sophistication. Designed for both comfort and style, these pieces redefine modern living, creating a space where memories are made and moments are cherished.<br></p><p><a href=\"/collections/coalesce-living\">explore now</a></p>",
+   "button": null,
+   "condensed": true
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": true,
+   "disableBottom": false,
+   "image": "/images/pdp/Dining.jpg",
+   "ratio": 76.087,
+   "headingClass": "h4",
+   "heading": null,
+   "headingThin": [
+    "gatherings",
+    " reimagined"
+   ],
+   "html": "<p>Set the stage for meaningful connections with a dining range that brings style and functionality to every meal. From quiet family dinners to festive celebrations, create a dining space that feels inviting, refined, and uniquely yours.<br></p><p><a href=\"/collections/coalesce-dining\">explore now</a></p>",
+   "button": null,
+   "condensed": true
+  },
+  {
+   "kind": "icons",
+   "blocks": [
+    {
+     "title": "Doorstep Delivery",
+     "text": "Receive purchases at your doorstep\nthroughout all major cities in Pakistan"
+    },
+    {
+     "title": "After Sale Support",
+     "text": "All our products come with our promise of\nlong-term after sales service"
+    },
+    {
+     "title": "International Standard",
+     "text": "Our products are created locally and adhere\nto global manufacturing standards"
+    },
+    {
+     "title": "Assembly Assistance",
+     "text": "After delivery, our team of experts help\nyou assemble your products in your location for maximum ease"
+    }
+   ]
+  },
+  {
+   "kind": "testimonials",
+   "subheading": null,
+   "heading": "We take pride in our work and our customer testimonials reflect that",
+   "size": "text-small",
+   "items": [
+    {
+     "quote": "\"I was really impressed with the timely delivery and good packaging of my bedroom set from Cozy Furnitures. The furniture was delivered on the promised date and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Saad Arain"
+    },
+    {
+     "quote": "\"I was very happy with the quick delivery and nice packaging of my furniture from Cozy Furnitures. The furniture was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Ramisha Rameez"
+    },
+    {
+     "quote": "\"I have been a customer of Cozy Furnitures for many years and I have always been happy with the service. The furniture is always delivered on time and is well-packed. The assembly team is also very professional and they do a great job of assembling the furniture. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Rahat Raja"
+    },
+    {
+     "quote": "\"I was really impressed with the fast delivery and good packing of my sofa set from Cozy Furnitures. The sofa set was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Asif Hasan"
+    },
+    {
+     "quote": "\"I had a great experience shopping with Cozy Furnitures. The shopping experience was a breeze and the service was excellent. I made the payment online and Cozy Furnitures delivered the table on time. As per their promise, their team came the next day for fitting of the table. Great service.\"",
+     "author": "Waqas Ashraf"
+    },
+    {
+     "quote": "\"I was very happy with the product I purchased from Cozy Furnitures. The product was delivered on time and a professional team came to assemble it at my residence. Thanks Cozy Furnitures.\"",
+     "author": "Mazhar Awan"
+    },
+    {
+     "quote": "\"I was really impressed with the customer service from Cozy Furnitures. The staff was very helpful and answered all of my questions. The delivery time was also very impressive. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Maleeha Awais"
+    }
+   ]
+  },
+  {
+   "kind": "reviews"
+  }
+ ],
+ "blank-template-no-section": [
+  {
+   "kind": "recommendations"
+  }
+ ],
+ "kids-products": [
+  {
+   "kind": "overlay",
+   "image": "/images/pdp/Fresco_1920_x_600.jpg",
+   "subheading": null,
+   "heading": "Finishing Touches Make All the Difference",
+   "headingClass": "h4",
+   "html": "<p>Make every space unique with our range of home décor accessories. From large centerpieces to small touches, mix and match to reflect your own unique style.</p>"
+  },
+  {
+   "kind": "imageText",
+   "size": "medium",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/Doris_1268_x_1028.jpg",
+   "ratio": 81.0726,
+   "headingClass": "h4",
+   "heading": "Fill Spaces with our Trendy Accent Pieces",
+   "headingThin": null,
+   "html": "<p>Add pops of color and style with our range of trendy accent pieces – a seamless fusion of modern aesthetics and charm that are perfect to fill those empty spots around your home and office.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "icons",
+   "blocks": [
+    {
+     "title": "Doorstep Delivery",
+     "text": "Receive purchases at your doorstep\nthroughout all major cities in Pakistan"
+    },
+    {
+     "title": "After Sale Support",
+     "text": "All our products come with our promise of\nlong-term after sales service"
+    },
+    {
+     "title": "International Standard",
+     "text": "Our products are created locally and adhere\nto global manufacturing standards"
+    },
+    {
+     "title": "Assembly Assistance",
+     "text": "After delivery, our team of experts help\nyou assemble your products in your location for maximum ease"
+    }
+   ]
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": true,
+   "center": false,
+   "disableBottom": true,
+   "image": "/images/pdp/Willow_Chair_1320_x_600.jpg",
+   "ratio": 45.4545,
+   "headingClass": "h4",
+   "heading": "Create Space for Your Imagination",
+   "headingThin": null,
+   "html": "<p>Find convenient ways to work at home with our range of study desks & chairs. Simple, compact and comfortable for maximum productivity in limited space.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "imageText",
+   "size": "large",
+   "imageFirst": false,
+   "center": false,
+   "disableBottom": false,
+   "image": "/images/pdp/Pluto_1462_x_842.jpg",
+   "ratio": 57.5923,
+   "headingClass": "h4",
+   "heading": "Combine Fun, Work & Sleep into One!",
+   "headingThin": null,
+   "html": "<p>Save space while creating a fun station in your kids’ room with our versatile bunk beds. Designed to provide a place to work, sleep and play all in one, our bunk beds are the perfect way to grow with your kids’ needs as well as their imaginations.</p>",
+   "button": null,
+   "condensed": false
+  },
+  {
+   "kind": "testimonials",
+   "subheading": null,
+   "heading": "We take pride in our work and our customer testimonials reflect that",
+   "size": "text-small",
+   "items": [
+    {
+     "quote": "\"I was really impressed with the timely delivery and good packaging of my bedroom set from Cozy Furnitures. The furniture was delivered on the promised date and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Saad Arain"
+    },
+    {
+     "quote": "\"I was very happy with the quick delivery and nice packaging of my furniture from Cozy Furnitures. The furniture was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Ramisha Rameez"
+    },
+    {
+     "quote": "\"I have been a customer of Cozy Furnitures for many years and I have always been happy with the service. The furniture is always delivered on time and is well-packed. The assembly team is also very professional and they do a great job of assembling the furniture. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Rahat Raja"
+    },
+    {
+     "quote": "\"I was really impressed with the fast delivery and good packing of my sofa set from Cozy Furnitures. The sofa set was delivered within a few days of placing my order and was well-protected during shipping. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Asif Hasan"
+    },
+    {
+     "quote": "\"I had a great experience shopping with Cozy Furnitures. The shopping experience was a breeze and the service was excellent. I made the payment online and Cozy Furnitures delivered the table on time. As per their promise, their team came the next day for fitting of the table. Great service.\"",
+     "author": "Waqas Ashraf"
+    },
+    {
+     "quote": "\"I was very happy with the product I purchased from Cozy Furnitures. The product was delivered on time and a professional team came to assemble it at my residence. Thanks Cozy Furnitures.\"",
+     "author": "Mazhar Awan"
+    },
+    {
+     "quote": "\"I was really impressed with the customer service from Cozy Furnitures. The staff was very helpful and answered all of my questions. The delivery time was also very impressive. I would definitely recommend Cozy Furnitures to anyone looking for high-quality furniture with excellent service.\"",
+     "author": "Maleeha Awais"
+    }
+   ]
+  },
+  {
+   "kind": "recommendations"
+  },
+  {
+   "kind": "reviews"
+  }
+ ]
+}

@@ -1,0 +1,475 @@
+/*
+ * Live theme (Shopify Habitat + interwood custom.css) rules for content pages, blog and articles.
+ * Everything is scoped under `.sf-page` so it never leaks into product/collection pages or /admin.
+ * Rich-text bodies come from the DB (`Page.bodyHtml`), so these rules target the theme's own
+ * class names (`page-content-width`, `post-content`, `sub-title`, …) rather than Tailwind classes.
+ */
+
+/* ---------- page height ----------
+ * Live's footer follows short content directly (loyalty-form, track-your-ticket, /blogs/blog, 404).
+ * The store layout's `main` carries a 60vh floor, so lift it while a content page is mounted. */
+main:has(.sf-page) {
+  min-height: 0;
+}
+
+/* ---------- heading scale ----------
+ * The global `:where(.theme-store) :where(h1…)` scale loses to Tailwind preflight's
+ * `h1{font-size:inherit;font-weight:inherit}` (0,0,1 > 0), so content pages restate it here.
+ * `:where()` keeps this at 0,1,0 so utilities with `!` can still override it. */
+.sf-page :where(h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6) {
+  font-weight: 600;
+  color: #103a3a;
+}
+.sf-page :where(h1, .h1) { font-size: 46px; line-height: 54px; }
+.sf-page :where(h2, .h2) { font-size: 40px; line-height: 48px; }
+.sf-page :where(h3, .h3) { font-size: 34px; line-height: 42px; }
+.sf-page :where(h4, .h4) { font-size: 28px; line-height: 36px; }
+.sf-page :where(h5, .h5) { font-size: 24px; line-height: 32px; }
+.sf-page :where(h6, .h6) { font-size: 18px; line-height: 26px; }
+@media (min-width: 768px) {
+  .sf-page :where(h1, .h1) { font-size: 54px; line-height: 62px; }
+  .sf-page :where(h2, .h2) { font-size: 46px; line-height: 54px; }
+  .sf-page :where(h3, .h3) { font-size: 36px; line-height: 44px; }
+  .sf-page :where(h4, .h4) { font-size: 30px; line-height: 38px; }
+}
+@media (min-width: 1068px) {
+  .sf-page :where(h1, .h1) { font-size: 64px; line-height: 72px; }
+  .sf-page :where(h2, .h2) { font-size: 54px; line-height: 62px; }
+  .sf-page :where(h3, .h3) { font-size: 40px; line-height: 48px; }
+}
+/* `.h2` on an h1 etc.: the class wins over the tag, as in the theme */
+.sf-page :where(.h1) { font-size: 46px; line-height: 54px; }
+.sf-page :where(.h2) { font-size: 40px; line-height: 48px; }
+.sf-page :where(.h3) { font-size: 34px; line-height: 42px; }
+.sf-page :where(.h4) { font-size: 28px; line-height: 36px; }
+@media (min-width: 768px) {
+  .sf-page :where(.h1) { font-size: 54px; line-height: 62px; }
+  .sf-page :where(.h2) { font-size: 46px; line-height: 54px; }
+  .sf-page :where(.h3) { font-size: 36px; line-height: 44px; }
+  .sf-page :where(.h4) { font-size: 30px; line-height: 38px; }
+}
+@media (min-width: 1068px) {
+  .sf-page :where(.h1) { font-size: 64px; line-height: 72px; }
+  .sf-page :where(.h2) { font-size: 54px; line-height: 62px; }
+  .sf-page :where(.h3) { font-size: 40px; line-height: 48px; }
+  .sf-page :where(.h4) { font-size: 30px; line-height: 38px; }
+}
+
+/* ---------- text rendering: live app.css `p { word-spacing:.001em; font-feature-settings:"kern";
+ * font-kerning:normal; text-rendering:optimizeLegibility }` + `body { overflow-wrap:break-word }`.
+ * Without them paragraphs wrap differently (first Ramzan article paragraph: 12 lines live, 11 local at 390px). */
+.sf-page {
+  overflow-wrap: break-word;
+}
+.sf-page :where(p) {
+  word-spacing: 0.001em;
+  font-feature-settings: 'kern';
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---------- section spacing (`.section-spacing`; custom.css trims the bottom margin) ---------- */
+.sf-page .section-spacing {
+  margin-top: 50px;
+  margin-bottom: 25px;
+}
+@media (min-width: 768px) {
+  .sf-page .section-spacing {
+    margin-top: 100px;
+    margin-bottom: 40px;
+  }
+}
+.sf-page .section-spacing--disable-top {
+  margin-top: 0;
+}
+.sf-page .section-spacing--disable-bottom {
+  margin-bottom: 0;
+}
+
+/* ---------- rich text (`.rte`) ---------- */
+.sf-page .rte {
+  font-size: inherit;
+  line-height: inherit;
+}
+.sf-page .rte p {
+  margin: 0;
+  line-height: 1.7;
+}
+.sf-page .rte ul,
+.sf-page .rte ol {
+  margin: 0 0 1.25rem 1.25rem;
+  line-height: 1.7;
+}
+.sf-page .rte ul {
+  list-style: disc;
+}
+.sf-page .rte ol {
+  list-style: decimal;
+}
+.sf-page .rte ul ul,
+.sf-page .rte ol ol {
+  margin-bottom: 0;
+}
+.sf-page .rte a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.sf-page .rte strong,
+.sf-page .rte b {
+  font-weight: 500;
+}
+.sf-page .rte em,
+.sf-page .rte i {
+  font-style: italic;
+}
+.sf-page .rte img {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+  margin: 0;
+}
+.sf-page .rte table {
+  width: 100%;
+  margin: 0 0 30px;
+  border-collapse: collapse;
+  border: 1px solid #eee;
+  font-size: 15px;
+  text-align: left;
+}
+.sf-page .rte th,
+.sf-page .rte td {
+  padding: 10px 15px;
+  border: 1px solid #eee;
+}
+.sf-page .rte th {
+  font-weight: 700;
+}
+@media (min-width: 768px) {
+  .sf-page .rte th,
+  .sf-page .rte td {
+    padding: 15px 25px;
+  }
+}
+.sf-page iframe {
+  width: 100%;
+  max-width: 100%;
+}
+.sf-page .rte iframe {
+  aspect-ratio: auto;
+  margin: 0;
+  /* live: inline inside its <p> (preflight makes it block), which leaves a baseline gap below */
+  display: inline;
+  vertical-align: baseline;
+}
+
+/* heading line-heights follow the theme scale; sizes are flattened to 30px (custom.css) */
+.sf-page .page-content-width :is(h1, h2, h3, h4, h5, h6) {
+  font-size: 30px;
+  font-weight: 600;
+  margin: 0;
+}
+.sf-page .page-content-width h1 { line-height: 54px; }
+.sf-page .page-content-width h2 { line-height: 48px; }
+.sf-page .page-content-width h3 { line-height: 42px; }
+.sf-page .page-content-width h4 { line-height: 36px; }
+.sf-page .page-content-width h5 { line-height: 32px; }
+.sf-page .page-content-width h6 { line-height: 26px; }
+@media (min-width: 768px) {
+  .sf-page .page-content-width h1 { line-height: 62px; }
+  .sf-page .page-content-width h2 { line-height: 54px; }
+  .sf-page .page-content-width h3 { line-height: 44px; }
+  .sf-page .page-content-width h4 { line-height: 38px; }
+}
+@media (min-width: 1068px) {
+  .sf-page .page-content-width h1 { line-height: 72px; }
+  .sf-page .page-content-width h2 { line-height: 62px; }
+  .sf-page .page-content-width h3 { line-height: 48px; }
+}
+
+/* ---------- `template-page`: policies, payment, rewards, shipping … ---------- */
+.sf-tpl-page .page-content-width {
+  max-width: 100%;
+  margin: 0 auto;
+  padding-top: 40px;
+}
+.sf-tpl-page .page-content-width p,
+.sf-tpl-page .page-content-width ul li {
+  font-size: 14px;
+}
+.sf-tpl-page .page-content-width :is(.sub-title, .sub-title strong) {
+  font-weight: 500;
+  font-size: 22px;
+}
+.sf-tpl-page .page-content-width p strong,
+.sf-tpl-page .page-content-width strong {
+  font-weight: 500;
+  font-size: 26px;
+}
+@media (min-width: 768px) {
+  .sf-tpl-page .page-content-width p,
+  .sf-tpl-page .page-content-width ul li {
+    font-size: 16px;
+  }
+  .sf-tpl-page .page-content-width :is(.sub-title, .sub-title strong) {
+    font-size: 26px;
+  }
+}
+/* inline `<table border=1 style=…>` keep their own inline borders */
+.sf-tpl-page .page-content-width table[border] {
+  border-collapse: collapse;
+}
+.sf-tpl-page #openPopup {
+  cursor: pointer;
+}
+
+/* ---------- article body (`.post-content.page-content-width.rte`) ---------- */
+.sf-article .post-content {
+  margin-bottom: 30px;
+}
+/* custom.css only spaces headings that follow a paragraph; after a list the ul's 20px is the gap */
+.sf-article .post-content p + :is(h1, h2, h3, h4, h5, h6) {
+  margin-top: 40px;
+}
+.sf-article .post-content :is(h1, h2, h3, h4, h5, h6) b {
+  font-weight: 500;
+}
+.sf-article .post-content ul {
+  margin: 0 0 20px 20px;
+}
+.sf-article .post-content li {
+  font-size: 17px;
+}
+
+/* ---------- forms: floating-label `.field` ---------- */
+.sf-page .sf-field {
+  position: relative;
+}
+.sf-page .sf-field :is(input, textarea, select) {
+  display: block;
+  width: 100%;
+  height: 52px;
+  margin: 0 0 20px;
+  padding: 17px 22px;
+  border: 1px solid #dedede;
+  border-radius: 3px;
+  background: transparent;
+  color: #103a3a;
+  font-size: 13px;
+  /* live: normalize.css `line-height: 1.15` (14.95px) and the browser's default focus ring */
+  line-height: 1.15;
+  transition: all 0.25s var(--ease-theme);
+}
+.sf-page .sf-field textarea {
+  /* live textarea is inline-block: its baseline gap puts the next control 10px lower */
+  display: inline-block;
+  vertical-align: baseline;
+  min-height: 200px;
+  resize: vertical;
+}
+.sf-page .sf-field select {
+  appearance: none;
+  padding-right: 24px;
+  cursor: pointer;
+}
+.sf-page .sf-field :is(input, textarea, select):focus {
+  border-color: #103a3a;
+}
+.sf-page .sf-field :is(input, textarea)::placeholder {
+  color: transparent;
+}
+.sf-page .sf-field label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  height: 52px;
+  padding: 17px 22px;
+  font-size: 13px;
+  line-height: 1.75;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  transition: all 0.25s var(--ease-theme);
+}
+.sf-page .sf-field :is(input, textarea):is(:focus, :not(:placeholder-shown)) + label,
+.sf-page .sf-field select + label {
+  left: 17px;
+  height: auto;
+  padding: 0 6px;
+  background: #fff;
+  font-size: 11px;
+  transform: translateY(-50%);
+}
+.sf-page .sf-select {
+  position: relative;
+}
+.sf-page .sf-select::after {
+  content: '';
+  position: absolute;
+  top: 26px;
+  right: 12px;
+  margin-top: -2px;
+  border-style: solid;
+  border-width: 4px 3px 0;
+  border-color: #103a3a transparent transparent;
+  pointer-events: none;
+}
+.sf-page .sf-submit {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+  height: 52px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 5px 27px;
+  border-radius: 3px;
+  background: #00b950;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  /* live submit is an <input type=submit>: normalize.css line-height 1.15 */
+  line-height: 1.15;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.sf-page .sf-submit::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.1);
+  transform: translateY(100%);
+  transition: transform 0.25s var(--ease-theme);
+}
+.sf-page .sf-submit:hover::before,
+.sf-page .sf-submit:focus-visible::before {
+  transform: translateY(0);
+}
+.sf-page .sf-submit > span {
+  position: relative;
+}
+.sf-page .sf-submit:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+/* ---------- `.text-button` (catalogues download links, article tags) ----------
+ * Live: an inline <a> (body line-height 1.75 → 21px box, underline 2px below it) that turns accent2
+ * on hover via the theme's `a:hover` rule. */
+.sf-page .text-button {
+  display: inline;
+  line-height: 1.75;
+  transition: color 0.25s var(--ease-theme);
+}
+.sf-page .text-button:hover {
+  color: #c25b41;
+}
+
+/* ---------- store locator (`section.store-locator`, custom.css) ---------- */
+.sf-page .store-left {
+  max-height: 449px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+.sf-page .store_btn:hover {
+  color: #fff;
+  background-color: #103a3a9c;
+}
+
+/* ---------- about: background video (`.background-video__iframe iframe`) ---------- */
+.sf-page .sf-bg-video iframe {
+  position: absolute;
+  width: 300%;
+  height: 100%;
+  left: -100%;
+  top: 0;
+  border: 0;
+  pointer-events: none;
+}
+@media (min-width: 768px) {
+  .sf-page .sf-bg-video iframe {
+    width: 200%;
+    height: 200%;
+    left: -50%;
+    top: -50%;
+  }
+}
+@media (min-width: 1068px) {
+  .sf-page .sf-bg-video iframe {
+    width: 100%;
+    height: 300%;
+    left: 0;
+    top: -100%;
+  }
+}
+
+/* ---------- blog cards ---------- */
+.sf-page .blog-post .featured-image img {
+  transition: all 1s var(--ease-theme);
+}
+.sf-page .blog-post .featured-image a:is(:hover, :focus) img {
+  transform: scale(1.05);
+}
+.sf-page .blog-post .post-excerpt p {
+  margin: 0 0 20px;
+  line-height: 1.7;
+}
+.sf-page .read-more::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  background: #103a3a;
+  opacity: 0.2;
+}
+
+/* ---------- article navigation (sticky "Now Reading" bar) ---------- */
+.sf-page .article-nav-link svg {
+  transition: transform 0.25s var(--ease-theme);
+}
+.sf-page .article-nav-link.prev:hover svg {
+  transform: translateX(-12%);
+}
+.sf-page .article-nav-link.next:hover svg {
+  transform: translateX(12%);
+}
+
+/* ---------- slideshow dots (`.flickity-page-dots .dot`) ---------- */
+.sf-page .sf-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin: 0 3px;
+  border: 2px solid #103a3a;
+  border-radius: 6px;
+  opacity: 0.6;
+  cursor: pointer;
+  transition: opacity 0.25s var(--ease-theme);
+}
+.sf-page .sf-dot:first-child {
+  margin-left: 0;
+}
+.sf-page .sf-dot:hover,
+.sf-page .sf-dot[aria-current='true'] {
+  opacity: 1;
+}
+.sf-page .sf-dot[aria-current='true'] {
+  background: #103a3a;
+}
+@media (min-width: 768px) {
+  .sf-page .sf-dot {
+    width: 12px;
+    height: 12px;
+    margin: 0 4px;
+  }
+}
+
+/* ---------- wedding package builder: live hides the footer group and back-to-top on this page ---------- */
+.theme-store:has(.sf-wedding) footer.footer,
+.theme-store:has(.sf-wedding) footer.footer + div,
+.theme-store:has(.sf-wedding) button[aria-label='Back to top'] {
+  display: none;
+}

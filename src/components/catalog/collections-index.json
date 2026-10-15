@@ -1,0 +1,1292 @@
+[
+{
+"handle": "frontpage",
+"title": "Home page",
+"placeholder": 1
+},
+{
+"handle": "furniture",
+"title": "Furniture",
+"image": "https://interwood.pk/cdn/shop/collections/slide-01_2560x867_crop_center_2502797c-f493-4471-b7a8-b54de502766d.jpg?v=1686991130"
+},
+{
+"handle": "bathroom",
+"title": "All Products",
+"placeholder": 2
+},
+{
+"handle": "dining-room",
+"title": "Dining-Room",
+"placeholder": 3
+},
+{
+"handle": "bed-set",
+"title": "Bed Set",
+"image": "https://interwood.pk/cdn/shop/collections/Bed-Sets-Banner.jpg?v=1730783480"
+},
+{
+"handle": "king-size-beds",
+"title": "King Size Beds",
+"image": "https://interwood.pk/cdn/shop/collections/cresta_bed_zoomed_1.jpg?v=1704786642"
+},
+{
+"handle": "queen-size-beds",
+"title": "Queen Size Beds",
+"image": "https://interwood.pk/cdn/shop/collections/crescent_bed_zoomed.jpg?v=1704786729"
+},
+{
+"handle": "single-beds",
+"title": "Single Beds",
+"image": "https://interwood.pk/cdn/shop/collections/Untitleddesign_7.jpg?v=1704786849"
+},
+{
+"handle": "bed-side-tables",
+"title": "Bed Side Tables",
+"image": "https://interwood.pk/cdn/shop/collections/sienna_bed_zoomed1.jpg?v=1704786209"
+},
+{
+"handle": "dressing-tables",
+"title": "Dressing Tables",
+"image": "https://interwood.pk/cdn/shop/collections/Chelsea-Dresser_32defe9c-3fbd-4bfe-b599-0a4a999f9c30.jpg?v=1760073995"
+},
+{
+"handle": "wardrobes",
+"title": "Wardrobes",
+"image": "https://interwood.pk/cdn/shop/collections/1462_x_842_Wardrobes.jpg?v=1734083768"
+},
+{
+"handle": "cloth-stands",
+"title": "Cloth Stands",
+"image": "https://interwood.pk/cdn/shop/files/WhatsApp_Image_2025-04-23_at_9.13.54_AM.jpg?v=1757335662"
+},
+{
+"handle": "wall-mirrors",
+"title": "Wall Mirrors",
+"image": "https://interwood.pk/cdn/shop/collections/Royal-Cocoa-Wall-Mirror_063a3031-8789-4f20-8702-3a98e56b3c32.jpg?v=1760074097"
+},
+{
+"handle": "bedroom-chairs",
+"title": "Bedroom Chairs",
+"image": "https://interwood.pk/cdn/shop/collections/bedroom-sofa-chair-omni-wing-in-black-color.jpg?v=1704786532"
+},
+{
+"handle": "bedroom",
+"title": "Bedroom",
+"image": "https://interwood.pk/cdn/shop/collections/savannah_bed_zoomed_1.jpg?v=1767953386"
+},
+{
+"handle": "beds",
+"title": "Beds",
+"image": "https://interwood.pk/cdn/shop/collections/Trysil_Bed_Set.webp?v=1775735917"
+},
+{
+"handle": "storage",
+"title": "Storage",
+"image": "https://interwood.pk/cdn/shop/files/ArbourShelf.jpg?v=1758371801"
+},
+{
+"handle": "decor",
+"title": "Decor",
+"image": "https://interwood.pk/cdn/shop/files/Sable_Console_Mirror_Vis.jpg?v=1762857426"
+},
+{
+"handle": "seating-chairs",
+"title": "Seating & Chairs",
+"image": "https://interwood.pk/cdn/shop/files/Omni_Wing_Chair_Olive_Green.jpg?v=1784636202"
+},
+{
+"handle": "sofas-all",
+"title": "Sofas",
+"image": "https://interwood.pk/cdn/shop/collections/SOFA.webp?v=1775559616"
+},
+{
+"handle": "3-seater-sofa",
+"title": "3 Seater Sofa",
+"placeholder": 2
+},
+{
+"handle": "l-shaped-sofa",
+"title": "L Shaped Sofa",
+"placeholder": 3
+},
+{
+"handle": "sofa-cum-bed",
+"title": "Sofa Cum Bed",
+"image": "https://interwood.pk/cdn/shop/collections/20250417_1603_Sofa_in_Chic_Room_remix_01js1pjmjqezfayf1kp02rtxjg.png?v=1760074583"
+},
+{
+"handle": "l-shaped-sofa-bed",
+"title": "L Shaped Sofa Bed",
+"image": "https://interwood.pk/cdn/shop/files/Button_OttomanLimitedEdition.webp?v=1765883614"
+},
+{
+"handle": "power-lift",
+"title": "Power Lift",
+"image": "https://interwood.pk/cdn/shop/files/Power_Recliner.jpg?v=1758255641"
+},
+{
+"handle": "power",
+"title": "Power",
+"image": "https://interwood.pk/cdn/shop/files/maverick.jpg?v=1757336146"
+},
+{
+"handle": "manual",
+"title": "Manual",
+"image": "https://interwood.pk/cdn/shop/files/Manual_recliner_2.jpg?v=1758255149"
+},
+{
+"handle": "gliders",
+"title": "Gliders",
+"placeholder": 3
+},
+{
+"handle": "relax-chairs",
+"title": "Relax Chairs",
+"placeholder": 4
+},
+{
+"handle": "lounge-chairs",
+"title": "Lounge Chairs",
+"placeholder": 5
+},
+{
+"handle": "dining-chairs",
+"title": "Dining Chairs",
+"image": "https://interwood.pk/cdn/shop/files/FG020004670ComoDiningChair.png?v=1773574481"
+},
+{
+"handle": "accent-chairs",
+"title": "Accent Chairs",
+"placeholder": 6
+},
+{
+"handle": "stools",
+"title": "Stools",
+"image": "https://interwood.pk/cdn/shop/files/Lunar_Warten_Teal.jpg?v=1758254961"
+},
+{
+"handle": "ottoman",
+"title": "Ottoman",
+"placeholder": 3
+},
+{
+"handle": "benches",
+"title": "Benches",
+"placeholder": 4
+},
+{
+"handle": "coffee-tables",
+"title": "Coffee Tables",
+"image": "https://interwood.pk/cdn/shop/files/20250423_1554_Centered_Coffee_Table_remix_01jsh4fpnqfnqshebwx7j8jbmq.png?v=1757335737"
+},
+{
+"handle": "center-table",
+"title": "Center Table",
+"image": "https://interwood.pk/cdn/shop/files/Ozone_2.0_Center_Table_1.jpg?v=1758282798"
+},
+{
+"handle": "side-end-tables",
+"title": "Side & End Tables",
+"image": "https://interwood.pk/cdn/shop/files/Wavy_Side_Table.jpg?v=1758277213"
+},
+{
+"handle": "nested-tables",
+"title": "Nested Tables",
+"image": "https://interwood.pk/cdn/shop/files/Generated_Image_January_23_2026_-_10_32AM.png?v=1769146547"
+},
+{
+"handle": "tv-units",
+"title": "TV Units",
+"image": "https://interwood.pk/cdn/shop/files/Quest_TV_Unit.jpg?v=1758255697"
+},
+{
+"handle": "bookshelves",
+"title": "Bookshelves",
+"image": "https://interwood.pk/cdn/shop/files/Single_Box.jpg?v=1758282618"
+},
+{
+"handle": "showcases",
+"title": "Showcases",
+"image": "https://interwood.pk/cdn/shop/files/Kav_cabnet.jpg?v=1758205423"
+},
+{
+"handle": "shoe-racks",
+"title": "Shoe Racks",
+"placeholder": 1
+},
+{
+"handle": "laminate-flooring",
+"title": "Laminate Flooring",
+"image": "https://interwood.pk/cdn/shop/files/HL1323.jpg?v=1757596185"
+},
+{
+"handle": "study-tables",
+"title": "Study Tables",
+"image": "https://interwood.pk/cdn/shop/collections/Austen_study_desk_21170892-526b-4bff-be0d-244539562ba0.jpg?v=1760074795"
+},
+{
+"handle": "computer-tables",
+"title": "Computer Tables",
+"image": "https://interwood.pk/cdn/shop/files/WilsonBlue-2.png?v=1760677654"
+},
+{
+"handle": "study-chairs",
+"title": "Study Chairs",
+"placeholder": 4
+},
+{
+"handle": "study-bookshelves",
+"title": "Study Bookshelves",
+"image": "https://interwood.pk/cdn/shop/files/Kav_cabnet.jpg?v=1758205423"
+},
+{
+"handle": "wall-shelves",
+"title": "Wall Shelves",
+"image": "https://interwood.pk/cdn/shop/files/FG990031074.jpg?v=1757596374"
+},
+{
+"handle": "study-table-sets",
+"title": "Study Table Sets",
+"placeholder": 6
+},
+{
+"handle": "ergonomic-study-chairs",
+"title": "Ergonomic Study Chairs",
+"placeholder": 2
+},
+{
+"handle": "kids-bed-sets",
+"title": "Kids Bed Sets",
+"placeholder": 3
+},
+{
+"handle": "kids-single-beds",
+"title": "Kids Single Beds",
+"image": "https://interwood.pk/cdn/shop/files/Oliver_Single_Bed.jpg?v=1757596535"
+},
+{
+"handle": "bunk-beds",
+"title": "Bunk Beds",
+"image": "https://interwood.pk/cdn/shop/collections/Plutobunkbed.jpg?v=1706765266"
+},
+{
+"handle": "sliding-beds",
+"title": "Sliding Beds",
+"placeholder": 1
+},
+{
+"handle": "kids-bedside-tables",
+"title": "Kids Bedside Tables",
+"image": "https://interwood.pk/cdn/shop/files/Wilson_BedSide_Red.webp?v=1770700383"
+},
+{
+"handle": "kids-wardrobe",
+"title": "Kids Wardrobe",
+"placeholder": 2
+},
+{
+"handle": "kids-study-tables",
+"title": "Kids Study Tables",
+"placeholder": 3
+},
+{
+"handle": "kids-study-chairs",
+"title": "Kids Study Chairs",
+"image": "https://interwood.pk/cdn/shop/files/20250416_1201_Chair_in_Lounge_Setting_remix_01jrypb30bfnvtbhfnpb0d6zrq_6cba740d-450d-41a4-a248-fe2b68504b47.png?v=1753794667"
+},
+{
+"handle": "dining-table-sets",
+"title": "Dining Table Sets",
+"image": "https://interwood.pk/cdn/shop/collections/DINING.webp?v=1775459967"
+},
+{
+"handle": "dining-tables",
+"title": "Dining Tables",
+"image": "https://interwood.pk/cdn/shop/files/Trysil_4_Persons_Dining_Table_2_3041e782-3402-4c9b-af76-3fe98cdc0ea4.jpg?v=1758275115"
+},
+{
+"handle": "kitchen-dining-room-furniture-dining-chairs",
+"title": "Kitchen & Dining Room Furniture",
+"image": "https://interwood.pk/cdn/shop/files/Deco_Dining_Chair_3d267a65-f661-41e3-aa29-ca01ee8d7fc5.jpg?v=1766555258"
+},
+{
+"handle": "4-persons-dining-tables",
+"title": "4 Persons Dining Tables",
+"image": "https://interwood.pk/cdn/shop/files/KAVDining3.webp?v=1758693223"
+},
+{
+"handle": "6-persons-dining-tables",
+"title": "6 Persons Dining Tables",
+"placeholder": 3
+},
+{
+"handle": "8-persons-dining-tables",
+"title": "8 Persons Dining Tables",
+"image": "https://interwood.pk/cdn/shop/files/Sienna_-_1_eea532f9-2f2e-4d3b-8a7d-5493ae8e7533.jpg?v=1757596854"
+},
+{
+"handle": "bar-stools",
+"title": "Bar Stools",
+"image": "https://interwood.pk/cdn/shop/files/Triton_HWS_01_-_920x700_20491ce4-ee69-4580-ad2a-14716add1ad4.png?v=1757596679"
+},
+{
+"handle": "lamps-and-lighting",
+"title": "Lamps And Lighting",
+"placeholder": 1
+},
+{
+"handle": "candles",
+"title": "Candles",
+"placeholder": 6
+},
+{
+"handle": "art-frames",
+"title": "Art Frames",
+"placeholder": 2
+},
+{
+"handle": "trays",
+"title": "Trays",
+"placeholder": 3
+},
+{
+"handle": "trash-can",
+"title": "Trash Can",
+"placeholder": 4
+},
+{
+"handle": "picture-frames",
+"title": "Picture Frames",
+"placeholder": 5
+},
+{
+"handle": "candle-holders",
+"title": "Candle Holders",
+"placeholder": 1
+},
+{
+"handle": "accent-mirrors",
+"title": "Accent Mirrors",
+"placeholder": 6
+},
+{
+"handle": "table-runners",
+"title": "Table Runners",
+"placeholder": 2
+},
+{
+"handle": "cushions",
+"title": "Cushions",
+"image": "https://interwood.pk/cdn/shop/files/Claid-AI-203b5c78bdf14b6fbe6b41f98f5d195e.png?v=1768370713"
+},
+{
+"handle": "manager-tables",
+"title": "Manager Tables",
+"image": "https://interwood.pk/cdn/shop/collections/DESK.webp?v=1775460147"
+},
+{
+"handle": "executive-tables",
+"title": "Executive Tables",
+"image": "https://interwood.pk/cdn/shop/files/Arc_2.0_Desk.png?v=1787132751"
+},
+{
+"handle": "side-racks",
+"title": "Side Racks",
+"image": "https://interwood.pk/cdn/shop/products/ariel_credenza-l.jpg?v=1757335559"
+},
+{
+"handle": "credenza",
+"title": "Credenza",
+"image": "https://interwood.pk/cdn/shop/products/ozone_credenza.jpg?v=1757335572"
+},
+{
+"handle": "office-center-tables",
+"title": "Office / Center Tables",
+"image": "https://interwood.pk/cdn/shop/files/Orbis-Centertable.png?v=1757596143"
+},
+{
+"handle": "sofa-side-tables",
+"title": "Sofa Side Tables",
+"image": "https://interwood.pk/cdn/shop/files/Anchor_Side_Table.png?v=1757335747"
+},
+{
+"handle": "reception-counters",
+"title": "Reception Counters",
+"image": "https://interwood.pk/cdn/shop/files/Lunar_DR2.jpg?v=1757335321"
+},
+{
+"handle": "meeting-tables",
+"title": "Meeting Tables",
+"image": "https://interwood.pk/cdn/shop/files/ARC-MEETING-TABLE-8-PERSON.jpg?v=1777705007"
+},
+{
+"handle": "manager-chairs",
+"title": "Manager Chairs",
+"image": "https://interwood.pk/cdn/shop/products/studio_series.jpg?v=1757335935"
+},
+{
+"handle": "executive-chairs",
+"title": "Executive Chairs",
+"image": "https://interwood.pk/cdn/shop/collections/Executive-Office-Chairs.webp?v=1776340327"
+},
+{
+"handle": "ceo-chairs",
+"title": "CEO Chairs",
+"image": "https://interwood.pk/cdn/shop/files/Sidus_Executive_Chair_Camel_Beige_Waffle_Black_-_1.webp?v=1766570624"
+},
+{
+"handle": "high-back-chairs",
+"title": "High Back Chairs",
+"image": "https://interwood.pk/cdn/shop/files/Apex_Chair_with_Headrest_Grey.jpg?v=1757596509"
+},
+{
+"handle": "office-chairs-visitor-chairs",
+"title": "Visitor Chairs",
+"image": "https://interwood.pk/cdn/shop/products/fg050000500.jpg?v=1757335401"
+},
+{
+"handle": "cafeteria-chairs",
+"title": "Cafeteria Chairs",
+"image": "https://interwood.pk/cdn/shop/files/Meadow_jpg.jpg?v=1790317012"
+},
+{
+"handle": "ozone-2-0",
+"title": "Ozone 2.0",
+"image": "https://interwood.pk/cdn/shop/collections/ozone-2-0-meeting-table-top-8-person-rectangular-e5e9e12-interwood-mobel_1.png?v=1754034574"
+},
+{
+"handle": "ariel",
+"title": "Ariel",
+"image": "https://interwood.pk/cdn/shop/collections/ariel_linear_workstations_for_4_persons.jpg?v=1753970044"
+},
+{
+"handle": "lunar",
+"title": "Lunar",
+"image": "https://interwood.pk/cdn/shop/collections/L1_5.jpg?v=1754034639"
+},
+{
+"handle": "triton",
+"title": "Triton",
+"image": "https://interwood.pk/cdn/shop/collections/triton_grid_workstations_1.jpg?v=1753970375"
+},
+{
+"handle": "solo",
+"title": "Solo",
+"placeholder": 4
+},
+{
+"handle": "budget-pro",
+"title": "Budget Pro",
+"image": "https://interwood.pk/cdn/shop/collections/BudgetProWorkstationsShaped06Person_981c8044-7ad4-4cba-af2f-09c7cb16b877.jpg?v=1753970411"
+},
+{
+"handle": "office-sofas",
+"title": "Office Sofas",
+"image": "https://interwood.pk/cdn/shop/products/camelot_4.jpg?v=1757596751"
+},
+{
+"handle": "office-sofa-set",
+"title": "Office Sofa Set",
+"placeholder": 6
+},
+{
+"handle": "office-seating-lounge-chairs",
+"title": "Lounge Chairs",
+"placeholder": 2
+},
+{
+"handle": "co-working-spaces-stools-chairs",
+"title": "Stools & Chairs",
+"image": "https://interwood.pk/cdn/shop/files/Meadow_jpg.jpg?v=1790317012"
+},
+{
+"handle": "bean-bags",
+"title": "Bean Bags",
+"placeholder": 4
+},
+{
+"handle": "meeting-phone-pods",
+"title": "Meeting & Phone Pods",
+"image": "https://interwood.pk/cdn/shop/files/20250429_1001_Modern_Office_Pod_remix_01jszynpwse1eaxeme5ajrqr3z.png?v=1757335795"
+},
+{
+"handle": "office-executive-furniture-sets-traditional",
+"title": "Traditional Office Executive Set",
+"image": "https://interwood.pk/cdn/shop/collections/TRADITIONAL.webp?v=1753775311"
+},
+{
+"handle": "arc",
+"title": "Arc Executive Set",
+"image": "https://interwood.pk/cdn/shop/collections/Arc.webp?v=1790583646"
+},
+{
+"handle": "marcus",
+"title": "Marcus Executive Set",
+"image": "https://interwood.pk/cdn/shop/collections/Marcus.webp?v=1753777068"
+},
+{
+"handle": "camelot",
+"title": "Camelot Executive Set",
+"image": "https://interwood.pk/cdn/shop/collections/Camelot.webp?v=1753777046"
+},
+{
+"handle": "conte",
+"title": "Conte Executive Set",
+"image": "https://interwood.pk/cdn/shop/collections/Conte.webp?v=1753778375"
+},
+{
+"handle": "callisto",
+"title": "Callisto Executive Set",
+"image": "https://interwood.pk/cdn/shop/collections/Callisto_8f004565-5998-4c1d-b0fa-19996674dd21.webp?v=1753777009"
+},
+{
+"handle": "antonin",
+"title": "Antonin Executive Set",
+"image": "https://interwood.pk/cdn/shop/collections/Antonin_5774f076-497e-442d-8058-d9acae434645.webp?v=1753777169"
+},
+{
+"handle": "drawer-pedestals",
+"title": "Drawer Pedestals",
+"image": "https://interwood.pk/cdn/shop/files/BudgetProDrawerPedestal.jpg?v=1757335976"
+},
+{
+"handle": "filing-cabinets",
+"title": "Filing Cabinets",
+"image": "https://interwood.pk/cdn/shop/files/RemingtonFilingCabinet.jpg?v=1757596441"
+},
+{
+"handle": "small-kitchen-design",
+"title": "Small kitchen design",
+"placeholder": 3
+},
+{
+"handle": "kitchen-sink",
+"title": "Kitchen sink",
+"image": "https://interwood.pk/cdn/shop/products/fg010004385-ed41a7b-interwood-mobel.jpg?v=1757335415"
+},
+{
+"handle": "modern-kitchen-design-1",
+"title": "Modern kitchen Design",
+"placeholder": 5
+},
+{
+"handle": "traditional-kitchen-design-1",
+"title": "Traditional Kitchen Design",
+"placeholder": 1
+},
+{
+"handle": "column-system-1",
+"title": "Column System",
+"placeholder": 6
+},
+{
+"handle": "basket-rack-system-2",
+"title": "Basket & Rack System",
+"image": "https://interwood.pk/cdn/shop/products/detergent-basket-for-laundry-and-dishwasher-42694c9-interwood-mobel.png?v=1757335553"
+},
+{
+"handle": "microwave-ovens",
+"title": "Microwave Ovens",
+"placeholder": 3
+},
+{
+"handle": "refrigerator",
+"title": "Refrigerator",
+"image": "https://interwood.pk/cdn/shop/products/fg010008346-59fc21a-interwood-mobel.jpg?v=1757335402"
+},
+{
+"handle": "main-doors",
+"title": "Main Doors",
+"image": "https://interwood.pk/cdn/shop/collections/ezio.jpg?v=1706518717"
+},
+{
+"handle": "panel-doors",
+"title": "Panel Doors",
+"image": "https://interwood.pk/cdn/shop/products/linia.jpg?v=1757335529"
+},
+{
+"handle": "glass-door",
+"title": "Glass Door",
+"image": "https://interwood.pk/cdn/shop/collections/french.jpg?v=1706519092"
+},
+{
+"handle": "veneer-door",
+"title": "Veneer Door",
+"image": "https://interwood.pk/cdn/shop/products/flush.jpg?v=1757335520"
+},
+{
+"handle": "thermoset-doors",
+"title": "Thermoset Doors",
+"image": "https://interwood.pk/cdn/shop/products/mira.jpg?v=1757335518"
+},
+{
+"handle": "painted-door",
+"title": "Painted Door",
+"image": "https://interwood.pk/cdn/shop/products/umbra.jpg?v=1757335541"
+},
+{
+"handle": "laminated-door",
+"title": "laminated Door",
+"image": "https://interwood.pk/cdn/shop/files/Screenshot_2025-11-10_174509.png?v=1762779039"
+},
+{
+"handle": "sliding-door",
+"title": "Sliding Door",
+"image": "https://interwood.pk/cdn/shop/products/barn.jpg?v=1757335531"
+},
+{
+"handle": "built-in-wardrobes",
+"title": "Built-in wardrobes",
+"image": "https://interwood.pk/cdn/shop/products/iris-wordrobe-1-d6b9ad7-interwood-mobel.jpg?v=1757335501"
+},
+{
+"handle": "4-doors-wardrobes",
+"title": "4 Doors Wardrobes",
+"placeholder": 2
+},
+{
+"handle": "3-doors-wardrobes",
+"title": "3 Doors Wardrobes",
+"image": "https://interwood.pk/cdn/shop/files/Charm_Wardrobe_01_a9346eb3-446a-48cd-aca2-83f2b6a4749d.jpg?v=1758203855"
+},
+{
+"handle": "2-doors-wardrobes",
+"title": "2 Doors Wardrobes",
+"image": "https://interwood.pk/cdn/shop/files/Quest_Wardrobe.jpg?v=1757335663"
+},
+{
+"handle": "sliding-wardrobes",
+"title": "Sliding Wardrobes",
+"image": "https://interwood.pk/cdn/shop/files/Quest_Wardrobe.jpg?v=1757335663"
+},
+{
+"handle": "bumper-offers",
+"title": "Bumper Offers",
+"image": "https://interwood.pk/cdn/shop/files/CallistoTVUnit-2.png?v=1764685542"
+},
+{
+"handle": "home-furniture",
+"title": "Home Furniture",
+"image": "https://interwood.pk/cdn/shop/files/Omni_Wing_Chair_Olive_Green.jpg?v=1784636202"
+},
+{
+"handle": "mega-sale-office-furniture",
+"title": "Mega Sale Office Furniture",
+"placeholder": 2
+},
+{
+"handle": "decor-sale",
+"title": "Decor Sale",
+"placeholder": 3
+},
+{
+"handle": "kitchens-sale",
+"title": "Kitchens Sale",
+"placeholder": 4
+},
+{
+"handle": "sale",
+"title": "Sale",
+"image": "https://interwood.pk/cdn/shop/collections/WhatsAppImage2026-05-14at5.04.16PM.jpg?v=1778761962"
+},
+{
+"handle": "recliners",
+"title": "RECLINERS",
+"image": "https://interwood.pk/cdn/shop/files/Power_Recliner.jpg?v=1758255641"
+},
+{
+"handle": "living-chairs",
+"title": "Chairs",
+"image": "https://interwood.pk/cdn/shop/files/Deco_Dining_Chair_3d267a65-f661-41e3-aa29-ca01ee8d7fc5.jpg?v=1766555258"
+},
+{
+"handle": "tables",
+"title": "Tables",
+"image": "https://interwood.pk/cdn/shop/files/Hampton_Side_Table_Vis.webp?v=1764771694"
+},
+{
+"handle": "living-storage",
+"title": "Living Storage",
+"image": "https://interwood.pk/cdn/shop/files/CallistoTVUnit-2.png?v=1764685542"
+},
+{
+"handle": "flooring",
+"title": "Flooring",
+"image": "https://interwood.pk/cdn/shop/files/HL1323.jpg?v=1757596185"
+},
+{
+"handle": "living",
+"title": "Living",
+"image": "https://interwood.pk/cdn/shop/collections/astor_sofa_set_in_black_leatherette_9da49002-159d-4533-8133-45d097d35fe3.jpg?v=1734083958"
+},
+{
+"handle": "home-office-desks",
+"title": "Home Office Desks",
+"image": "https://interwood.pk/cdn/shop/files/WhatsApp_Image_2026-01-06_at_2.59.25_PM_2ad768ea-fa24-40fd-b6ff-3db398adc99e.jpg?v=1786010406"
+},
+{
+"handle": "study",
+"title": "Study",
+"image": "https://interwood.pk/cdn/shop/files/WhatsApp_Image_2026-01-06_at_4.59.35_PM.jpg?v=1767958475"
+},
+{
+"handle": "kids-beds",
+"title": "Kids Beds",
+"image": "https://interwood.pk/cdn/shop/files/ValenEnvironmentalVisual_e182c59c-07e0-4603-8fa9-9e43b7169eca.webp?v=1775030301"
+},
+{
+"handle": "kids-storage",
+"title": "Kids Storage",
+"image": "https://interwood.pk/cdn/shop/files/Wilson_BedSide_Yellow.jpg?v=1758277497"
+},
+{
+"handle": "tables-desks",
+"title": "TABLES & DESKS",
+"placeholder": 4
+},
+{
+"handle": "kids-seating-chairs",
+"title": "KIDS SEATING & CHAIRS",
+"placeholder": 5
+},
+{
+"handle": "kids",
+"title": "Kids",
+"image": "https://interwood.pk/cdn/shop/collections/Kids-Furniture.jpg?v=1745390098"
+},
+{
+"handle": "dining",
+"title": "Dining",
+"image": "https://interwood.pk/cdn/shop/collections/fresco_dining_tabel_set_390ff264-638a-4bcf-a935-1e3b369601f4.jpg?v=1734086792"
+},
+{
+"handle": "accessories",
+"title": "ACCESSORIES",
+"image": "https://interwood.pk/cdn/shop/files/Heritage-Clock12-EN_235bc9bf-ba44-4d03-8f9f-64604e194728.png?v=1788860805"
+},
+{
+"handle": "accent-furniture",
+"title": "ACCENT FURNITURE",
+"placeholder": 3
+},
+{
+"handle": "soft-furnishing",
+"title": "SOFT FURNISHING",
+"image": "https://interwood.pk/cdn/shop/files/IkatMat.jpg?v=1759146160"
+},
+{
+"handle": "decor-acc",
+"title": "Decor",
+"image": "https://interwood.pk/cdn/shop/collections/Home-Decore.jpg?v=1745302489"
+},
+{
+"handle": "kitchen-designs",
+"title": "KITCHEN DESIGNS",
+"image": "https://interwood.pk/cdn/shop/files/Dune_3.webp?v=1790317901"
+},
+{
+"handle": "kitchen-accessories",
+"title": "Kitchen Accessories",
+"image": "https://interwood.pk/cdn/shop/products/detergent-basket-for-laundry-and-dishwasher-42694c9-interwood-mobel.png?v=1757335553"
+},
+{
+"handle": "kitchen-appliances",
+"title": "Kitchen Appliances",
+"image": "https://interwood.pk/cdn/shop/products/fg010004385-ed41a7b-interwood-mobel.jpg?v=1757335415"
+},
+{
+"handle": "kitchens",
+"title": "Kitchens",
+"image": "https://interwood.pk/cdn/shop/collections/KITCHEN.webp?v=1775557189"
+},
+{
+"handle": "doors",
+"title": "Doors",
+"image": "https://interwood.pk/cdn/shop/collections/DOOR.webp?v=1775460189"
+},
+{
+"handle": "wardrobes-1",
+"title": "Wardrobes",
+"image": "https://interwood.pk/cdn/shop/files/Wardrobe.png?v=1757596260"
+},
+{
+"handle": "office-tables",
+"title": "Office Tables",
+"image": "https://interwood.pk/cdn/shop/files/Arc-Desk-Credenza.jpg?v=1777704839"
+},
+{
+"handle": "office-chairs",
+"title": "Office Chairs",
+"image": "https://interwood.pk/cdn/shop/collections/OFFICE-CHAIR.webp?v=1775460002"
+},
+{
+"handle": "workstations",
+"title": "Workstations",
+"image": "https://interwood.pk/cdn/shop/files/2_Person_desk.jpg?v=1757596156"
+},
+{
+"handle": "seating",
+"title": "SEATING",
+"image": "https://interwood.pk/cdn/shop/files/Moda_Ottoman.jpg?v=1763022466"
+},
+{
+"handle": "co-working-spaces",
+"title": "CO-WORKING SPACES",
+"image": "https://interwood.pk/cdn/shop/files/Meadow_jpg.jpg?v=1790317012"
+},
+{
+"handle": "office-executive-furniture-sets",
+"title": "OFFICE EXECUTIVE FURNITURE SETS",
+"image": "https://interwood.pk/cdn/shop/files/Arc-Desk-Credenza.jpg?v=1777704839"
+},
+{
+"handle": "office-storage",
+"title": "Office Storage",
+"image": "https://interwood.pk/cdn/shop/files/RemingtonFilingCabinet.jpg?v=1757596441"
+},
+{
+"handle": "office",
+"title": "Office",
+"image": "https://interwood.pk/cdn/shop/files/PinnacleGreyVisual.jpg?v=1770442446"
+},
+{
+"handle": "double-bed-set",
+"title": "Double Bed Set",
+"image": "https://interwood.pk/cdn/shop/files/Sienna_Bed.png?v=1787127952"
+},
+{
+"handle": "best-selling-collection",
+"title": "Best selling products",
+"image": "https://interwood.pk/cdn/shop/files/Untitleddesign_2.png?v=1757335786"
+},
+{
+"handle": "new-collection",
+"title": "New products",
+"image": "https://interwood.pk/cdn/shop/files/Untitleddesign_2.png?v=1757335786"
+},
+{
+"handle": "fees-products",
+"title": "Fees products",
+"image": "https://interwood.pk/cdn/shop/files/Free_M1.webp?v=1790319076"
+},
+{
+"handle": "all",
+"title": "Products",
+"image": "https://interwood.pk/cdn/shop/products/gothic.jpg?v=1757335539"
+},
+{
+"handle": "office-furniture",
+"title": "Office Furniture",
+"image": "https://interwood.pk/cdn/shop/files/2_Person_desk.jpg?v=1757596156"
+},
+{
+"handle": "home-furniture-for-sale",
+"title": "Home Furniture for Sale",
+"image": "https://interwood.pk/cdn/shop/files/Omni_Wing_Chair_Olive_Green.jpg?v=1784636202"
+},
+{
+"handle": "office-furniture-for-sale",
+"title": "Office Furniture for Sale",
+"placeholder": 3
+},
+{
+"handle": "decor-for-sale",
+"title": "Decor for Sale",
+"placeholder": 4
+},
+{
+"handle": "kitchen-for-sale",
+"title": "Kitchen for Sale",
+"placeholder": 5
+},
+{
+"handle": "sidus",
+"title": "Sidus Executive Set",
+"image": "https://interwood.pk/cdn/shop/collections/Sidus_Desk_with_Chairs.jpg?v=1699246171"
+},
+{
+"handle": "best-sellers",
+"title": "Best Sellers",
+"image": "https://interwood.pk/cdn/shop/files/Charm_Bed_Set_01_ad48b206-eb2d-48dd-b00c-5ff90f407b56.jpg?v=1757596734"
+},
+{
+"handle": "sale-items",
+"title": "Sale Items",
+"image": "https://interwood.pk/cdn/shop/files/WhatsApp_Image_2026-01-06_at_2.59.25_PM_2ad768ea-fa24-40fd-b6ff-3db398adc99e.jpg?v=1786010406"
+},
+{
+"handle": "dining-1",
+"title": "Dining",
+"placeholder": 3
+},
+{
+"handle": "living-1",
+"title": "Living",
+"placeholder": 4
+},
+{
+"handle": "tag-collection",
+"title": "tag collection",
+"image": "https://interwood.pk/cdn/shop/products/fg050000328.jpg?v=1757335473"
+},
+{
+"handle": "new-arrivals",
+"title": "New Arrivals",
+"image": "https://interwood.pk/cdn/shop/files/Aura_Bed.png?v=1787132606"
+},
+{
+"handle": "mat",
+"title": "Mat",
+"placeholder": 6
+},
+{
+"handle": "accent-tables",
+"title": "Accent Tables",
+"placeholder": 2
+},
+{
+"handle": "all-1",
+"title": "All",
+"image": "https://interwood.pk/cdn/shop/files/ChatGPT_Image_Aug_8_2025_03_04_18_PM.png?v=1757336084"
+},
+{
+"handle": "occasional-chairs",
+"title": "Occasional Chairs",
+"image": "https://interwood.pk/cdn/shop/files/Meadow_jpg.jpg?v=1790317012"
+},
+{
+"handle": "exclusive-flash-deals",
+"title": "Exclusive Flash deals.",
+"placeholder": 5
+},
+{
+"handle": "living-room-wedding",
+"title": "Living room wedding",
+"placeholder": 1
+},
+{
+"handle": "dining-table-sets-wedding",
+"title": "Dining table sets wedding",
+"placeholder": 6
+},
+{
+"handle": "retail-solutions",
+"title": "Retail Solutions",
+"image": "https://interwood.pk/cdn/shop/collections/retail_solutions.jpg?v=1728621602"
+},
+{
+"handle": "omega",
+"title": "Omega Executive Set",
+"image": "https://interwood.pk/cdn/shop/collections/Omega.webp?v=1753776747"
+},
+{
+"handle": "wedding-packages",
+"title": "Wedding Packages",
+"placeholder": 4
+},
+{
+"handle": "ottomans-stools-benches",
+"title": "Ottomans, Stools & Benches",
+"image": "https://interwood.pk/cdn/shop/files/Button_OttomanLimitedEdition.webp?v=1765883614"
+},
+{
+"handle": "shelves-racks",
+"title": "Shelves & Racks",
+"image": "https://interwood.pk/cdn/shop/files/Sable_Console_Mirror_Vis_06107a66-d38c-4741-b511-9ff8e768031f.jpg?v=1762857500"
+},
+{
+"handle": "kids-study-tables-and-chairs",
+"title": "Kids Study Tables and Chairs",
+"image": "https://interwood.pk/cdn/shop/files/Millie_Study_Chair.png?v=1787132276"
+},
+{
+"handle": "all-decor",
+"title": "All Decor",
+"image": "https://interwood.pk/cdn/shop/files/Untitleddesign_2.png?v=1757335786"
+},
+{
+"handle": "tablet-arm-chairs",
+"title": "Tablet Arm Chairs",
+"image": "https://interwood.pk/cdn/shop/files/Mentor_Study_Chair_With_Tablet_Arm.png?v=1784090834"
+},
+{
+"handle": "sofa-sets-offer-homepage",
+"title": "Sofa Sets Offer Homepage",
+"image": "https://interwood.pk/cdn/shop/files/Oryn_3_Seater_Sofa.webp?v=1770700445"
+},
+{
+"handle": "hot-selling-items-homepage",
+"title": "Hot Selling Items Homepage",
+"image": "https://interwood.pk/cdn/shop/files/Quest_Wardrobe.jpg?v=1757335663"
+},
+{
+"handle": "workstations-layout-linear",
+"title": "Workstations Layout Linear",
+"image": "https://interwood.pk/cdn/shop/files/BudgetProWorkstationsShaped02Person.jpg?v=1757596467"
+},
+{
+"handle": "workstations-layout-y",
+"title": "Workstations Layout Y",
+"image": "https://interwood.pk/cdn/shop/products/ariel-y-shape.jpg?v=1768909140"
+},
+{
+"handle": "workstations-layout-grid",
+"title": "Workstations Layout Grid",
+"image": "https://interwood.pk/cdn/shop/files/Lunar2PersonsGridWorkstations.jpg?v=1757335962"
+},
+{
+"handle": "yale-safes",
+"title": "Yale Safes",
+"placeholder": 3
+},
+{
+"handle": "coalesce-bedroom",
+"title": "Bedroom Furniture",
+"image": "https://interwood.pk/cdn/shop/collections/Coalesce_Beds.webp?v=1779690654"
+},
+{
+"handle": "coalesce-living",
+"title": "Coalesce Living",
+"image": "https://interwood.pk/cdn/shop/collections/Coalesce_Bed.png?v=1776422215"
+},
+{
+"handle": "coalesce-dining",
+"title": "Coalesce Dining",
+"image": "https://interwood.pk/cdn/shop/files/Coalesce_Arbour_Dining_Chair_Vis.jpg?v=1757596245"
+},
+{
+"handle": "home-accessories",
+"title": "HOME ACCESSORIES",
+"placeholder": 6
+},
+{
+"handle": "bedside-tables",
+"title": "BEDSIDE TABLES",
+"image": "https://interwood.pk/cdn/shop/files/Wilson_BedSide_Red.webp?v=1770700383"
+},
+{
+"handle": "center-side-tables",
+"title": "CENTER & SIDE TABLES",
+"image": "https://interwood.pk/cdn/shop/files/CynosureRunner.jpg?v=1759133123"
+},
+{
+"handle": "kitchen-accessories-1",
+"title": "KITCHEN ACCESSORIES",
+"image": "https://interwood.pk/cdn/shop/products/fg010004370-465f858-interwood-mobel.jpg?v=1757335418"
+},
+{
+"handle": "meeting-tables-pods",
+"title": "MEETING TABLES & PODS",
+"image": "https://interwood.pk/cdn/shop/files/Untitleddesign_11.jpg?v=1757335995"
+},
+{
+"handle": "office-accessories",
+"title": "OFFICE ACCESSORIES",
+"placeholder": 1
+},
+{
+"handle": "office-chairs-1",
+"title": "OFFICE CHAIRS",
+"image": "https://interwood.pk/cdn/shop/files/Mirra_Chair_8d689d10-52dc-485d-b138-a8693059017e.jpg?v=1770726059"
+},
+{
+"handle": "office-desks",
+"title": "OFFICE DESKS",
+"placeholder": 2
+},
+{
+"handle": "office-storage-1",
+"title": "OFFICE STORAGE",
+"image": "https://interwood.pk/cdn/shop/files/ozone-2-0-office-filing-cabinet-base-height-84b0809-interwood-mobel.png?v=1757335574"
+},
+{
+"handle": "racking-systems",
+"title": "RACKING SYSTEMS",
+"image": "https://interwood.pk/cdn/shop/files/FG990031068.jpg?v=1757596385"
+},
+{
+"handle": "reception-counters-1",
+"title": "RECEPTION COUNTERS",
+"placeholder": 5
+},
+{
+"handle": "shelving-wall-panels",
+"title": "SHELVING & WALL PANELS",
+"image": "https://interwood.pk/cdn/shop/files/Sienna_Media_Wall_Panel.png?v=1758283002"
+},
+{
+"handle": "sofas-1",
+"title": "SOFAS",
+"image": "https://interwood.pk/cdn/shop/files/Cooper-Sofa-RH-3S_jpg.jpg?v=1778743831"
+},
+{
+"handle": "workstations-1",
+"title": "WORKSTATIONS",
+"image": "https://interwood.pk/cdn/shop/files/L1_6.jpg?v=1757335961"
+},
+{
+"handle": "wardrobe-accessories",
+"title": "WARDROBE ACCESSORIES",
+"image": "https://interwood.pk/cdn/shop/products/fg040000232-89996a5-interwood-mobel.jpg?v=1757335438"
+},
+{
+"handle": "stools-ottomans",
+"title": "STOOLS & OTTOMANS",
+"placeholder": 4
+},
+{
+"handle": "match-for-champions",
+"title": "Match for Champions",
+"placeholder": 5
+},
+{
+"handle": "bed-sets-offer-homepage",
+"title": "Bed Sets Offer Homepage",
+"image": "https://interwood.pk/cdn/shop/files/WhatsApp_Image_2025-02-26_at_3.23.11_PM.jpg?v=1757596259"
+},
+{
+"handle": "cushion-filling",
+"title": "Cushion Filling",
+"image": "https://interwood.pk/cdn/shop/files/Untitleddesign_2.png?v=1757335786"
+},
+{
+"handle": "cork-mats",
+"title": "Cork Mats",
+"image": "https://interwood.pk/cdn/shop/files/IkatMat.jpg?v=1759146160"
+},
+{
+"handle": "wall-paintings",
+"title": "Wall Paintings",
+"placeholder": 3
+},
+{
+"handle": "modular-storage",
+"title": "Modular Storage",
+"image": "https://interwood.pk/cdn/shop/files/Single_Box.jpg?v=1758282618"
+},
+{
+"handle": "clothes-hangers",
+"title": "Clothes Hangers",
+"image": "https://interwood.pk/cdn/shop/files/WhatsApp_Image_2025-04-23_at_9.13.54_AM.jpg?v=1757335662"
+},
+{
+"handle": "table-storage",
+"title": "Table Storage",
+"image": "https://interwood.pk/cdn/shop/files/FG990031072_09f73959-59d6-4951-a82c-a03908393232.jpg?v=1757596378"
+},
+{
+"handle": "part-sale",
+"title": "Part Sale",
+"placeholder": 6
+},
+{
+"handle": "coalesce-office-manager-desks",
+"title": "Coalesce Office Manager Desks",
+"image": "https://interwood.pk/cdn/shop/files/Orwell-Desk-Left.png?v=1757596161"
+},
+{
+"handle": "coalesce-office-workstations",
+"title": "Coalesce Office Workstations",
+"image": "https://interwood.pk/cdn/shop/files/Orbis-Workstation-4P.png?v=1757595683"
+},
+{
+"handle": "coalesce-office-sofas",
+"title": "Coalesce Office Sofas",
+"image": "https://interwood.pk/cdn/shop/files/Orwell_Sofa_Final.png?v=1758255484"
+},
+{
+"handle": "coalesce-office-storage",
+"title": "Coalesce Office Storage",
+"image": "https://interwood.pk/cdn/shop/files/Orwell-Drawer-Pedestal.png?v=1757596155"
+},
+{
+"handle": "coalesce-office-tables",
+"title": "Coalesce Office Tables",
+"image": "https://interwood.pk/cdn/shop/collections/Coalesce-Office-Range.webp?v=1776340263"
+},
+{
+"handle": "dining-trolleys",
+"title": "Dining Trolleys",
+"image": "https://interwood.pk/cdn/shop/files/OtisTeaTrolley_3aa37a9a-4f78-4045-9a3c-a7e794133dd8.webp?v=1757595712"
+},
+{
+"handle": "berlin",
+"title": "Berlin",
+"image": "https://interwood.pk/cdn/shop/collections/Berlin-Executive-Series.webp?v=1776340175"
+},
+{
+"handle": "wedding-season",
+"title": "Wedding Season",
+"placeholder": 3
+},
+{
+"handle": "orbis",
+"title": "Orbis",
+"image": "https://interwood.pk/cdn/shop/collections/Orbis-Workstation-4P-2_b4b1361d-66bc-4bcd-aac1-0882dd5fe17f.png?v=1763381211"
+},
+{
+"handle": "orwell",
+"title": "Orwell",
+"image": "https://interwood.pk/cdn/shop/collections/Orwell-Workstation-4P-Index2.png?v=1763381167"
+},
+{
+"handle": "coat-hanger",
+"title": "Coat Hanger",
+"image": "https://interwood.pk/cdn/shop/products/fg050000027-cd43dd9-interwood-mobel_1.jpg?v=1757596755"
+},
+{
+"handle": "clocks",
+"title": "Clocks",
+"image": "https://interwood.pk/cdn/shop/files/Heritage-Clock17-EN.png?v=1788859480"
+},
+{
+"handle": "arc-2-0",
+"title": "Arc 2.0",
+"image": "https://interwood.pk/cdn/shop/collections/Arc_2.0_Desk.png?v=1790583534"
+},
+{
+"handle": "offer-of-the-week",
+"title": "Offer Of The Week",
+"image": "https://interwood.pk/cdn/shop/files/WhatsApp_Image_2026-01-06_at_2.59.25_PM_2ad768ea-fa24-40fd-b6ff-3db398adc99e.jpg?v=1786010406"
+},
+{
+"handle": "sofa-chair",
+"title": "Sofa Chair",
+"image": "https://interwood.pk/cdn/shop/files/WhatsApp_Image_2025-04-21_at_6.23.14_PM.jpg?v=1757596658"
+},
+{
+"handle": "nexis-executive-set",
+"title": "Nexis Executive Set",
+"image": "https://interwood.pk/cdn/shop/collections/Nexis-Executive-Series.webp?v=1776340377"
+},
+{
+"handle": "como-range",
+"title": "Como Range",
+"image": "https://interwood.pk/cdn/shop/collections/Como-Range.webp?v=1776341585"
+},
+{
+"handle": "patio-range",
+"title": "Patio Range",
+"image": "https://interwood.pk/cdn/shop/collections/Patio-Outdoor-Range.webp?v=1776341574"
+},
+{
+"handle": "erin-range",
+"title": "Erin Range",
+"image": "https://interwood.pk/cdn/shop/collections/Erin-Range.webp?v=1776341563"
+},
+{
+"handle": "romano-range",
+"title": "Romano Range",
+"image": "https://interwood.pk/cdn/shop/collections/Romano-Sofa-Set.webp?v=1776341549"
+},
+{
+"handle": "ariel-2-0",
+"title": "Ariel 2.0",
+"image": "https://interwood.pk/cdn/shop/files/Ariel2.0SideRackRight.jpg?v=1785910153"
+},
+{
+"handle": "wedding-campaign-products",
+"title": "Wedding Campaigns 2026",
+"image": "https://interwood.pk/cdn/shop/files/WhatsApp_Image_2025-04-23_at_9.13.54_AM.jpg?v=1757335662"
+}
+]

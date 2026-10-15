@@ -1,93 +1,16 @@
-import { CheckIcon, PackageIcon, TruckIcon } from '@/components/icons';
-
-const STEPS = [
-  { value: 'PENDING', label: 'Order Placed', note: 'We have received your order' },
-  { value: 'CONFIRMED', label: 'Order Confirmed', note: 'Confirmed by our team over phone' },
-  { value: 'PROCESSING', label: 'In Production', note: 'Your furniture is being crafted' },
-  { value: 'SHIPPED', label: 'Shipped', note: 'On its way to your address' },
-  { value: 'DELIVERED', label: 'Delivered & Installed', note: 'Enjoy your new furniture' },
-] as const;
-
-/**
- * Vertical order-status timeline: PENDING → CONFIRMED → PROCESSING → SHIPPED → DELIVERED.
- * CANCELLED renders a dedicated notice instead of the timeline.
- */
-export function StatusTimeline({ status }: { status: string }) {
-  if (status === 'CANCELLED') {
-    return (
-      <div className="rounded-2xl bg-sale/5 px-5 py-4">
-        <p className="text-sm font-semibold uppercase tracking-wide text-sale">Order Cancelled</p>
-        <p className="mt-1 text-xs leading-relaxed text-ink-muted">
-          This order has been cancelled. If you believe this is a mistake, please contact us at +92-42-111-203-203.
-        </p>
-      </div>
-    );
-  }
-
-  const currentIndex = Math.max(
-    0,
-    STEPS.findIndex((s) => s.value === status),
-  );
-
+/** Live `.iw-timeline`: grey 2px rail, green 12px dots, bold status + muted meta line. */
+export function StatusTimeline({ events }: { events: { status: string; meta: string }[] }) {
   return (
-    <ol className="relative">
-      {STEPS.map((step, i) => {
-        const done = i < currentIndex;
-        const current = i === currentIndex;
-        const last = i === STEPS.length - 1;
-        return (
-          <li key={step.value} className="relative flex gap-4 pb-7 last:pb-0">
-            {!last && (
-              <span
-                aria-hidden
-                className={`absolute left-[15px] top-9 h-[calc(100%-2rem)] w-0.5 ${done ? 'bg-brand' : 'bg-brand-100'}`}
-              />
-            )}
-            <span
-              className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 ${
-                done
-                  ? 'border-brand bg-brand text-white'
-                  : current
-                    ? 'border-brand bg-white text-brand'
-                    : 'border-brand-100 bg-brand-50 text-brand-300'
-              }`}
-            >
-              {done ? (
-                <CheckIcon className="h-4 w-4" strokeWidth={2.5} />
-              ) : current ? (
-                step.value === 'SHIPPED' ? (
-                  <TruckIcon className="h-4 w-4" />
-                ) : step.value === 'PROCESSING' ? (
-                  <PackageIcon className="h-4 w-4" />
-                ) : (
-                  <span className="h-2.5 w-2.5 rounded-full bg-brand" />
-                )
-              ) : (
-                <span className="h-2 w-2 rounded-full bg-brand-200" />
-              )}
-            </span>
-            <span className="pt-0.5">
-              <span
-                className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
-                  done
-                    ? 'bg-brand-50 text-brand-700'
-                    : current
-                      ? 'bg-brand text-white'
-                      : 'bg-cream-soft text-ink-light'
-                }`}
-              >
-                {step.label}
-                {current && (
-                  <span className="text-[10px] font-bold uppercase tracking-wide text-white/80">Current</span>
-                )}
-              </span>
-              <span className={`mt-1 block text-xs ${done || current ? 'text-ink-muted' : 'text-ink-light/80'}`}>
-                {step.note}
-              </span>
-            </span>
-          </li>
-        );
-      })}
+    <ol className="m-0 list-none p-0">
+      {events.map((e, i) => (
+        <li
+          key={i}
+          className="relative ml-[7px] border-l-2 border-[#e5e7eb] pb-[18px] pl-7 last:pb-0 before:absolute before:-left-[7px] before:top-0.5 before:h-3 before:w-3 before:rounded-full before:bg-[#087443] before:content-['']"
+        >
+          <span className="block text-[15px] font-[750] leading-[1.4] text-[#111827]">{e.status}</span>
+          <span className="mt-1 block text-[13px] leading-[1.4] text-[#6b7280]">{e.meta}</span>
+        </li>
+      ))}
     </ol>
   );
 }

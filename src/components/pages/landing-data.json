@@ -1,0 +1,186 @@
+{
+ "home-furniture": [
+  {
+   "kind": "banner",
+   "image": "/images/landing/home-furniture-banner.jpg",
+   "ratio": 31.25
+  },
+  {
+   "kind": "richText",
+   "heading": "Create a home that reflects you.",
+   "html": "<p>Explore furniture for every room & every mood.</p>"
+  },
+  {
+   "kind": "imageText",
+   "image": "/images/landing/home-furniture-1.png",
+   "ratio": 76.08695652173913,
+   "imageFirst": true,
+   "disableTop": true,
+   "disableBottom": true,
+   "heading": "Bedroom",
+   "html": "<p>Turn your bedroom into a space of calm, comfort, and quiet luxury. From upholstered bed sets to elegant dressing tables and wardrobes — find everything to create your dream escape.<br/><br/><a href=\"/collections/bedroom\">learn more</a></p>"
+  },
+  {
+   "kind": "imageText",
+   "image": "/images/landing/home-furniture-2.png",
+   "ratio": 76.08695652173913,
+   "imageFirst": false,
+   "disableTop": true,
+   "disableBottom": true,
+   "heading": "Living",
+   "html": "<p>The soul of your home starts here.\u000bExplore plush sofas, smart sofa beds, and accents that bring warmth and character to every gathering space.<br/><br/><a href=\"/collections/living\">learn more</a></p>"
+  },
+  {
+   "kind": "imageText",
+   "image": "/images/landing/home-furniture-3.png",
+   "ratio": 76.08695652173913,
+   "imageFirst": true,
+   "disableTop": true,
+   "disableBottom": false,
+   "heading": "Dining",
+   "html": "<p>Celebrate togetherness in style.\u000bWhether it’s family dinners or friendly brunches — our dining tables, chairs, and bar stools set the perfect tone.<br/><br/><a href=\"/collections/dining\">learn more</a></p>"
+  },
+  {
+   "kind": "imageText",
+   "image": "/images/landing/home-furniture-4.png",
+   "ratio": 76.08695652173913,
+   "imageFirst": false,
+   "disableTop": true,
+   "disableBottom": true,
+   "heading": "Seating",
+   "html": "<p>Make room for comfort and style in every corner. From occasional chairs to ottomans and benches — find seating that’s as versatile as it is beautiful.</p><p><br/><a href=\"/collections/occasional-chairs\">learn more</a></p>"
+  },
+  {
+   "kind": "imageText",
+   "image": "/images/landing/home-furniture-5.png",
+   "ratio": 76.08695652173913,
+   "imageFirst": true,
+   "disableTop": true,
+   "disableBottom": false,
+   "heading": "Recliners",
+   "html": "<p>Your personal comfort zone, reimagined.<br/>Choose from manual, power, or lift recliners — each crafted to bring you effortless relaxation with timeless design.<br/><br/><a href=\"/collections/recliners\">learn more</a></p>"
+  },
+  {
+   "kind": "imageText",
+   "image": "/images/landing/home-furniture-6.png",
+   "ratio": 76.08695652173913,
+   "imageFirst": false,
+   "disableTop": true,
+   "disableBottom": false,
+   "heading": "Kids",
+   "html": "<p>Let imagination take center stage. From playful bunk beds to functional study tables, find furniture that grows with your child — safely and stylishly.<br/><br/><a href=\"/collections/kids\">learn more</a></p>"
+  },
+  {
+   "kind": "imageText",
+   "image": "/images/landing/home-furniture-7.png",
+   "ratio": 76.08695652173913,
+   "imageFirst": true,
+   "disableTop": true,
+   "disableBottom": false,
+   "heading": "Study",
+   "html": "<p>Design a space where focus flows and ideas come alive. Our study tables are built for clarity, comfort, and everyday inspiration.<br/><br/><a href=\"/collections/coalesce-office-tables\">learn more</a></p>"
+  },
+  {
+   "kind": "imageText",
+   "image": "/images/landing/home-furniture-8.png",
+   "ratio": 76.08695652173913,
+   "imageFirst": false,
+   "disableTop": true,
+   "disableBottom": false,
+   "heading": "Tables",
+   "html": "<p>The finishing touch to every room. Whether it’s a bold center table or nested side pieces — our tables bring balance, charm, and functionality together.<br/><br/><a href=\"/collections/center-table\">learn more</a></p>"
+  },
+  {
+   "kind": "imageText",
+   "image": "/images/landing/home-furniture-9.png",
+   "ratio": 76.08695652173913,
+   "imageFirst": true,
+   "disableTop": true,
+   "disableBottom": false,
+   "heading": "Storage",
+   "html": "<p>Style meets smart organization. Discover TV units, shelves, and cabinets that keep your home tidy — and looking effortlessly chic.<br/><br/><a href=\"/collections/living-storage\">learn more</a></p>"
+  }
+ ],
+ "office-furniture": [
+  {
+   "kind": "banner",
+   "image": "/images/landing/office-furniture-banner.jpg",
+   "ratio": 31.25
+  },
+  {
+   "kind": "richText",
+   "heading": "Create a workspace that works for you.",
+   "html": "<p>Explore smart, stylish furniture for every role, every routine.</p>"
+  },
+  {
+   "kind": "imageText",
+   "image": "/images/landing/office-furniture-1.png",
+   "ratio": 76.08695652173913,
+   "imageFirst": true,
+   "disableTop": true,
+   "disableBottom": false,
+   "heading": "Executive Sets",
+   "html": "<p>Make a lasting impression with our premium executive collections. From Omega to Callisto — discover curated office sets that blend authority, elegance, and innovation.<br/></p><p><a href=\"/collections/office-executive-furniture-sets\">learn more</a></p>"
+  },
+  {
+   "kind": "imageText",
+   "image": "/images/landing/office-furniture-2.png",
+   "ratio": 76.08695652173913,
+   "imageFirst": false,
+   "disableTop": true,
+   "disableBottom": false,
+   "heading": "Seating",
+   "html": "<p>Comfort that keeps you productive. Discover sleek office sofas for lounges, waiting areas, or a polished executive touch.<br/></p><p><a href=\"/collections/seating\">learn more</a></p>"
+  },
+  {
+   "kind": "imageText",
+   "image": "/images/landing/office-furniture-3.png",
+   "ratio": 76.08695652173913,
+   "imageFirst": true,
+   "disableTop": true,
+   "disableBottom": false,
+   "heading": "Workstations",
+   "html": "<p>Tailored designs for teams that think ahead. Choose from Ozone, Ariel, Lunar, Triton, and Budget Pro — modern modular systems for every work style.<br/><a href=\"/collections/workstations\">learn more</a></p>"
+  },
+  {
+   "kind": "imageText",
+   "image": "/images/landing/office-furniture-4.png",
+   "ratio": 76.08695652173913,
+   "imageFirst": false,
+   "disableTop": true,
+   "disableBottom": true,
+   "heading": "Office Tables",
+   "html": "<p>From managerial command centers to sleek meeting tables, every surface matters. Explore manager tables, executive desks, side racks, center tables, and more — designed to enhance both aesthetics and function.</p><p><a href=\"/collections/office-tables\">learn more</a></p>"
+  },
+  {
+   "kind": "imageText",
+   "image": "/images/landing/office-furniture-5.png",
+   "ratio": 76.08695652173913,
+   "imageFirst": true,
+   "disableTop": true,
+   "disableBottom": true,
+   "heading": "Office Chairs",
+   "html": "<p>Support your workday with comfort that lasts. Discover manager chairs, visitor seating, and ergonomic designs — made to move with you, from boardroom to break time.<br/><a href=\"/collections/office-chairs\">learn more</a></p>"
+  },
+  {
+   "kind": "imageText",
+   "image": "/images/landing/office-furniture-6.png",
+   "ratio": 76.08695652173913,
+   "imageFirst": false,
+   "disableTop": true,
+   "disableBottom": false,
+   "heading": "Co-Working Spaces",
+   "html": "<p>Built for agile teams and creative minds. From stools and chairs to private phone pods — create spaces that adapt to the way you work.<br/><a href=\"/collections/co-working-spaces\">learn more</a></p>"
+  },
+  {
+   "kind": "imageText",
+   "image": "/images/landing/office-furniture-7.png",
+   "ratio": 76.08695652173913,
+   "imageFirst": true,
+   "disableTop": true,
+   "disableBottom": false,
+   "heading": "Storage",
+   "html": "<p>Declutter your office without compromising on style. Choose from credenzas, filing cabinets, and drawer pedestals — crafted to keep your workspace organized and efficient.<br/><a href=\"/collections/office-storage\">learn more</a></p>"
+  }
+ ]
+}

@@ -1,31 +1,33 @@
 import Link from 'next/link';
-import { ChevronRight } from '@/components/icons';
 
 export type Crumb = { label: string; href?: string };
 
-/** Breadcrumbs rendered as pill chips; the current page is a static emphasized chip. */
+/**
+ * Live `nav.breadcrumbs`: plain 13px text links separated by a faint "/", aligned to the
+ * 40px header edge (15px on mobile), no chips. Current page is plain text.
+ * Pass `className` to adjust spacing (e.g. `px-0` when already inside a container).
+ */
 export function Breadcrumbs({ items, className }: { items: Crumb[]; className?: string }) {
   return (
-    <nav aria-label="Breadcrumb" className={`flex flex-wrap items-center gap-1 text-xs text-ink-muted ${className ?? ''}`}>
+    <nav
+      aria-label="breadcrumbs"
+      className={`no-scrollbar flex w-full items-center overflow-x-auto whitespace-nowrap px-[15px] py-[10px] text-[13px] font-normal leading-[22.75px] text-accent md:px-10 ${className ?? ''}`}
+    >
       {items.map((item, i) => {
         const last = i === items.length - 1;
         return (
-          <span key={`${item.label}-${i}`} className="flex items-center gap-1">
-            {i > 0 && <ChevronRight className="h-3 w-3 text-ink-light" aria-hidden />}
+          <span key={`${item.label}-${i}`} className="inline-flex items-center">
+            {i > 0 && (
+              <i className="mx-2 not-italic opacity-20" aria-hidden>
+                /
+              </i>
+            )}
             {item.href && !last ? (
-              <Link
-                href={item.href}
-                className="rounded-full bg-cream-soft px-3 py-1 transition hover:bg-brand hover:text-white"
-              >
+              <Link href={item.href} className="text-accent hover:text-accent2">
                 {item.label}
               </Link>
             ) : (
-              <span
-                className={last ? 'rounded-full bg-cream-soft px-3 py-1 font-semibold text-ink-dark' : undefined}
-                aria-current={last ? 'page' : undefined}
-              >
-                {item.label}
-              </span>
+              <span aria-current={last ? 'page' : undefined}>{item.label}</span>
             )}
           </span>
         );

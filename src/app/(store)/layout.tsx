@@ -1,35 +1,39 @@
-import { Header } from '@/components/layout/Header';
-import { Footer, WhatsappButton } from '@/components/layout/Footer';
+import { AnnouncementBar, Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
+import { BackToTop, WhatsappButton } from '@/components/layout/FloatingButtons';
+import { CartDrawer } from '@/components/layout/CartDrawer';
 import { getMenu, getSettingsMap } from '@/lib/queries';
-import type { MenuNode } from '@/lib/queries';
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
-  const [menu, foot1, foot2, foot3, topbar, settings] = await Promise.all([
+  const [menu, information, userArea, seo, settings] = await Promise.all([
     getMenu('MAIN'),
     getMenu('FOOTER_1'),
     getMenu('FOOTER_2'),
-    getMenu('FOOTER_3'),
-    getMenu('TOPBAR'),
+    getMenu('FOOTER_SEO'),
     getSettingsMap(),
   ]);
 
-  const columns = [
-    { title: 'About', items: foot1 },
-    { title: 'Customer Support', items: foot2 },
-    { title: 'Shop', items: foot3 },
-  ];
+  const announcement = settings.announcement ?? '';
 
   return (
-    <>
-      <Header
-        menu={menu}
-        announcement={settings.announcement ?? ''}
-        phone={settings.phone ?? ''}
-        topbarLinks={topbar.map((item) => ({ label: item.label, href: item.href }))}
+    <div className="theme-store">
+      <AnnouncementBar
+        text={announcement}
+        href={settings.announcementHref || undefined}
+        ctaLabel={settings.announcementCta || undefined}
+        ctaHref={settings.announcementCtaHref || undefined}
       />
-      <main className="min-h-[60vh]">{children}</main>
-      <Footer columns={columns} settings={settings} />
+      <Header menu={menu} hasAnnouncement={announcement !== ''} />
+      <main>{children}</main>
+      <Footer
+        information={information}
+        userArea={userArea}
+        seo={seo.map((group) => ({ title: group.label, items: group.children }))}
+        settings={settings}
+      />
+      <CartDrawer />
+      <BackToTop />
       <WhatsappButton whatsapp={settings.whatsapp ?? ''} />
-    </>
+    </div>
   );
 }

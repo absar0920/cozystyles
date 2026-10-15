@@ -1,60 +1,36 @@
-import type { SVGProps } from 'react';
-import { HeartIcon } from '@/components/icons';
+/** Live leading padding: 15 × (U+200E LEFT-TO-RIGHT MARK + space) before the text. */
+const LEAD = '\u200E '.repeat(15);
 
-/** Brand-toned scrolling promo strip shown directly under the hero slider. */
+const MESSAGES = ['FREE Nationwide Delivery!', 'FREE Nationwide Delivery!'];
 
-const MESSAGE = 'FREE Nationwide Delivery!';
-const REPEATS = 10;
-
-/** Inline sofa glyph matching the stroke style of @/components/icons. */
-const SofaIcon = (p: SVGProps<SVGSVGElement>) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.8}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...p}
-  >
-    <path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3" />
-    <path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1H6v-1a2 2 0 0 0-4 0Z" />
-    <path d="M4 18v2M20 18v2" />
-  </svg>
-);
-
-function MarqueeCopy({ ariaHidden = false }: { ariaHidden?: boolean }) {
+function Group({ hidden }: { hidden?: boolean }) {
   return (
-    <span aria-hidden={ariaHidden} className="flex shrink-0 items-center">
-      {Array.from({ length: REPEATS }).map((_, i) => (
-        <span
-          key={i}
-          className="flex items-center whitespace-nowrap text-[13px] font-bold uppercase tracking-wider text-brand-800"
-        >
-          {MESSAGE}
-          <span aria-hidden className="mx-4 flex items-center text-brand-400">
-            {i % 2 === 0 ? <SofaIcon className="h-3.5 w-3.5" /> : <HeartIcon className="h-3.5 w-3.5" />}
+    <div className="flex shrink-0" aria-hidden={hidden || undefined}>
+      {MESSAGES.map((m, i) => (
+        <div key={i} className="block px-[5vw]">
+          <span className="inline-flex items-center text-accent">
+            {LEAD}
+            {m}
           </span>
-        </span>
+        </div>
       ))}
-    </span>
+    </div>
   );
 }
 
 /**
- * Infinite horizontal marquee. The animated track holds two identical copies
- * and slides by -50%, so the loop is seamless. Screen readers get the
- * message once via the sr-only paragraph.
+ * Live `.scrolling-text`: yellow strip, "FREE Nationwide Delivery!" scrolling left.
+ * Two identical groups in one track; the track moves −50% (= one group) every 20s.
  */
 export function MarqueeStrip() {
   return (
-    <div className="overflow-hidden bg-brand-50 py-2.5" role="presentation">
-      <p className="sr-only">{MESSAGE}</p>
-      <div className="flex w-max animate-marquee">
-        <MarqueeCopy />
-        <MarqueeCopy ariaHidden />
+    <section className="mb-[25px] bg-[#f6e84a] text-black md:mb-10" aria-label="Announcement">
+      <div className="flex items-center overflow-hidden whitespace-nowrap py-[15px] text-[16px] font-medium leading-[28px] md:text-[18px] md:leading-[31.5px]">
+        <div className="flex w-max animate-marquee [animation-duration:20s] motion-reduce:animate-none">
+          <Group />
+          <Group hidden />
+        </div>
       </div>
-    </div>
+    </section>
   );
 }

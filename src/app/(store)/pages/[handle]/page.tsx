@@ -1,25 +1,53 @@
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { getPageByHandle } from '@/lib/queries';
-import { Breadcrumbs } from '@/components/catalog/Breadcrumbs';
-import { ContactForm } from '@/components/pages/ContactForm';
-import { decodeEntities, stripHtml } from '@/components/pages/content';
+import { AboutPage } from '@/components/pages/AboutPage';
+import { BerlinPage } from '@/components/pages/BerlinPage';
+import { Catalogues } from '@/components/pages/Catalogues';
+import { LandingPage } from '@/components/pages/LandingPage';
+import { ContactPage } from '@/components/pages/ContactPage';
+import { ComplaintForm, LeadForm, TrackTicket } from '@/components/pages/FormPages';
+import { PaymentPopup } from '@/components/pages/PaymentPopup';
+import { StoreLocatorPage } from '@/components/pages/StoreLocator';
+import { WeddingBuilder } from '@/components/pages/WeddingBuilder';
+import { cleanBodyHtml, decodeEntities, stripHtml } from '@/components/pages/content';
+import '@/components/pages/content.css';
 
 export const dynamic = 'force-dynamic';
 
 type PageParams = Promise<{ handle: string }>;
 
+/**
+ * Pages whose live markup is a theme/app section rather than rich text are rebuilt as components
+ * (their DB body is kept for metadata only). Everything else renders the DB body with the live
+ * `template-page` rich-text styling. Live shows no breadcrumb or page title on any of them.
+ */
+const SECTION_PAGES: Record<string, () => React.ReactNode> = {
+  'about-us': () => <AboutPage />,
+  about: () => <AboutPage />,
+  contact: () => <ContactPage />,
+  'store-locator': () => <StoreLocatorPage />,
+  authorized: () => <StoreLocatorPage dealersOnly />,
+  catalogues: () => <Catalogues />,
+  'lead-form': () => <LeadForm />,
+  'loyalty-form': () => null, // the live app block renders nothing
+  'support-complaint-form': () => <ComplaintForm />,
+  'track-your-ticket': () => <TrackTicket />,
+  'wedding-package-builder': () => <WeddingBuilder />,
+  // department landing pages (theme sections, data from scripts/fidelity/landing.ts)
+  'home-furniture': () => <LandingPage handle="home-furniture" />,
+  'office-furniture': () => <LandingPage handle="office-furniture" />,
+  berlin: () => <BerlinPage />, // assets: scripts/fidelity/berlin.ts
+};
+
 export async function generateMetadata({ params }: { params: PageParams }): Promise<Metadata> {
   const { handle } = await params;
   if (handle === 'track-your-order') return { title: 'Track Your Order' };
   const page = await getPageByHandle(handle);
-  if (!page) return { title: 'Page not found' };
+  if (!page || !page.published) return { title: 'Page not found' };
   const title = decodeEntities(page.seoTitle?.trim() || page.title);
   const description = page.seoDescription?.trim() || stripHtml(page.bodyHtml).slice(0, 160);
-  return {
-    title,
-    ...(description ? { description: description.slice(0, 160) } : {}),
-  };
+  return { title, ...(description ? { description: description.slice(0, 160) } : {}) };
 }
 
 export default async function StaticPage({ params }: { params: PageParams }) {
@@ -29,33 +57,18 @@ export default async function StaticPage({ params }: { params: PageParams }) {
   const page = await getPageByHandle(handle);
   if (!page || !page.published) notFound();
 
-  const title = decodeEntities(page.title);
+  const section = SECTION_PAGES[handle];
+  if (section) return <div className="sf-page">{section()}</div>;
 
   return (
-    <div className="container-iw py-8 sm:py-10">
-      <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: title }]} className="mb-5 sm:mb-7" />
-
-      <header className="mb-7 rounded-2xl bg-cream px-6 py-7 sm:mb-9 sm:px-10 sm:py-8">
-        <p className="text-xs font-semibold uppercase tracking-widest text-brand">Cozy Furnitures</p>
-        <h1 className="mt-1.5 text-2xl font-bold text-ink-dark sm:text-3xl lg:text-4xl">{title}</h1>
-      </header>
-
-      <div className="rte max-w-4xl" dangerouslySetInnerHTML={{ __html: page.bodyHtml }} />
-
-      {handle === 'contact' && (
-        <section className="mt-12 max-w-4xl" aria-labelledby="contact-form-heading">
-          <div className="rounded-2xl bg-white p-6 shadow-card sm:p-10">
-            <h2 id="contact-form-heading" className="text-xl font-bold text-ink-dark sm:text-2xl">
-              Send Us a Message
-            </h2>
-            <p className="mt-1.5 mb-7 text-sm leading-relaxed text-ink-muted">
-              Have a question, feedback or a complaint? Fill in the form below and our team will get back to you within
-              1–2 business days.
-            </p>
-            <ContactForm />
-          </div>
-        </section>
-      )}
+    <div className="sf-page sf-tpl-page">
+      <div className="section-spacing section-spacing--disable-top">
+        {/* flow-root: like live's flex column, the body's trailing margin adds to the section margin */}
+        <div className="container-iw flow-root">
+          <div className="page-content-width rte" dangerouslySetInnerHTML={{ __html: cleanBodyHtml(page.bodyHtml) }} />
+        </div>
+      </div>
+      {handle === 'payment' && <PaymentPopup />}
     </div>
   );
 }

@@ -1,53 +1,45 @@
 import Link from 'next/link';
-import { CubeIcon } from '@/components/icons';
 
-/** Category card used on the /collections index — image (or branded fallback), title, count. */
+/**
+ * Live `.collection-card.style1`: portrait 4:5 image (cover) under an always-on 30% black overlay,
+ * zooming to 1.05 on hover, then a 14.4px title. No image → Shopify line-art placeholder on #f6f6f0.
+ */
 export function CategoryTile({
   href,
   title,
   image,
-  count,
-  subItems,
+  placeholder = 1,
+  eager = false,
 }: {
   href: string;
   title: string;
   image?: string | null;
-  count?: number;
-  subItems?: string[];
+  placeholder?: number;
+  eager?: boolean;
 }) {
   return (
-    <Link
-      href={href}
-      className="group flex flex-col overflow-hidden rounded-2xl border-0 bg-white shadow-card transition duration-200 hover:-translate-y-0.5 hover:shadow-hover"
-    >
-      <div className="relative aspect-[4/3] overflow-hidden bg-cream-soft">
+    <Link href={href} className="group flex flex-col text-accent hover:text-accent2">
+      <div className="relative mb-[10px] overflow-hidden pb-[125%]">
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={image}
             alt={title}
-            loading="lazy"
-            width={480}
-            height={360}
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+            loading={eager ? 'eager' : 'lazy'}
+            className="absolute inset-0 h-full w-full object-cover transition-all duration-1000 ease-theme group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-50 to-cream">
-            <CubeIcon className="h-10 w-10 text-brand-200" />
-          </div>
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={`/images/catalog/collection-placeholder-${placeholder}.svg`}
+            alt=""
+            loading={eager ? 'eager' : 'lazy'}
+            className="absolute inset-0 h-full w-full bg-cream transition-all duration-1000 ease-theme group-hover:scale-105"
+          />
         )}
-        {count != null && count > 0 && (
-          <span className="absolute bottom-2 right-2 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-ink-dark shadow-sm backdrop-blur-sm">
-            {count} {count === 1 ? 'product' : 'products'}
-          </span>
-        )}
+        <span aria-hidden className="absolute inset-0 z-[11] bg-black/30" />
       </div>
-      <div className="flex flex-1 flex-col p-3.5">
-        <h3 className="text-sm font-semibold leading-snug text-ink-dark transition group-hover:text-brand">{title}</h3>
-        {subItems && subItems.length > 0 && (
-          <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-ink-muted">{subItems.join(' · ')}</p>
-        )}
-      </div>
+      <h2 className="m-0 pb-[5px] text-left text-[14.4px] font-normal leading-none text-inherit">{title}</h2>
     </Link>
   );
 }

@@ -1,36 +1,15 @@
-import Link from 'next/link';
-import { ChevronRight } from '@/components/icons';
 import { prisma } from '@/lib/db';
-import {
-  getBanners,
-  getFeaturedCollections,
-  getRecentReviews,
-  getSettingsMap,
-  listProducts,
-} from '@/lib/queries';
-import { HeroSlider } from '@/components/home/HeroSlider';
+import { getBanners, getSettingsMap, toCard } from '@/lib/queries';
+import { HeroSlider, type HeroSlide } from '@/components/home/HeroSlider';
 import { MarqueeStrip } from '@/components/home/MarqueeStrip';
-import { TrustStrip } from '@/components/home/TrustStrip';
-import { ProductCarousel } from '@/components/home/ProductCarousel';
-import { CategoryTiles } from '@/components/home/CategoryTiles';
-import { RatingBanner } from '@/components/home/RatingBanner';
+import { ProductCarousel, type CarouselProduct } from '@/components/home/ProductCarousel';
+import { CategoryTiles, type CategoryTile } from '@/components/home/CategoryTiles';
 import { Testimonials } from '@/components/home/Testimonials';
+import { SeoTextBlock } from '@/components/home/SeoTextBlock';
+import { HOT_SELLING } from '@/components/home/hotSelling';
+import { HOME_REVIEWS } from '@/components/home/homeReviews';
 
 export const dynamic = 'force-dynamic';
-
-/** Curated Shopify collection powering the "Hot Selling Products" row. */
-const HOT_SELLING_COLLECTION = 'hot-selling-items-homepage';
-
-/** Category rows shown mid-page, mirroring the real store's home sections. */
-const CATEGORY_SECTIONS = [
-  { handle: 'bedroom', title: 'Bedroom Furniture' },
-  { handle: 'sofas-all', title: 'Sofas' },
-  { handle: 'office-chairs', title: 'Office Chairs' },
-  { handle: 'beds', title: 'Beds' },
-  { handle: 'dining-table-sets', title: 'Dining Table Sets' },
-  { handle: 'kids', title: 'Kids' },
-  { handle: 'decor-acc', title: 'Decor' },
-] as const;
 
 /** Collections used for the "Shop by Category" tiles, in live-site order. */
 const CATEGORY_TILE_HANDLES = [
@@ -43,118 +22,67 @@ const CATEGORY_TILE_HANDLES = [
   'decor-acc',
 ] as const;
 
-type TileCollection = { handle: string; title: string; image: string | null };
-
 /** Fetch a fixed list of collections by handle, preserving the given order. */
-async function getCollectionsByHandles(handles: readonly string[]): Promise<TileCollection[]> {
+async function getCollectionsByHandles(handles: readonly string[]): Promise<CategoryTile[]> {
   const rows = await prisma.collection.findMany({
     where: { handle: { in: [...handles] } },
     select: { handle: true, title: true, image: true },
   });
   const byHandle = new Map(rows.map((r) => [r.handle, r]));
-  return handles
-    .map((h) => byHandle.get(h))
-    .filter((c): c is TileCollection => Boolean(c));
+  return handles.map((h) => byHandle.get(h)).filter((c): c is CategoryTile => Boolean(c));
 }
 
-/** Eyebrow labels cycled across hero slides. */
-const HERO_EYEBROWS = ['Limited Time', 'Featured Collection', 'New Season', 'Curated Picks'];
-
-/**
- * Resolve the art for a hero slide. The seeded banner artwork carries the old
- * brand's logo baked into it, so every slide is re-illustrated from the
- * banner's destination instead: the target collection's image, then that
- * collection's first product image, then any product image at all. Null means
- * the slide renders as a full-bleed gradient panel.
- */
-async function resolveHeroImage(href: string | null): Promise<string | null> {
-  const handle = href?.startsWith('/collections/') ? href.split('/').filter(Boolean).pop() : null;
-  if (handle) {
-    const col = await prisma.collection.findUnique({
-      where: { handle },
-      select: {
-        image: true,
-        products: {
-          take: 1,
-          orderBy: { id: 'asc' },
-          select: { images: { orderBy: { position: 'asc' }, take: 1, select: { src: true } } },
-        },
-      },
-    });
-    if (col?.image) return col.image;
-    const inCollection = col?.products[0]?.images[0]?.src;
-    if (inCollection) return inCollection;
-  }
-  const any = await prisma.product.findFirst({
-    where: { status: 'ACTIVE', images: { some: {} } },
-    orderBy: { hot: 'desc' },
-    select: { images: { orderBy: { position: 'asc' }, take: 1, select: { src: true } } },
+/** The live "Hot Selling Products" cards, in live order, with the live per-card extras. */
+async function getHotSelling(): Promise<CarouselProduct[]> {
+  const rows = await prisma.product.findMany({
+    where: { handle: { in: HOT_SELLING.map((h) => h.handle) }, status: 'ACTIVE' },
+    select: {
+      id: true,
+      handle: true,
+      title: true,
+      hot: true,
+      rating: true,
+      reviewCount: true,
+      productType: true,
+      images: { orderBy: { position: 'asc' }, take: 2, select: { src: true, alt: true } },
+      variants: { orderBy: { position: 'asc' }, select: { price: true, compareAtPrice: true, inventory: true } },
+    },
   });
-  return any?.images[0]?.src ?? null;
-}
-
-function SectionHeader({ eyebrow, title, href }: { eyebrow: string; title: string; href?: string }) {
-  return (
-    <div className="mb-5 flex flex-col items-center gap-1.5 text-center">
-      <p className="text-xs font-semibold uppercase tracking-widest text-brand">{eyebrow}</p>
-      <h2 className="font-heading text-xl font-semibold text-ink-dark sm:text-2xl">{title}</h2>
-      {href && (
-        <Link
-          href={href}
-          className="group mt-1 inline-flex items-center gap-1 text-sm font-medium text-brand transition hover:text-brand-600"
-        >
-          View All
-          <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-        </Link>
-      )}
-    </div>
-  );
+  const byHandle = new Map(rows.map((r) => [r.handle, r]));
+  return HOT_SELLING.flatMap((spec) => {
+    const row = byHandle.get(spec.handle);
+    if (!row) return [];
+    const card = toCard(row);
+    // Ringed swatch (ProductCardExtras.activeSwatch; undefined = first, null = none).
+    const swatchState = spec.activeSwatch !== undefined ? { activeSwatch: spec.activeSwatch } : {};
+    return [
+      {
+        ...card,
+        compareAtPrice: spec.compareAt !== undefined ? spec.compareAt : card.compareAtPrice,
+        hoverImage: row.images[1]?.src ?? null,
+        salePercent: spec.salePercent,
+        statusLabel: card.inventory > 0 ? 'Ready to ship' : 'Sold out',
+        showRating: spec.rating != null,
+        rating: spec.rating ?? card.rating,
+        reviewCount: spec.rating != null ? 1 : 0,
+        swatches: spec.swatches,
+        ...swatchState,
+      },
+    ];
+  });
 }
 
 export default async function HomePage() {
-  const [bannerRows, hotFromCollection, tileCollections, reviewRows, settings] = await Promise.all([
+  const [bannerRows, hot, tiles, settings] = await Promise.all([
     getBanners('HOME_HERO'),
-    listProducts({ collectionHandle: HOT_SELLING_COLLECTION, perPage: 12 }),
+    getHotSelling(),
     getCollectionsByHandles(CATEGORY_TILE_HANDLES),
-    getRecentReviews(10),
     getSettingsMap(),
   ]);
-  const sectionResults = await Promise.all(
-    CATEGORY_SECTIONS.map((s) => listProducts({ collectionHandle: s.handle, perPage: 8 }))
-  );
-  const slideArt = await Promise.all(bannerRows.map((b) => resolveHeroImage(b.href)));
 
-  // Live site curates "Hot Selling Products" from a dedicated collection; fall
-  // back to the default hot-flag listing if that collection has no products.
-  const hot =
-    hotFromCollection.items.length > 0 ? hotFromCollection : await listProducts({ perPage: 12 });
-  const featured =
-    tileCollections.length > 0 ? tileCollections : await getFeaturedCollections(10);
-
-  const slides = bannerRows.map((b, i) => ({
-    id: b.id,
-    eyebrow: HERO_EYEBROWS[i % HERO_EYEBROWS.length],
-    title: b.title,
-    subtitle: b.subtitle,
-    ctaLabel: b.ctaLabel,
-    href: b.href,
-    image: slideArt[i],
-  }));
-
-  const categoryRows = CATEGORY_SECTIONS.map((s, i) => ({
-    handle: s.handle,
-    title: s.title,
-    products: sectionResults[i].items,
-  })).filter((s) => s.products.length > 0);
-
-  const testimonials = reviewRows.map((r) => ({
-    id: r.id,
-    author: r.author,
-    rating: r.rating,
-    title: r.title,
-    body: r.body,
-    product: r.product ? { handle: r.product.handle, title: r.product.title } : null,
-  }));
+  const slides: HeroSlide[] = bannerRows
+    .filter((b) => b.image)
+    .map((b) => ({ id: b.id, title: b.title, href: b.href, image: b.image as string, mobileImage: b.mobileImage }));
 
   return (
     <>
@@ -162,39 +90,50 @@ export default async function HomePage() {
         Cozy Furnitures — Pakistan&rsquo;s Largest Furniture Manufacturer. Bedroom, living, dining, office
         furniture, kitchens &amp; wardrobes.
       </h1>
+
       <HeroSlider slides={slides} />
       <MarqueeStrip />
-      <TrustStrip />
 
-      {/* Hot Selling Products */}
-      {hot.items.length > 0 && (
-        <section className="container-iw py-9 lg:py-12">
-          <SectionHeader eyebrow="Trending Now" title="Hot Selling Products" href="/collections/all" />
-          <ProductCarousel products={hot.items} label="Hot selling products" />
+      {/* Hot Selling Products (live `.featured-collection`) */}
+      {hot.length > 0 && (
+        <section className="container-iw mt-[35px] min-[881px]:mt-0 min-[881px]:mb-10">
+          <div className="mb-[25px] border-b border-[#e3cece] min-[881px]:mx-auto min-[881px]:mb-10 min-[881px]:max-w-[730px] min-[881px]:border-0 min-[881px]:px-10">
+            <h2 className="m-0 text-left text-[20.4px] font-semibold leading-[42px] text-accent min-[881px]:text-center min-[881px]:text-[36px] min-[881px]:leading-[44px] lg:text-[40px] lg:leading-[48px]">
+              Hot Selling Products
+            </h2>
+          </div>
+          <ProductCarousel products={hot} label="Hot Selling Products" />
         </section>
       )}
 
-      {/* Shop by Category */}
-      {featured.length > 0 && (
-        <section className="bg-cream">
-          <div className="container-iw py-9 lg:py-12">
-            <SectionHeader eyebrow="Explore" title="Shop by Category" />
-            <CategoryTiles collections={featured} />
+      {/* Shop by Category (live `.list-collections`) */}
+      {tiles.length > 0 && (
+        <section className="mb-[25px] overflow-hidden md:mb-10">
+          <div className="container-iw">
+            <div className="mb-[25px] md:mb-10">
+              <h2 className="m-0 text-center text-[34px] font-semibold leading-[42px] text-accent md:text-[36px] md:leading-[44px] lg:text-[40px] lg:leading-[48px]">Shop by Category</h2>
+            </div>
+            <CategoryTiles collections={tiles} />
           </div>
         </section>
       )}
 
-      <RatingBanner rating={settings.ratingSummary} count={settings.ratingSummaryCount} />
+      {/* Rich text heading above the reviews widget */}
+      <section className="container-iw text-center">
+        <div className="mx-auto max-w-[800px]">
+          <h3 className="m-0 text-[22.1px] font-semibold leading-[42px] text-accent md:mb-5 md:text-[36px] md:leading-[44px] lg:text-[40px] lg:leading-[48px]">
+            Our customer speaks for us
+          </h3>
+        </div>
+      </section>
 
-      {/* Per-category product rows */}
-      {categoryRows.map((row) => (
-        <section key={row.handle} className="container-iw py-9 lg:py-12">
-          <SectionHeader eyebrow="Collection" title={row.title} href={`/collections/${row.handle}`} />
-          <ProductCarousel products={row.products} label={row.title} />
-        </section>
-      ))}
+      <Testimonials
+        reviews={HOME_REVIEWS}
+        rating={settings.ratingSummary || '4.92'}
+        count={settings.ratingSummaryCount || '102'}
+      />
 
-      <Testimonials reviews={testimonials} />
+      <SeoTextBlock />
     </>
   );
 }

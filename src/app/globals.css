@@ -2,48 +2,268 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Live theme (Shopify Habitat) values. Every storefront page is wrapped in `.theme-store`
+ * (src/app/(store)/layout.tsx), so the base typography below never leaks into /admin.
+ * All storefront base rules use :where() so any Tailwind utility still overrides them.
+ */
 :root {
-  --brand: #108474;
+  --color-accent: #103a3a;
+  --color-accent2: #c25b41;
+  --color-accent3: #f6f6f0;
+  --color-border: #eeeeee;
+  --color-form-border: #dedede;
+  --ease-theme: cubic-bezier(0.104, 0.204, 0.492, 1);
+  /* legacy aliases */
+  --brand: #103a3a;
   --brand-dark: #103a3a;
   --terra: #c25b41;
 }
 
-html {
-  scroll-behavior: smooth;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-white font-sans antialiased;
+    color: #103a3a;
+  }
+
+  :where(.theme-store) {
+    font-size: 17px;
+    line-height: 1.75;
+    color: #103a3a;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* links: accent colour, accent2 on hover, theme easing */
+  :where(.theme-store) a {
+    transition: color 0.25s var(--ease-theme), background-color 0.25s var(--ease-theme);
+  }
+  :where(.theme-store) a:where(:hover, :focus-visible) {
+    color: #c25b41;
+  }
+
+  /* heading scale: <768 / 768–1067 / ≥1068. `.theme-store` (not :where) so these beat preflight's
+     `h1…h6 { font-size/weight: inherit }`; any single Tailwind utility still overrides them. */
+  .theme-store :where(h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6) {
+    font-family: var(--font-poppins), Poppins, sans-serif;
+    font-weight: 600;
+    color: #103a3a;
+  }
+  .theme-store :where(h1, .h1) { font-size: 46px; line-height: 54px; }
+  .theme-store :where(h2, .h2) { font-size: 40px; line-height: 48px; }
+  .theme-store :where(h3, .h3) { font-size: 34px; line-height: 42px; }
+  .theme-store :where(h4, .h4) { font-size: 28px; line-height: 36px; }
+  .theme-store :where(h5, .h5) { font-size: 24px; line-height: 32px; }
+  .theme-store :where(h6, .h6) { font-size: 18px; line-height: 26px; }
+  @media (min-width: 768px) {
+    .theme-store :where(h1, .h1) { font-size: 54px; line-height: 62px; }
+    .theme-store :where(h2, .h2) { font-size: 46px; line-height: 54px; }
+    .theme-store :where(h3, .h3) { font-size: 36px; line-height: 44px; }
+    .theme-store :where(h4, .h4) { font-size: 30px; line-height: 38px; }
+  }
+  @media (min-width: 1068px) {
+    .theme-store :where(h1, .h1) { font-size: 64px; line-height: 72px; }
+    .theme-store :where(h2, .h2) { font-size: 54px; line-height: 62px; }
+    .theme-store :where(h3, .h3) { font-size: 40px; line-height: 48px; }
+  }
 }
 
-body {
-  @apply bg-white font-body text-ink antialiased;
-}
+@layer components {
+  /* `.row` + `.columns`: 1360 box, 40px content inset (12.5px under 768). At 1440 content = x80…1360. */
+  .container-iw {
+    @apply mx-auto w-full max-w-[1360px] px-[12.5px] md:px-10;
+  }
+  /* `.row.expanded` (header, announcement, breadcrumbs): full width, 40px inset (12.5px mobile). */
+  .container-wide {
+    @apply w-full px-[12.5px] md:px-10;
+  }
 
-h1, h2, h3, h4, h5, h6 {
-  @apply font-heading;
-}
+  /* ---------- buttons (`.button`) ---------- */
+  .btn {
+    @apply relative inline-flex h-[52px] cursor-pointer select-none items-center justify-center overflow-hidden whitespace-nowrap rounded-btn border border-transparent bg-accent px-[27px] py-[5px] text-[13px] font-bold uppercase leading-none tracking-btn text-white no-underline;
+    transition: color 0.25s var(--ease-theme), background-color 0.25s var(--ease-theme), border-color 0.25s var(--ease-theme);
+  }
+  .btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.1);
+    transform: translateY(100%);
+    transition: transform 0.25s var(--ease-theme);
+    pointer-events: none;
+  }
+  .btn > * {
+    position: relative;
+  }
+  .btn:hover,
+  .btn:focus-visible {
+    color: #fff;
+  }
+  .btn:hover::before,
+  .btn:focus-visible::before {
+    transform: translateY(0);
+  }
+  .btn:disabled,
+  .btn[aria-disabled='true'] {
+    @apply cursor-not-allowed opacity-50;
+  }
+  .btn:disabled::before {
+    transform: translateY(100%);
+  }
+  /* aliases kept for existing pages */
+  .btn-primary,
+  .btn-dark {
+    @apply btn;
+  }
+  .btn-accent2 {
+    @apply btn bg-accent2;
+  }
+  .btn-outline {
+    @apply btn border-accent bg-transparent text-accent;
+  }
+  .btn-outline::before {
+    display: none;
+  }
+  .btn-outline:hover,
+  .btn-outline:focus-visible {
+    @apply bg-accent text-white;
+  }
+  .btn-white {
+    @apply btn bg-white text-accent;
+  }
+  .btn-white:hover,
+  .btn-white:focus-visible {
+    @apply text-accent;
+  }
+  .btn-full {
+    @apply w-full;
+  }
+  .btn-md {
+    @apply h-10 text-[12px];
+  }
+  .btn-sm {
+    @apply h-8 px-5 font-medium normal-case tracking-soft;
+  }
 
-.container-iw {
-  @apply mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8;
+  /* `.text-button`: 15px/500 with a soft underline that turns accent2 on hover */
+  .text-button {
+    @apply relative inline-block cursor-pointer bg-transparent p-0 text-[15px] font-medium leading-normal text-accent;
+  }
+  .text-button::before,
+  .text-button::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: calc(100% + 2px);
+    width: 100%;
+    height: 1px;
+    background: rgba(16, 58, 58, 0.3);
+  }
+  .text-button::after {
+    background: #c25b41;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.25s var(--ease-theme);
+  }
+  .text-button:hover::after {
+    transform: scaleX(1);
+  }
+
+  /* ---------- form controls ---------- */
+  .input {
+    @apply mb-0 h-[52px] w-full rounded-btn border border-formline bg-transparent px-[22px] py-[17px] text-[13px] font-normal leading-none text-accent outline-none placeholder:text-accent/30;
+    transition: border-color 0.25s var(--ease-theme);
+  }
+  .input:focus {
+    @apply border-accent;
+  }
+  textarea.input {
+    @apply h-auto min-h-[200px] leading-[1.6];
+  }
+  select.input {
+    @apply appearance-none pr-10;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='4' viewBox='0 0 6 4'%3E%3Cpath d='M0 0h6L3 4z' fill='%23103a3a'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+  .label {
+    @apply mb-2 block text-[13px] font-normal leading-[1.4] tracking-soft text-accent;
+  }
+
+  /* ---------- quantity selector ---------- */
+  .qty {
+    @apply relative inline-flex h-[52px] items-center rounded-btn border border-formline px-[30px] text-[13px] font-semibold text-accent;
+  }
+  .qty > button {
+    @apply absolute top-0 flex h-full w-[25px] items-center justify-center text-accent;
+  }
+  .qty > button:first-child {
+    @apply left-0;
+  }
+  .qty > button:last-child {
+    @apply right-0;
+  }
+  .qty > input {
+    @apply w-full min-w-[20px] border-0 bg-transparent p-0 text-center text-[13px] font-semibold text-accent outline-none;
+    -moz-appearance: textfield;
+  }
+  .qty > input::-webkit-outer-spin-button,
+  .qty > input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
+
+  /* ---------- prices (`.price ins/del`) ---------- */
+  .price {
+    @apply text-[14px] font-medium tracking-soft text-accent;
+  }
+  .price del {
+    @apply text-[0.9em] align-middle;
+  }
+  .price del > span {
+    opacity: 0.4;
+  }
+
+  /* ---------- Judge.me-style text stars: <span class="star-rating" style="--rating:80%">★★★★★</span> ---------- */
+  .star-rating {
+    @apply inline-block font-stars text-[19.2px] leading-none;
+    background: linear-gradient(90deg, #103a3a var(--rating, 100%), #e1e1e1 var(--rating, 100%));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* blurred page overlay used behind drawers (`.click-capture`) */
+  .click-capture {
+    background: rgba(196, 196, 196, 0.7);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+  }
 }
 
 /* Rich-text content rendered from DB (product descriptions, pages) */
 .rte {
-  @apply text-sm leading-relaxed text-ink;
+  @apply text-[15px] leading-[1.7] text-accent;
 }
-.rte h1 { @apply mb-3 text-2xl font-semibold text-ink-dark; }
-.rte h2 { @apply mb-2.5 mt-6 text-xl font-semibold text-ink-dark; }
-.rte h3 { @apply mb-2 mt-5 text-lg font-semibold text-ink-dark; }
-.rte h4 { @apply mb-2 mt-4 font-semibold text-ink-dark; }
-.rte p { @apply mb-3; }
-.rte ul { @apply mb-3 list-disc space-y-1.5 pl-5; }
-.rte ol { @apply mb-3 list-decimal space-y-1.5 pl-5; }
-.rte a { @apply text-brand underline underline-offset-2; }
-.rte img { @apply my-4 h-auto max-w-full rounded-lg; }
-.rte table { @apply my-4 w-full border-collapse text-xs; }
-.rte th { @apply border border-cream-border bg-cream px-2 py-1.5 text-left font-semibold; }
-.rte td { @apply border border-cream-border px-2 py-1.5; }
-.rte strong { @apply font-semibold text-ink-dark; }
-.rte blockquote { @apply my-3 border-l-4 border-brand pl-4 italic text-ink-muted; }
-.rte hr { @apply my-6 border-cream-border; }
-.rte iframe { @apply my-4 aspect-video w-full rounded-lg; }
+.rte h1 { @apply mb-5 text-[28px] font-semibold leading-[36px] text-accent; }
+.rte h2 { @apply mb-5 mt-6 text-[24px] font-semibold leading-[32px] text-accent; }
+.rte h3 { @apply mb-4 mt-5 text-[20px] font-semibold leading-[28px] text-accent; }
+.rte h4 { @apply mb-3 mt-4 text-[18px] font-semibold leading-[26px] text-accent; }
+.rte p { @apply mb-0; }
+.rte p + p { @apply mt-4; }
+.rte ul { @apply mb-5 ml-5 list-disc; }
+.rte ol { @apply mb-5 ml-5 list-decimal; }
+.rte a { @apply text-accent underline underline-offset-[3px] hover:text-accent2; }
+.rte img { @apply my-4 h-auto max-w-full; }
+.rte table { @apply my-4 w-full border-collapse border border-line text-[15px]; }
+.rte th { @apply border border-line px-[15px] py-[10px] text-left font-bold md:px-[25px] md:py-[15px]; }
+.rte td { @apply border border-line px-[15px] py-[10px] md:px-[25px] md:py-[15px]; }
+.rte strong, .rte b { @apply font-medium; }
+.rte blockquote { @apply my-4 border-l-2 border-accent pl-4 italic; }
+.rte hr { @apply my-6 border-line; }
+.rte iframe { @apply my-4 aspect-video w-full; }
 
 /* horizontal scroll carousels */
 .no-scrollbar {
@@ -52,21 +272,4 @@ h1, h2, h3, h4, h5, h6 {
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;
-}
-
-/* form controls shared look */
-.input {
-  @apply w-full rounded-xl border border-cream-border bg-white px-4 py-2.5 text-sm text-ink-dark outline-none transition placeholder:text-ink-light focus:border-brand focus:ring-2 focus:ring-brand/20;
-}
-.label {
-  @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted;
-}
-.btn-primary {
-  @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand px-7 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand/40 disabled:cursor-not-allowed disabled:opacity-50;
-}
-.btn-outline {
-  @apply inline-flex items-center justify-center gap-2 rounded-full border-2 border-brand bg-white px-7 py-2.5 text-sm font-semibold text-brand transition hover:bg-brand hover:text-white disabled:opacity-50;
-}
-.btn-dark {
-  @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand-900 px-7 py-3 text-sm font-semibold text-white transition hover:bg-black;
 }

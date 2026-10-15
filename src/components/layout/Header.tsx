@@ -1,264 +1,246 @@
 'use client';
 
-import { Logo } from '@/components/brand/Logo';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { Logo } from '@/components/brand/Logo';
 import type { MenuNode } from '@/lib/queries';
 import { useCart } from '@/lib/cart';
-import { CartIcon, ChevronDown, MenuIcon, PhoneIcon, SearchIcon, UserIcon, XIcon, ChevronRight } from '@/components/icons';
+import { AngleDownIcon, ThemeAccountIcon, ThemeCartIcon, ThemeSearchIcon } from '@/components/icons';
+import { SearchPanel } from '@/components/layout/SearchPanel';
+import { MobileMenu } from '@/components/layout/MobileMenu';
+import { megaColumns, isSpacer } from '@/components/layout/menu';
 
-export function Header({
-  menu,
-  announcement,
-  phone,
-  topbarLinks = [],
-}: {
-  menu: MenuNode[];
-  announcement: string;
-  phone: string;
-  topbarLinks?: { label: string; href: string }[];
-}) {
-  const { count } = useCart();
+export type AnnouncementProps = {
+  text: string;
+  href?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+};
+
+/** Live `.announcement-bar`: centred 11px text + maroon CTA box. Sticky only below 981px. */
+export function AnnouncementBar({ text, href, ctaLabel, ctaHref }: AnnouncementProps) {
+  if (!text) return null;
+  return (
+    <div className="sticky top-0 z-[51] min-h-9 bg-accent py-2 text-cream hd:relative">
+      <div className="grid grid-cols-[1fr_auto_1fr] px-[12.5px] md:px-10">
+        <div />
+        <div className="relative flex items-center">
+          <p className="m-0 text-[11px] font-normal leading-[18.7px] tracking-ann text-cream">{text}</p>
+          {href && <Link href={href} className="absolute inset-0" aria-label={text} />}
+          {ctaLabel && ctaHref && (
+            <Link
+              href={ctaHref}
+              className="relative z-[1] ml-[13.2px] inline-block whitespace-nowrap bg-maroon px-[14px] py-[7.92px] text-[13.2px] font-bold leading-[13.2px] text-white hover:text-white"
+            >
+              {ctaLabel}
+            </Link>
+          )}
+        </div>
+        <div />
+      </div>
+    </div>
+  );
+}
+
+export function Header({ menu, hasAnnouncement = true }: { menu: MenuNode[]; hasAnnouncement?: boolean }) {
+  const { count, openDrawer } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const router = useRouter();
-  const searchRef = useRef<HTMLInputElement>(null);
+  const pathname = usePathname();
 
+  // close overlays on navigation
   useEffect(() => {
-    if (searchOpen) searchRef.current?.focus();
-  }, [searchOpen]);
+    setMobileOpen(false);
+    setSearchOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [mobileOpen]);
 
-  const submitSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
-      setSearchOpen(false);
-      setMobileOpen(false);
-    }
-  };
-
   return (
-    <header className="sticky top-0 z-50">
-      {/* announcement bar */}
-      <div className="bg-gradient-to-r from-brand-700 to-brand-900 text-white">
-        <div className="container-iw flex h-9 items-center justify-between gap-4 text-[11.5px]">
-          <p className="truncate font-medium tracking-wide">{announcement}</p>
-          <div className="hidden items-center gap-4 md:flex">
-            <nav aria-label="Top bar links" className="hidden items-center gap-4 lg:flex">
-              {topbarLinks.map((link) => (
-                <Link key={`${link.href}-${link.label}`} href={link.href} className="whitespace-nowrap rounded-full px-2.5 py-0.5 transition hover:bg-white/10 hover:text-white">
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-            <a href={`tel:${phone.replace(/-/g, '')}`} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 font-semibold transition hover:bg-white/10 hover:text-white">
-              <PhoneIcon className="h-3.5 w-3.5" /> {phone}
-            </a>
-          </div>
-        </div>
-      </div>
-
-      {/* main header */}
-      <div className="border-b border-cream-border bg-white">
-        <div className="container-iw flex h-[72px] items-center gap-4">
+    <header
+      className={`header sticky z-50 bg-white shadow-header ${hasAnnouncement ? 'top-[45px] hd:top-0' : 'top-0'}`}
+    >
+      <div className="relative z-[2] bg-white">
+        <div className="flex h-[50px] items-center px-[10px] pt-[5px] md:h-[65px] md:px-[15px] lg:block lg:h-[125px] lg:pt-[15px] min-[1200px]:px-10">
+          {/* mobile hamburger */}
           <button
             type="button"
-            aria-label="Open menu"
-            className="rounded-full p-2 text-ink-dark transition hover:bg-cream-soft lg:hidden"
-            onClick={() => setMobileOpen(true)}
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileOpen}
+            onClick={() => {
+              setSearchOpen(false);
+              setMobileOpen((v) => !v);
+            }}
+            className="relative -ml-3 h-11 w-11 shrink-0 text-accent lg:hidden"
           >
-            <MenuIcon className="h-6 w-6" />
+            <span
+              className={`absolute left-3 top-[15px] h-px w-[18px] rounded-[.5px] bg-current transition-transform duration-[250ms] ease-theme ${mobileOpen ? 'translate-y-[6px] rotate-45' : ''}`}
+            />
+            <span className={`absolute left-3 top-[21px] h-px w-[18px] rounded-[.5px] bg-current transition-opacity ${mobileOpen ? 'opacity-0' : ''}`} />
+            <span
+              className={`absolute left-3 top-[27px] h-px w-[18px] rounded-[.5px] bg-current transition-transform duration-[250ms] ease-theme ${mobileOpen ? '-translate-y-[6px] -rotate-45' : ''}`}
+            />
           </button>
 
-          <Link href="/" className="shrink-0" aria-label="Cozy Furnitures home">
-            <Logo size="md" withTagline />
-          </Link>
-
-          {/* desktop search */}
-          <form onSubmit={submitSearch} className="ml-auto hidden max-w-xl flex-1 items-center lg:flex">
-            <div className="relative w-full">
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search for sofas, beds, wardrobes, office chairs…"
-                className="w-full rounded-full border border-transparent bg-cream-soft py-2.5 pl-5 pr-11 text-sm outline-none transition focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/25"
-              />
-              <button type="submit" aria-label="Search" className="absolute right-0 top-0 flex h-full w-11 items-center justify-center rounded-full bg-brand text-white transition hover:bg-brand-600">
-                <SearchIcon className="h-4.5 w-4.5" />
-              </button>
-            </div>
-          </form>
-
-          <div className="ml-auto flex items-center gap-1 lg:ml-2">
-            <button type="button" aria-label="Search" className="rounded-full p-2.5 text-ink-dark transition hover:bg-cream-soft lg:hidden" onClick={() => setSearchOpen((v) => !v)}>
-              <SearchIcon className="h-5.5 w-5.5" />
-            </button>
-            <Link href="/account/login" aria-label="Login / Account" title="Login" className="hidden rounded-full p-2.5 text-ink-dark transition hover:bg-cream-soft sm:block">
-              <UserIcon className="h-5.5 w-5.5" />
-            </Link>
-            <Link href="/cart" aria-label="Cart" className="relative rounded-full p-2.5 text-ink-dark transition hover:bg-cream-soft">
-              <CartIcon className="h-5.5 w-5.5" />
-              {count > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-terra px-1 text-[10.5px] font-bold text-white">
-                  {count}
-                </span>
-              )}
+          {/* logo: own centred row on desktop (live margin 15px 0 20px; top as container padding) */}
+          <div className="flex min-w-0 flex-1 justify-center lg:mb-5">
+            <Link href="/" aria-label="Cozy Furnitures home" className="block">
+              <Logo className="h-[35px] max-w-full md:h-10" />
             </Link>
           </div>
-        </div>
 
-        {/* mobile search drawer */}
-        {searchOpen && (
-          <form onSubmit={submitSearch} className="container-iw pb-3 lg:hidden">
-            <div className="relative">
-              <input
-                ref={searchRef}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search products…"
-                className="w-full rounded-full border border-transparent bg-cream-soft py-2.5 pl-5 pr-11 text-sm outline-none transition focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/25"
-              />
-              <button type="submit" aria-label="Search" className="absolute right-0 top-0 flex h-full w-11 items-center justify-center rounded-full bg-brand text-white">
-                <SearchIcon className="h-4.5 w-4.5" />
-              </button>
-            </div>
-          </form>
-        )}
+          {/* nav row (desktop) + icons */}
+          <div className="flex shrink-0 items-center lg:h-[50px]">
+            <nav aria-label="Main navigation" className="relative ml-auto hidden lg:block">
+              <DesktopNav menu={menu} />
+            </nav>
+            <ul className="ml-auto flex items-center justify-end lg:min-w-[135px]">
+              <li>
+                <a
+                  href="/search"
+                  title="Search"
+                  aria-label="Search"
+                  aria-expanded={searchOpen}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileOpen(false);
+                    setSearchOpen((v) => !v);
+                  }}
+                  className="flex px-1 text-accent hover:text-accent2 md:px-[5px]"
+                >
+                  <ThemeSearchIcon className="h-4 w-4 md:h-5 md:w-[19px]" />
+                </a>
+              </li>
+              <li>
+                <Link href="/account/login" title="My Account" aria-label="My Account" className="flex px-1 text-accent hover:text-accent2 md:px-[5px]">
+                  <ThemeAccountIcon className="h-4 w-4 md:h-[21px] md:w-[19px]" />
+                </Link>
+              </li>
+              <li>
+                <a
+                  href="/cart"
+                  aria-label={`Cart (${count})`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileOpen(false);
+                    setSearchOpen(false);
+                    openDrawer();
+                  }}
+                  className="flex px-1 text-accent hover:text-accent2 md:px-[5px]"
+                >
+                  <span className="relative block">
+                    <ThemeCartIcon className="h-4 w-4 md:h-[22px] md:w-[23px]" />
+                    <span className="absolute -right-3 -top-[7px] flex h-[19px] w-[19px] items-center justify-center rounded-full bg-accent2 text-[10px] font-semibold leading-[10px] text-white">
+                      {count}
+                    </span>
+                  </span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
 
-      {/* desktop nav with mega menu */}
-      <nav className="hidden border-b border-cream-border bg-white shadow-sm lg:block" aria-label="Main navigation">
-        <ul className="container-iw flex h-12 items-stretch">
-          {menu.map((item) => (
-            <li key={item.id} className="group relative">
-              <Link
-                href={item.href}
-                className="relative flex h-12 items-center gap-1 px-4 text-[13px] font-semibold tracking-wide text-ink-dark transition hover:text-brand"
-              >
-                {item.label}
-                {item.badge && (
-                  <span className={`ml-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold ${item.badge === 'SALE' ? 'bg-sale text-white' : 'bg-[#ffd166] text-brand-900'}`}>
-                    {item.badge}
-                  </span>
-                )}
-                {item.children.length > 0 && <ChevronDown className="h-3.5 w-3.5 opacity-60 transition group-hover:rotate-180" />}
-                <span className="absolute bottom-0 left-1/2 h-0.5 w-0 -translate-x-1/2 rounded-full bg-brand transition-all duration-300 group-hover:w-full" aria-hidden />
-              </Link>
-              {item.children.length > 0 && <MegaMenu item={item} />}
-            </li>
-          ))}
-          <li className="ml-auto group">
-            <Link href="/collections/sale" className="relative flex h-12 items-center px-4 text-[13px] font-semibold tracking-wide text-sale transition hover:text-sale/80">
-              Sale — Up to 40% Off
-              <span className="absolute bottom-0 left-1/2 h-0.5 w-0 -translate-x-1/2 rounded-full bg-sale transition-all duration-300 group-hover:w-full" aria-hidden />
-            </Link>
-          </li>
-        </ul>
-      </nav>
-
-      {/* mobile drawer */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-[60] lg:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
-          <div className="absolute left-0 top-0 flex h-full w-[86%] max-w-sm flex-col bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-cream-border p-4">
-              <Logo size="sm" withTagline />
-              <button type="button" aria-label="Close menu" onClick={() => setMobileOpen(false)} className="rounded-full p-2 text-ink-dark transition hover:bg-cream-soft">
-                <XIcon className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="flex-1 space-y-1.5 overflow-y-auto p-3">
-              {menu.map((item) => (
-                <MobileMenuItem key={item.id} item={item} onNavigate={() => setMobileOpen(false)} />
-              ))}
-              <Link href="/track" onClick={() => setMobileOpen(false)} className="block rounded-2xl px-4 py-3 text-sm font-semibold text-ink-dark transition hover:bg-cream-soft">
-                Track Order
-              </Link>
-              <a href={`tel:${phone.replace(/-/g, '')}`} className="flex items-center justify-center gap-2 rounded-full bg-brand px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-600">
-                <PhoneIcon className="h-4 w-4" /> {phone}
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
+      <SearchPanel open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <MobileMenu menu={menu} open={mobileOpen} onClose={() => setMobileOpen(false)} />
     </header>
   );
 }
 
-function MegaMenu({ item }: { item: MenuNode }) {
-  const cols = item.children;
-  const featured = cols.find((c) => c.children.length > 0) ?? cols[0];
+/** Globo mega menu (desktop ≥1068): Work Sans 16px/500 black items; full-nav-width square dropdown panels. */
+function DesktopNav({ menu }: { menu: MenuNode[] }) {
+  // index of the item whose dropdown is suppressed after a click (so navigating closes it)
+  const [suppressed, setSuppressed] = useState<number | null>(null);
   return (
-    <div className="invisible absolute left-0 top-full z-50 min-w-[220px] translate-y-2 pt-2 opacity-0 transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
-      <div className="grid grid-cols-2 gap-x-10 gap-y-6 rounded-2xl bg-white p-7 shadow-hover" style={{ width: cols.length > 2 ? '760px' : cols.length === 2 ? '480px' : '260px' }}>
-        {cols.length > 0 && featured.children.length > 0 ? (
-          cols.map((col) => (
-            <div key={col.id} className="min-w-[200px]">
-              <Link href={col.href} className="mb-2.5 block text-[13px] font-bold uppercase tracking-wide text-brand hover:text-brand-600">
-                {col.label}
-              </Link>
-              <ul className="space-y-1.5">
-                {col.children.map((sub) => (
-                  <li key={sub.id}>
-                    <Link href={sub.href} className="text-[13px] text-ink transition hover:text-brand hover:underline">
-                      {sub.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))
-        ) : (
-          <ul className="space-y-1.5">
-            {cols.map((sub) => (
-              <li key={sub.id}>
-                <Link href={sub.href} className="text-[13px] font-medium text-ink transition hover:text-brand hover:underline">
-                  {sub.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </div>
+    <ul className="flex h-[50px] justify-center gap-px bg-white font-nav" onMouseLeave={() => setSuppressed(null)}>
+      {menu.map((item, i) => {
+        const highlight = i === 0; // live: first item "Wedding Packages" is a maroon block
+        const hasDrop = item.children.length > 0;
+        return (
+          <li key={item.id} className="group/nav static">
+            <Link
+              href={item.href}
+              onClick={() => setSuppressed(item.id)}
+              className={`flex h-[50px] items-center whitespace-nowrap px-1.5 py-[15px] text-[16px] font-medium leading-5 xl:px-5 ${
+                highlight
+                  ? 'bg-maroon text-white hover:bg-white hover:text-black'
+                  : 'bg-white text-black hover:bg-white hover:text-black'
+              }`}
+            >
+              {item.label}
+              {hasDrop && (
+                <span className="ml-2.5 flex h-5 w-[9px] items-center justify-center">
+                  <AngleDownIcon className="h-[6px] w-[9px]" />
+                </span>
+              )}
+            </Link>
+            {hasDrop && (
+              <div
+                className={`invisible absolute left-0 top-[42px] z-[1000] w-full border border-megaline bg-white opacity-0 transition-[opacity,visibility] duration-[250ms] ease-theme ${
+                  suppressed === item.id ? '' : 'group-hover/nav:visible group-hover/nav:opacity-100 group-focus-within/nav:visible group-focus-within/nav:opacity-100'
+                }`}
+              >
+                <MegaPanel item={item} onNavigate={() => setSuppressed(item.id)} />
+              </div>
+            )}
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
-function MobileMenuItem({ item, onNavigate }: { item: MenuNode; onNavigate: () => void }) {
-  const [open, setOpen] = useState(false);
+function MegaPanel({ item, onNavigate }: { item: MenuNode; onNavigate: () => void }) {
+  const columns = megaColumns(item);
   return (
-    <div className="rounded-2xl bg-cream-soft/70 transition hover:bg-cream-soft">
-      <div className="flex items-center">
-        <Link href={item.href} onClick={onNavigate} className="flex-1 px-4 py-3 text-sm font-semibold text-ink-dark">
-          {item.label}
-          {item.badge && <span className="ml-2 rounded-full bg-[#ffd166] px-1.5 py-0.5 text-[9px] font-bold text-brand-900">{item.badge}</span>}
-        </Link>
-        {item.children.length > 0 && (
-          <button
-            type="button"
-            aria-label={`Toggle ${item.label}`}
-            onClick={() => setOpen((v) => !v)}
-            className="mr-3 flex h-7 w-7 items-center justify-center rounded-full bg-brand text-white transition hover:bg-brand-600"
-          >
-            <ChevronRight className={`h-3.5 w-3.5 transition ${open ? 'rotate-90' : ''}`} />
-          </button>
-        )}
-      </div>
-      {open && item.children.length > 0 && (
-        <div className="mx-2 mb-2 space-y-1.5 rounded-xl bg-white p-2">
-          {item.children.map((child) => (
-            <MobileMenuItem key={child.id} item={child} onNavigate={onNavigate} />
-          ))}
-        </div>
-      )}
-    </div>
+    <ul className="flex flex-wrap items-start text-left">
+      {columns.map((groups, ci) => (
+        <li key={ci} className="w-1/4 max-w-[25%] px-[15px]">
+          <ul className="py-3">
+            {groups.map((group, gi) =>
+              group.heading ? (
+                <li key={group.heading.id} className={gi > 0 ? 'pt-[15px]' : undefined}>
+                  <Link
+                    href={group.heading.href}
+                    onClick={onNavigate}
+                    className="mb-[7px] block border-b border-cream-border pb-3 text-[14px] font-semibold leading-[23.8px] text-menuRed hover:text-menuRed"
+                  >
+                    {group.heading.label}
+                  </Link>
+                  <ul>
+                    {group.links.map((link) => (
+                      <MegaLink key={link.id} link={link} onNavigate={onNavigate} />
+                    ))}
+                  </ul>
+                </li>
+              ) : (
+                group.links.map((link) => <MegaLink key={link.id} link={link} onNavigate={onNavigate} />)
+              ),
+            )}
+          </ul>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function MegaLink({ link, onNavigate }: { link: MenuNode; onNavigate: () => void }) {
+  if (isSpacer(link)) return <li aria-hidden className="h-[30px]" />;
+  return (
+    <li>
+      <Link
+        href={link.href}
+        onClick={onNavigate}
+        className="flex py-[5px] text-[13px] font-normal leading-5 text-ink-dark hover:text-black"
+      >
+        {link.label}
+      </Link>
+    </li>
   );
 }

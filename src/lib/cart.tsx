@@ -21,10 +21,15 @@ type CartContextValue = {
   subtotal: number;
   savings: number;
   hydrated: boolean;
-  addItem: (item: Omit<CartItem, 'key' | 'qty'>, qty?: number) => void;
+  /** Adds (or increments) a line. Opens the cart drawer like the live site unless `opts.openDrawer === false`. */
+  addItem: (item: Omit<CartItem, 'key' | 'qty'>, qty?: number, opts?: { openDrawer?: boolean }) => void;
   setQty: (key: string, qty: number) => void;
   removeItem: (key: string) => void;
   clear: () => void;
+  /** Cart drawer (side panel) state — mounted once by the store layout. */
+  drawerOpen: boolean;
+  openDrawer: () => void;
+  closeDrawer: () => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -33,6 +38,7 @@ const STORAGE_KEY = 'iw-cart-v1';
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -51,8 +57,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (hydrated) localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items, hydrated]);
 
-  const addItem = useCallback((item: Omit<CartItem, 'key' | 'qty'>, qty = 1) => {
+  const openDrawer = useCallback(() => setDrawerOpen(true), []);
+  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
+
+  const addItem = useCallback((item: Omit<CartItem, 'key' | 'qty'>, qty = 1, opts?: { openDrawer?: boolean }) => {
     const key = `${item.productId}:${item.variantId}`;
+    if (opts?.openDrawer !== false) setDrawerOpen(true);
     setItems((prev) => {
       const existing = prev.find((i) => i.key === key);
       if (existing) return prev.map((i) => (i.key === key ? { ...i, qty: Math.min(99, i.qty + qty) } : i));
@@ -76,8 +86,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       (s, i) => s + (i.compareAtPrice && i.compareAtPrice > i.price ? (i.compareAtPrice - i.price) * i.qty : 0),
       0,
     );
-    return { items, count, subtotal, savings, hydrated, addItem, setQty, removeItem, clear };
-  }, [items, hydrated, addItem, setQty, removeItem, clear]);
+    return { items, count, subtotal, savings, hydrated, addItem, setQty, removeItem, clear, drawerOpen, openDrawer, closeDrawer };
+  }, [items, hydrated, addItem, setQty, removeItem, clear, drawerOpen, openDrawer, closeDrawer]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

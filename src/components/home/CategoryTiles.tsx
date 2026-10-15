@@ -1,46 +1,95 @@
+'use client';
+
+import { useRef } from 'react';
 import Link from 'next/link';
+import { useDragTrack } from './useDragTrack';
+import { useWrapPosition } from './useWrapPosition';
 
-export type CategoryTile = {
-  handle: string;
-  title: string;
-  image: string | null;
-};
+export type CategoryTile = { handle: string; title: string; image: string | null };
 
-/** Borderless "Shop by Category" tiles: rounded photo, gradient wash, label pill. */
+/**
+ * Live "Shop by Category" (`.list-collections`): wrap-around Flickity of 5:4 collection tiles,
+ * 3 per view from 768px (one tile plus a peek on mobile), always-on 15% black overlay, image
+ * zooms to 1.05 on hover, title below. No arrows; the page dots sit in a narrow column to the
+ * right of the slider, so they stack vertically (a live quirk, kept).
+ */
 export function CategoryTiles({ collections }: { collections: CategoryTile[] }) {
-  if (collections.length === 0) return null;
+  const n = collections.length;
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const { pos, animate, current, move, goTo, onTransitionEnd } = useWrapPosition(n);
+  const { offset, dragging, handlers } = useDragTrack((dx) => {
+    const first = viewportRef.current?.querySelector<HTMLElement>('[data-cell]');
+    const cell = first?.offsetWidth ?? 0;
+    if (!cell) return;
+    move(Math.round(-dx / cell) || (dx < 0 ? 1 : -1));
+  });
+
+  if (n === 0) return null;
+  const cells = [...collections, ...collections, ...collections];
+
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
-      {collections.map((c) => (
-        <Link
-          key={c.handle}
-          href={`/collections/${c.handle}`}
-          className="group relative block aspect-square overflow-hidden rounded-2xl bg-cream-soft"
+    <div className="relative">
+      <div ref={viewportRef} className="overflow-hidden" role="region" aria-roledescription="carousel" aria-label="Shop by Category">
+        <div
+          className={`flex touch-pan-y select-none [--cell:92%] md:[--cell:33.3333%] ${animate && !dragging ? 'transition-transform duration-500 ease-theme' : ''}`}
+          style={{ transform: `translateX(calc(${-pos} * var(--cell) + ${offset}px))` }}
+          onTransitionEnd={onTransitionEnd}
+          {...handlers}
         >
-          {c.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={c.image}
-              alt={c.title}
-              loading="lazy"
-              width={400}
-              height={400}
-              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-3xl font-bold text-cream-border">CF</div>
-          )}
-          <span
-            aria-hidden
-            className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent"
-          />
-          <span className="absolute inset-x-0 bottom-3 flex justify-center px-2">
-            <span className="max-w-full truncate rounded-full bg-white/90 px-3.5 py-1.5 text-[13px] font-semibold text-brand-900 shadow-sm sm:text-sm">
-              {c.title}
-            </span>
-          </span>
-        </Link>
-      ))}
+          {cells.map((c, i) => {
+            const inMiddle = i >= n && i < 2 * n;
+            return (
+              <div
+                key={`${c.handle}-${i}`}
+                data-cell
+                className="w-[var(--cell)] shrink-0 px-[7.5px] md:px-[15px]"
+                aria-hidden={!inMiddle || undefined}
+              >
+                <Link href={`/collections/${c.handle}`} className="group/tile block text-accent" tabIndex={inMiddle ? 0 : -1} draggable={false}>
+                  <div className="relative mb-[10px] block overflow-hidden pb-[80%]">
+                    {c.image ? (
+                      // Live serves Shopify `_crop_center` square renditions, then covers the 5:4 box:
+                      // a centred square, object-cover'd, reproduces that framing.
+                      <span className="absolute left-0 top-1/2 block aspect-square w-full -translate-y-1/2">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={c.image}
+                          alt={c.title}
+                          loading="lazy"
+                          draggable={false}
+                          className="absolute inset-0 h-full w-full object-cover transition-transform duration-1000 ease-theme group-hover/tile:scale-105"
+                        />
+                      </span>
+                    ) : (
+                      <span className="absolute inset-0 bg-cream" />
+                    )}
+                    <span className="absolute inset-0 bg-black/15" aria-hidden />
+                  </div>
+                  <h2 className="m-0 pb-[5px] text-left text-[14.4px] font-normal leading-[14.4px] text-accent">{c.title}</h2>
+                </Link>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {n > 1 && (
+        <ol className="absolute left-full top-0 m-0 hidden w-[50px] list-none flex-col items-center p-0 pt-10 md:flex" aria-label="Category slides">
+          {collections.map((c, i) => (
+            <li key={c.handle} className="flex">
+              <button
+                type="button"
+                onClick={() => goTo(i)}
+                aria-label={`Go to ${c.title}`}
+                aria-current={i === current}
+                className={`block h-3 w-3 cursor-pointer rounded-[6px] border-2 border-accent p-0 ${
+                  i === current ? 'bg-accent' : 'bg-transparent opacity-60'
+                }`}
+              />
+            </li>
+          ))}
+        </ol>
+      )}
     </div>
   );
 }

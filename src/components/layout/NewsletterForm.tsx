@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ThemeArrowRight } from '@/components/icons';
 
 /**
  * Footer newsletter signup. Posts to the shared /api/contact endpoint with
@@ -50,44 +51,38 @@ export function NewsletterForm() {
 
   if (status === 'done') {
     return (
-      <div className="mt-6">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Newsletter</p>
-        <p className="mt-2 text-[13px] font-semibold text-brand">Subscribed!</p>
-        <p className="mt-1 text-[12.5px] text-ink-muted">
-          You&rsquo;ll hear about new collections and seasonal offers first.
-        </p>
-      </div>
+      <p className="m-0 text-[15px] leading-[25.5px] text-accent" role="status">
+        Thanks for subscribing!
+      </p>
     );
   }
 
   return (
-    <form className="mt-6" onSubmit={onSubmit} noValidate>
-      <label htmlFor="newsletter-email" className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-        Newsletter
+    <form className="signup-container" onSubmit={onSubmit} noValidate>
+      <label htmlFor="newsletter-email" className="mb-[3px] block text-[13px] font-semibold leading-[1.4] tracking-soft text-accent">
+        Email
       </label>
-      <p className="mt-1.5 text-[12.5px] text-ink-muted">
-        New arrivals, seasonal offers and interior ideas — straight to your inbox.
-      </p>
-      <div className="mt-2.5 flex max-w-sm gap-2">
+      <div className="relative">
         <input
           id="newsletter-email"
           type="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="Your email address"
+          placeholder="Enter your mail address"
           autoComplete="email"
-          className="w-full min-w-0 rounded-full border border-cream-border bg-white px-4 py-2.5 text-[13px] text-ink-dark placeholder:text-ink-light outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+          className="h-[52px] w-full rounded-none border-0 border-b border-[#2b2b2b] bg-transparent py-[17px] pl-0 pr-10 text-[13px] text-accent outline-none placeholder:text-accent/40"
         />
         <button
           type="submit"
           disabled={status === 'loading'}
-          className="shrink-0 rounded-full bg-brand px-5 py-2.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-70"
+          aria-label="Enter your mail address"
+          className="absolute bottom-0 right-0 flex h-full max-h-[52px] w-10 items-center justify-center text-accent disabled:opacity-50"
         >
-          {status === 'loading' ? '…' : 'Subscribe'}
+          <ThemeArrowRight />
         </button>
       </div>
-      {status === 'error' && error && <p className="mt-2 text-[12px] font-medium text-sale">{error}</p>}
+      {status === 'error' && error && <p className="m-0 mt-2 text-[13px] text-sale">{error}</p>}
     </form>
   );
 }

@@ -1,6 +1,11 @@
-import { redirect } from 'next/navigation';
+import type { Metadata } from 'next';
+import { BlogIndex } from '@/components/pages/BlogIndex';
 
-/** Live-site parity: /blogs/blog is an alias of the blog index. */
-export default function BlogsBlogAliasPage() {
-  redirect('/blogs');
+export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = { title: 'Blog' };
+
+/** Live /blogs/blog is a real but empty blog: "Home / Blog" breadcrumb, "Blog Posts" header, no posts. */
+export default function BlogBlogPage() {
+  return <BlogIndex page={1} blog="blog" />;
 }

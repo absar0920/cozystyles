@@ -1,20 +1,32 @@
+import { Fragment } from 'react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
-import { getProductByHandle, getRecentReviews, getRelatedProducts, getReviewsForProduct } from '@/lib/queries';
+import { getProductByHandle, getReviewsForProduct } from '@/lib/queries';
 import { SITE } from '@/lib/constants';
-import { ChevronRight, PhoneIcon, ShieldIcon, TruckIcon } from '@/components/icons';
-import { Stars } from '@/components/ui/Stars';
-import { ProductCard } from '@/components/catalog/ProductCard';
-import { Gallery } from '@/components/product/Gallery';
-import { ProductBuyPanel } from '@/components/product/ProductBuyPanel';
-import { ProductAccordion } from '@/components/product/ProductAccordion';
-import { ReviewsSection } from '@/components/product/ReviewsSection';
+import { Breadcrumbs } from '@/components/catalog/Breadcrumbs';
+import { ProductMain } from '@/components/product/ProductMain';
+import { JudgeReviews } from '@/components/product/JudgeReviews';
+import { CardRow, StaticSection } from '@/components/product/TemplateSections';
+import { ShareFacebookIcon, SharePinterestIcon, ShareTwitterIcon } from '@/components/product/icons';
+import {
+  getFeaturedCards,
+  getRecommendations,
+  preOrderSkus,
+  swatchColor,
+  tagList,
+  templateFor,
+  variantImageIndex,
+  type FeaturedCollectionSection,
+} from '@/components/product/pdp-data';
 import type { ProductOption, VariantInfo } from '@/components/product/types';
 
 export const dynamic = 'force-dynamic';
 
-type Params = { params: Promise<{ handle: string }> };
+type Params = {
+  params: Promise<{ handle: string }>;
+  searchParams: Promise<{ variant?: string }>;
+};
 
 function stripHtml(html: string): string {
   return html
@@ -44,42 +56,34 @@ function parseOptions(json: string): ProductOption[] {
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { handle } = await params;
   const product = await getProductByHandle(handle);
-  if (!product || product.status !== 'ACTIVE') return { title: `Product Not Found | ${SITE.name}` };
+  if (!product || product.status !== 'ACTIVE') return { title: 'Product Not Found' };
   const description =
     stripHtml(product.bodyHtml).slice(0, 160) || `${product.title} — buy online at ${SITE.name}, ${SITE.tagline}.`;
   return {
-    title: `${product.title} | ${SITE.name}`,
+    title: product.title,
     description,
   };
 }
 
-export default async function ProductPage({ params }: Params) {
+export default async function ProductPage({ params, searchParams }: Params) {
   const { handle } = await params;
+  const { variant: variantParam } = await searchParams;
   const product = await getProductByHandle(handle);
   if (!product || product.status !== 'ACTIVE') notFound();
 
-  const [reviews, related] = await Promise.all([
+  const sections = templateFor(product.handle);
+  const collectionHandles = product.collections.map((c) => c.handle);
+  const [reviews, recommendations, featured] = await Promise.all([
     getReviewsForProduct(product.id),
-    getRelatedProducts(product.id, product.collections.map((c) => c.handle), 8),
+    sections.some((s) => s.kind === 'recommendations') ? getRecommendations(product.id, collectionHandles, 4) : [],
+    Promise.all(
+      sections
+        .filter((s): s is FeaturedCollectionSection => s.kind === 'featuredCollection')
+        .map(async (s) => ({ s, cards: (await getFeaturedCards(s)).filter((c) => c.id !== product.id) })),
+    ),
   ]);
-  // Testimonial strip: reuse the product's own reviews, falling back to recent site reviews
-  const testimonialReviews: {
-    id: number;
-    author: string;
-    rating: number;
-    title: string;
-    body: string;
-    product?: { title: string };
-  }[] = reviews.length > 0 ? reviews.slice(0, 3) : await getRecentReviews(3);
-  const testimonials = testimonialReviews.map((r) => ({
-    id: r.id,
-    author: r.author,
-    rating: r.rating,
-    title: r.title,
-    body: r.body,
-    productTitle: r.product?.title ?? null,
-  }));
 
+  const tags = tagList(product.tags);
   const options = parseOptions(product.options);
   const variants: VariantInfo[] = product.variants.map((v) => ({
     id: v.id,
@@ -93,8 +97,32 @@ export default async function ProductPage({ params }: Params) {
     option3: v.option3,
   }));
   const images = product.images.map((img) => ({ src: img.src, alt: img.alt || product.title }));
-  const firstCollection = product.collections[0];
+  const swatches = Object.fromEntries(options.flatMap((o) => o.values).map((v) => [v, swatchColor(v)]));
+  const requestedVariant = Number(variantParam);
+  const initialVariantId = variants.some((v) => v.id === requestedVariant) ? requestedVariant : null;
   const lowestPrice = variants.length ? Math.min(...variants.map((v) => v.price)) : 0;
+
+  const h = await headers();
+  const host = h.get('x-forwarded-host') ?? h.get('host') ?? 'localhost';
+  const proto = h.get('x-forwarded-proto') ?? (host.startsWith('localhost') ? 'http' : 'https');
+  const pageUrl = `${proto}://${host}/products/${product.handle}`;
+  const share = [
+    { label: 'Share', Icon: ShareFacebookIcon, iconWidth: 'w-4', href: `https://www.facebook.com/sharer.php?u=${encodeURIComponent(pageUrl)}` },
+    {
+      label: 'Tweet',
+      Icon: ShareTwitterIcon,
+      iconWidth: 'w-[19.2px]',
+      href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(product.title)}&url=${encodeURIComponent(pageUrl)}`,
+    },
+    {
+      label: 'Pin it',
+      Icon: SharePinterestIcon,
+      iconWidth: 'w-[15.1px]',
+      href: `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(pageUrl)}&media=${encodeURIComponent(
+        images[0] ? new URL(images[0].src, pageUrl).toString() : '',
+      )}&description=${encodeURIComponent(product.title)}`,
+    },
+  ];
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -108,9 +136,7 @@ export default async function ProductPage({ params }: Params) {
       '@type': 'Offer',
       priceCurrency: 'PKR',
       price: lowestPrice,
-      availability: variants.some((v) => v.inventory > 0)
-        ? 'https://schema.org/InStock'
-        : 'https://schema.org/PreOrder',
+      availability: variants.some((v) => v.inventory > 0) ? 'https://schema.org/InStock' : 'https://schema.org/PreOrder',
       url: `/products/${product.handle}`,
     },
     ...(product.reviewCount > 0
@@ -131,207 +157,69 @@ export default async function ProductPage({ params }: Params) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/<\//g, '<\\/') }}
       />
 
-      <div className="container-iw pb-4 pt-5">
-        {/* Breadcrumb */}
-        <nav aria-label="Breadcrumb">
-          <ol className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5 text-xs text-ink-muted">
-            <li>
-              <Link
-                href="/"
-                className="rounded-full bg-cream-soft px-3 py-1 text-ink-muted transition hover:bg-brand hover:text-white"
-              >
-                Home
-              </Link>
-            </li>
-            {firstCollection && (
-              <li className="flex items-center gap-1.5">
-                <ChevronRight className="h-3 w-3 text-ink-light" />
-                <Link
-                  href={`/collections/${firstCollection.handle}`}
-                  className="rounded-full bg-cream-soft px-3 py-1 text-ink-muted transition hover:bg-brand hover:text-white"
-                >
-                  {firstCollection.title}
-                </Link>
-              </li>
-            )}
-            <li className="flex min-w-0 items-center gap-1.5">
-              <ChevronRight className="h-3 w-3 shrink-0 text-ink-light" />
-              <span
-                aria-current="page"
-                className="truncate rounded-full bg-cream-soft px-3 py-1 font-semibold text-ink-dark"
-                title={product.title}
-              >
-                {product.title}
-              </span>
-            </li>
-          </ol>
-        </nav>
-      </div>
+      <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: product.title }]} className="w-auto" />
 
-      {/* Product main */}
-      <section className="container-iw grid gap-8 pb-8 lg:grid-cols-2 lg:gap-12 lg:pb-12">
-        <div className="lg:sticky lg:top-24 lg:self-start">
-          <Gallery images={images} title={product.title} />
-        </div>
-
-        <div className="flex flex-col">
-          {product.productType && (
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand">{product.productType}</p>
-          )}
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-2">
-            <h1 className="font-heading text-2xl font-semibold leading-tight text-ink-dark sm:text-[28px]">
-              {product.title}
-            </h1>
-            {product.hot && (
-              <span className="rounded-full bg-terra px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
-                Best Seller
-              </span>
-            )}
-          </div>
-
-          <a href="#reviews" className="mt-2.5 w-fit transition hover:opacity-80">
-            <Stars rating={product.rating} count={product.reviewCount} size="md" />
-          </a>
-
-          <div className="my-5 h-px bg-cream-border" />
-
-          <ProductBuyPanel
-            product={{
-              id: product.id,
-              handle: product.handle,
-              title: product.title,
-              image: images[0]?.src ?? '',
-              options,
-              variants,
-            }}
+      <ProductMain
+        product={{
+          id: product.id,
+          handle: product.handle,
+          title: product.title,
+          images,
+          options,
+          variants,
+          swatches,
+          variantImages: variantImageIndex(product.handle),
+          initialVariantId,
+          isNew: tags.includes('New Arrivals'),
+          deliveryLine: tags.find((t) => /^delivered in/i.test(t)) ?? null,
+          preOrderSkus: preOrderSkus(product.handle),
+        }}
+      >
+        {product.bodyHtml.trim() && (
+          <div
+            className="mb-[25px] text-[15px] leading-[26.25px] text-accent [&_h2]:mb-5 [&_h2]:inline-block [&_h2]:text-[18px] [&_h2]:font-bold [&_h2]:leading-[23.4px] [&_h3]:mb-[10px] [&_h3]:text-[16px] [&_h3]:font-bold [&_h3]:leading-[23.4px] [&_li]:leading-[25.5px] [&_ol]:mb-[10px] [&_ol]:ml-5 [&_ol]:list-decimal [&_p]:mb-[10px] [&_p]:leading-[25.5px] [&_strong]:font-medium [&_ul]:mb-[10px] [&_ul]:ml-5 [&_ul]:list-disc [&_a]:underline [&_img]:h-auto [&_img]:max-w-full [&_table]:w-full"
+            dangerouslySetInnerHTML={{ __html: product.bodyHtml }}
           />
+        )}
+        {/* inline-flex links separated by whitespace, like live (adds ~3.4px between items) */}
+        <aside className="mb-[25px] mt-[15px] text-[13px] leading-[13px]">
+          {share.map(({ label, Icon, iconWidth, href }) => (
+            <Fragment key={label}>
+              <a href={href} target="_blank" rel="noopener noreferrer" className="mr-[25px] inline-flex items-center text-accent">
+                <Icon className={`mr-[10px] block h-4 ${iconWidth}`} />
+                {label}
+              </a>{' '}
+            </Fragment>
+          ))}
+        </aside>
+      </ProductMain>
 
-          {/* Delivery / warranty / helpline strip */}
-          <ul className="mt-7 grid gap-3 sm:grid-cols-3">
-            <li className="flex items-center gap-3 rounded-2xl border-0 bg-cream-soft p-3.5">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
-                <TruckIcon className="h-5 w-5" />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-xs font-semibold text-ink-dark">Free Delivery</span>
-                <span className="block text-[11px] leading-snug text-ink-muted">Delivery &amp; installation nationwide</span>
-              </span>
-            </li>
-            <li className="flex items-center gap-3 rounded-2xl border-0 bg-cream-soft p-3.5">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
-                <ShieldIcon className="h-5 w-5" />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-xs font-semibold text-ink-dark">1 Year Warranty</span>
-                <span className="block text-[11px] leading-snug text-ink-muted">Manufacturer&rsquo;s warranty</span>
-              </span>
-            </li>
-            <li className="flex items-center gap-3 rounded-2xl border-0 bg-cream-soft p-3.5">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
-                <PhoneIcon className="h-5 w-5" />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-xs font-semibold text-ink-dark">Helpline</span>
-                <span className="block text-[11px] leading-snug text-ink-muted">{SITE.phone}</span>
-              </span>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      {/* Accordions */}
-      <section className="container-iw pb-10">
-        <div className="space-y-3">
-          <ProductAccordion title="Description" defaultOpen>
-            {product.bodyHtml.trim() ? (
-              <div dangerouslySetInnerHTML={{ __html: product.bodyHtml }} />
-            ) : (
-              <p>
-                {product.title} — crafted by {SITE.name}, {SITE.tagline.toLowerCase()}. Premium materials, expert
-                workmanship and nationwide delivery with professional installation.
-              </p>
-            )}
-          </ProductAccordion>
-
-          <ProductAccordion title="Delivery & Returns">
-            <p>
-              <strong>Free Delivery &amp; Installation:</strong> We deliver and install your furniture free of charge
-              anywhere in Pakistan. Our own installation teams handle assembly, placement and debris removal so your
-              furniture is ready to use from day one.
-            </p>
-            <p>
-              <strong>Lead Times:</strong> In-stock items are typically dispatched within 5–7 working days. Made-to-order
-              and customized pieces are manufactured for you and usually ship within 3–4 weeks; our team confirms your
-              delivery date on call after you place an order.
-            </p>
-            <p>
-              <strong>Returns:</strong> If a delivered item does not meet your expectations, you may request a return or
-              exchange within 7 days of delivery, provided it is unused and in its original condition. Custom-made and
-              made-to-order furniture cannot be returned unless there is a manufacturing defect.
-            </p>
-          </ProductAccordion>
-
-          <ProductAccordion title="Warranty">
-            <p>
-              All {SITE.name} furniture carries a <strong>1-year manufacturer&rsquo;s warranty</strong> covering defects in
-              materials and workmanship under normal domestic use.
-            </p>
-            <p>
-              Imported hardware and fittings (hinges, drawer channels, locks) are additionally covered by their original
-              manufacturer&rsquo;s warranty. The warranty does not cover normal wear and tear, misuse, or damage occurring
-              after delivery and installation. For warranty claims, contact our helpline at {SITE.phone}.
-            </p>
-          </ProductAccordion>
-        </div>
-      </section>
-
-      <div className="border-t border-cream-border bg-cream">
-        <ReviewsSection rating={product.rating} reviewCount={product.reviewCount} reviews={reviews} />
-      </div>
-
-      {/* Testimonials strip */}
-      {testimonials.length > 0 && (
-        <section aria-labelledby="testimonials-heading" className="container-iw py-9 lg:py-12">
-          <h2 id="testimonials-heading" className="mb-6 font-heading text-xl font-semibold text-ink-dark sm:text-2xl">
-            What Our Customers Say
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {testimonials.map((t) => (
-              <figure
-                key={t.id}
-                className="flex flex-col gap-2.5 rounded-2xl border-0 bg-cream-soft p-5 shadow-card"
-              >
-                <Stars rating={t.rating} />
-                <blockquote className="text-[13px] leading-relaxed text-ink">
-                  {t.title && <span className="mb-1 block text-sm font-semibold text-ink-dark">{t.title}</span>}
-                  {t.body}
-                </blockquote>
-                <figcaption className="mt-auto text-xs text-ink-muted">
-                  <span className="font-semibold text-ink-dark">{t.author}</span>
-                  {t.productTitle && <> · {t.productTitle}</>}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Related products */}
-      {related.length > 0 && (
-        <section aria-labelledby="related-heading" className="container-iw border-t border-cream-border py-9 lg:py-12">
-          <div className="mb-7 text-center">
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-brand">Related Products</p>
-            <h2 id="related-heading" className="mt-1.5 font-heading text-xl font-semibold text-ink-dark sm:text-2xl">
-              You May Also Like
-            </h2>
-          </div>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {related.map((item) => (
-              <ProductCard key={item.id} product={item} />
-            ))}
-          </div>
-        </section>
-      )}
+      {sections.map((s, i) => {
+        if (s.kind === 'recommendations') {
+          return <CardRow key={i} heading="You may also like" cards={recommendations} variant="recommendations" />;
+        }
+        if (s.kind === 'featuredCollection') {
+          const f = featured.find((x) => x.s === s);
+          return <CardRow key={i} heading={s.heading} cards={f?.cards ?? []} variant="featured" />;
+        }
+        if (s.kind === 'reviews') {
+          return (
+            <JudgeReviews
+              key={i}
+              productId={product.id}
+              reviews={reviews.map((r) => ({
+                id: r.id,
+                author: r.author,
+                rating: r.rating,
+                title: r.title,
+                body: r.body,
+                createdAt: r.createdAt.toISOString(),
+              }))}
+            />
+          );
+        }
+        return <StaticSection key={i} s={s} />;
+      })}
     </>
   );
 }

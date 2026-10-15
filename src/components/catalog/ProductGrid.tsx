@@ -1,13 +1,18 @@
 import { ProductCard } from '@/components/catalog/ProductCard';
-import type { ProductCardData } from '@/lib/queries';
+import type { CatalogCard } from './catalog-data';
 
-/** Responsive product grid: 2 columns on mobile, 3 on tablet, 4 on desktop. */
-export function ProductGrid({ items }: { items: (ProductCardData & { compareAtPrice?: number | null })[] }) {
+/**
+ * Live `#product-grid` (`small-up-2 medium-up-4`): 2 columns under 768 (15px gutter, 20px row gap),
+ * 4 columns from 768 (30px gutter, 30px row gap). Place inside `.container-iw`.
+ */
+export function ProductGrid({ items, eagerCount = 4 }: { items: CatalogCard[]; eagerCount?: number }) {
   return (
-    <div className="animate-fadeIn grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-5">
-      {items.map((product) => (
-        <ProductCard key={product.id} product={product} />
+    <ul id="product-grid" className="m-0 mb-5 grid list-none grid-cols-2 gap-x-[15px] gap-y-5 p-0 pb-5 md:grid-cols-4 md:pb-[30px] md:gap-x-[30px] md:gap-y-[30px]">
+      {items.map((product, i) => (
+        <li key={product.id}>
+          <ProductCard product={product} priority={i < eagerCount} />
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }

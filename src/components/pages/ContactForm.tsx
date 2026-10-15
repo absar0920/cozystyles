@@ -1,24 +1,80 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckIcon, MailIcon } from '@/components/icons';
-
-const SUBJECTS = [
-  { value: 'General', label: 'General Inquiry' },
-  { value: 'Sales', label: 'Sales' },
-  { value: 'Complaint', label: 'Complaint' },
-  { value: 'Corporate', label: 'Corporate' },
-  { value: 'Careers', label: 'Careers' },
-] as const;
 
 type Status = 'idle' | 'sending' | 'sent' | 'error';
 
-export function ContactForm() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [subject, setSubject] = useState<string>('General');
-  const [message, setMessage] = useState('');
+export type FieldSpec = {
+  name: string;
+  label: string;
+  type?: 'text' | 'email' | 'tel' | 'textarea';
+  required?: boolean;
+  /** half-width at ≥768 (live `medium-6`) */
+  half?: boolean;
+  options?: string[];
+};
+
+/** Live floating-label `.field` (input/textarea/select + label). */
+export function Field({ spec, value, onChange }: { spec: FieldSpec; value: string; onChange: (v: string) => void }) {
+  const id = `field-${spec.name}`;
+  const common = {
+    id,
+    name: spec.name,
+    required: spec.required,
+    value,
+    placeholder: spec.label,
+  };
+  return (
+    <div className={`sf-field w-full ${spec.half ? 'md:w-[calc(50%-15px)]' : ''}`}>
+      {spec.options ? (
+        <div className="sf-select">
+          <select {...common} onChange={(e) => onChange(e.target.value)}>
+            <option value="" disabled>
+              {spec.label}
+            </option>
+            {spec.options.map((o) => (
+              <option key={o} value={o}>
+                {o}
+              </option>
+            ))}
+          </select>
+          <label htmlFor={id}>{spec.label}</label>
+        </div>
+      ) : spec.type === 'textarea' ? (
+        <>
+          <textarea {...common} rows={10} maxLength={5000} onChange={(e) => onChange(e.target.value)} />
+          <label htmlFor={id}>{spec.label}</label>
+        </>
+      ) : (
+        <>
+          <input {...common} type={spec.type ?? 'text'} maxLength={200} onChange={(e) => onChange(e.target.value)} />
+          <label htmlFor={id}>{spec.label}</label>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Theme contact form posting to /api/contact. `compose` maps the field values onto the API's
+ * { name, email, phone, subject, message } payload.
+ */
+export function ThemeForm({
+  fields,
+  subject,
+  submitLabel = 'Send Message',
+  compose,
+  className = '',
+  submitClassName = '',
+}: {
+  fields: FieldSpec[];
+  subject: 'General' | 'Sales' | 'Complaint';
+  submitLabel?: string;
+  compose: (values: Record<string, string>) => { name: string; email: string; phone: string; message: string };
+  className?: string;
+  submitClassName?: string;
+}) {
+  const [values, setValues] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState('');
 
@@ -30,11 +86,12 @@ export function ContactForm() {
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, subject, message }),
+        body: JSON.stringify({ ...compose(values), subject }),
       });
       const data: { ok?: boolean; error?: string } = await response.json().catch(() => ({}));
       if (response.ok && data.ok) {
         setStatus('sent');
+        setValues({});
       } else {
         setError(data.error ?? 'Something went wrong. Please try again.');
         setStatus('error');
@@ -45,145 +102,48 @@ export function ContactForm() {
     }
   }
 
-  if (status === 'sent') {
-    return (
-      <div className="flex flex-col items-center rounded-2xl bg-cream-soft px-6 py-12 text-center">
-        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white">
-          <CheckIcon className="h-7 w-7" />
-        </span>
-        <h3 className="mt-5 text-xl font-bold text-ink-dark">Thank you, your message is on its way!</h3>
-        <p className="mt-2 max-w-md text-sm leading-relaxed text-ink-muted">
-          Our team typically responds within 1–2 business days. For urgent inquiries, call us at{' '}
-          <a href="tel:+9242111203203" className="font-semibold text-brand">
-            +92-42-111-203-203
-          </a>{' '}
-          or reach us on WhatsApp.
-        </p>
-        <button
-          type="button"
-          className="btn-outline mt-6"
-          onClick={() => {
-            setName('');
-            setEmail('');
-            setPhone('');
-            setSubject('General');
-            setMessage('');
-            setError('');
-            setStatus('idle');
-          }}
-        >
-          Send another message
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
-      <div>
-        <label htmlFor="contact-name" className="label">
-          Full Name <span className="text-terra">*</span>
-        </label>
-        <input
-          id="contact-name"
-          name="name"
-          className="input rounded-full"
-          placeholder="e.g. Ahmed Raza"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          maxLength={120}
-          required
-        />
-      </div>
-      <div>
-        <label htmlFor="contact-email" className="label">
-          Email Address
-        </label>
-        <input
-          id="contact-email"
-          name="email"
-          type="email"
-          className="input rounded-full"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          maxLength={200}
-        />
-      </div>
-      <div>
-        <label htmlFor="contact-phone" className="label">
-          Phone Number
-        </label>
-        <input
-          id="contact-phone"
-          name="phone"
-          type="tel"
-          className="input rounded-full"
-          placeholder="03XX-XXXXXXX"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          maxLength={40}
-        />
-      </div>
-      <div>
-        <label htmlFor="contact-subject" className="label">
-          Subject
-        </label>
-        <select
-          id="contact-subject"
-          name="subject"
-          className="input rounded-full"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-        >
-          {SUBJECTS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="sm:col-span-2">
-        <label htmlFor="contact-message" className="label">
-          Message <span className="text-terra">*</span>
-        </label>
-        <textarea
-          id="contact-message"
-          name="message"
-          className="input min-h-36 resize-y rounded-2xl"
-          placeholder="How can we help you?"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          maxLength={5000}
-          required
-        />
-        <p className="mt-1 text-right text-xs text-ink-light">{message.length}/5000</p>
-      </div>
-
+    <form onSubmit={handleSubmit} className={className}>
+      {status === 'sent' && (
+        <p role="status" className="mb-[15px] text-[15px]">
+          Thanks for contacting us. We&apos;ll get back to you as soon as possible.
+        </p>
+      )}
       {status === 'error' && (
-        <p role="alert" className="rounded-xl bg-sale/10 px-4 py-3 text-sm font-medium text-sale sm:col-span-2">
+        <p role="alert" className="mb-[15px] text-[15px] text-accent2">
           {error}
         </p>
       )}
-
-      <div className="sm:col-span-2">
-        <button type="submit" className="btn-primary w-full sm:w-auto" disabled={status === 'sending'}>
-          {status === 'sending' ? (
-            <>
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden />
-              Sending…
-            </>
-          ) : (
-            <>
-              <MailIcon className="h-4 w-4" aria-hidden />
-              Send Message
-            </>
-          )}
-        </button>
-        <p className="mt-3 text-xs text-ink-muted">
-          Your details stay confidential and are only used to respond to your inquiry.
-        </p>
+      <div className="flex flex-wrap md:gap-x-[30px]">
+        {fields.map((spec) => (
+          <Field
+            key={spec.name}
+            spec={spec}
+            value={values[spec.name] ?? ''}
+            onChange={(v) => setValues((prev) => ({ ...prev, [spec.name]: v }))}
+          />
+        ))}
       </div>
+      <button type="submit" className={`sf-submit ${submitClassName}`} disabled={status === 'sending'}>
+        <span>{submitLabel}</span>
+      </button>
     </form>
+  );
+}
+
+/** Live /pages/contact form: Name + Email, Phone number, Comment, green SEND MESSAGE. */
+export function ContactForm() {
+  return (
+    <ThemeForm
+      subject="General"
+      className="max-w-[800px]"
+      fields={[
+        { name: 'name', label: 'Name', required: true, half: true },
+        { name: 'email', label: 'Email', type: 'email', required: true, half: true },
+        { name: 'phone', label: 'Phone number', type: 'tel', required: true },
+        { name: 'body', label: 'Comment', type: 'textarea', required: true },
+      ]}
+      compose={(v) => ({ name: v.name ?? '', email: v.email ?? '', phone: v.phone ?? '', message: v.body ?? '' })}
+    />
   );
 }

@@ -6,6 +6,7 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
+import { GLOBAL_MENUS, GLOBAL_SETTINGS, createMenuTree } from '../scripts/fidelity/global';
 
 const prisma = new PrismaClient();
 const RAW = 'data/raw';
@@ -337,188 +338,9 @@ async function main() {
   console.log('pages seeded');
 
   // ---------- menus ----------
-  type MenuSpec = { label: string; href: string; children?: MenuSpec[]; badge?: string };
-  const MAIN: MenuSpec[] = [
-    { label: 'Wedding Packages', href: '/pages/wedding-package-builder', badge: 'NEW' },
-    {
-      label: 'Home', href: '/pages/home-furniture',
-      children: [
-        { label: 'Bedroom', href: '/collections/bedroom', children: [
-          { label: 'Bedroom Furniture', href: '/collections/bedroom' },
-          { label: 'Bed Sets', href: '/collections/bed-set' },
-          { label: 'Double Bed Set', href: '/collections/double-bed-set' },
-          { label: 'Queen Size Beds', href: '/collections/queen-size-beds' },
-          { label: 'King Size Beds', href: '/collections/king-size-beds' },
-          { label: 'Bedsides', href: '/collections/bed-side-tables' },
-          { label: 'Dressing Tables', href: '/collections/dressing-tables' },
-          { label: 'Bedroom Chairs', href: '/collections/bedroom-chairs' },
-          { label: 'Wall Mirrors', href: '/collections/wall-mirrors' },
-        ]},
-        { label: 'Living Room', href: '/collections/living', children: [
-          { label: 'Living Room Furniture', href: '/collections/living' },
-          { label: 'Sofas', href: '/collections/sofas-1' },
-          { label: '1 Seater Sofa', href: '/collections/sofas-all' },
-          { label: '2 Seater Sofa', href: '/collections/sofas-all' },
-          { label: '3 Seater Sofa', href: '/collections/3-seater-sofa' },
-          { label: 'L Shaped Sofa', href: '/collections/l-shaped-sofa' },
-          { label: 'Recliners', href: '/collections/recliners' },
-          { label: 'Sofa Cum Bed', href: '/collections/sofa-cum-bed' },
-          { label: 'Center & Side Tables', href: '/collections/center-table' },
-          { label: 'Coffee Tables', href: '/collections/coffee-tables' },
-          { label: 'TV Units', href: '/collections/tv-units' },
-          { label: 'Living Storage', href: '/collections/living-storage' },
-        ]},
-        { label: 'Dining', href: '/collections/dining', children: [
-          { label: 'Dining Table Set', href: '/collections/dining-table-sets' },
-          { label: 'Dining Tables', href: '/collections/dining-tables' },
-          { label: 'Dining Chairs', href: '/collections/dining-chairs' },
-          { label: 'Bar Stools', href: '/collections/bar-stools' },
-        ]},
-        { label: 'Kids', href: '/collections/kids', children: [
-          { label: 'Kids Furniture', href: '/collections/kids' },
-          { label: 'Bunk Beds', href: '/collections/bunk-beds' },
-          { label: 'Single Beds', href: '/collections/single-beds' },
-          { label: 'Kids Wardrobe', href: '/collections/kids-wardrobe' },
-          { label: 'Kids Study Tables', href: '/collections/kids-study-tables' },
-          { label: 'Kids Study Chairs', href: '/collections/kids-study-chairs' },
-        ]},
-        { label: 'Study & Home Office', href: '/collections/study', children: [
-          { label: 'Study Furniture', href: '/collections/study' },
-          { label: 'Study Tables', href: '/collections/study-tables' },
-          { label: 'Study Chairs', href: '/collections/study-chairs' },
-          { label: 'Ergonomic Chairs', href: '/collections/ergonomic-study-chairs' },
-          { label: 'Computer Tables', href: '/collections/computer-tables' },
-        ]},
-        { label: 'Chairs & Seating', href: '/collections/seating-chairs', children: [
-          { label: 'Occasional Chairs', href: '/collections/occasional-chairs' },
-          { label: 'Rocking Chairs', href: '/collections/relax-chairs' },
-          { label: 'Lounge Chairs', href: '/collections/lounge-chairs' },
-          { label: 'Stools', href: '/collections/stools' },
-          { label: 'Ottomans', href: '/collections/ottoman' },
-          { label: 'Benches', href: '/collections/benches' },
-        ]},
-      ],
-    },
-    {
-      label: 'Office', href: '/pages/office-furniture',
-      children: [
-        { label: 'Office Tables', href: '/collections/office-tables', children: [
-          { label: 'Manager Tables', href: '/collections/manager-tables' },
-          { label: 'Executive Tables', href: '/collections/executive-tables' },
-          { label: 'Workstations', href: '/collections/workstations' },
-          { label: 'Reception Counters', href: '/collections/reception-counters' },
-          { label: 'Meeting Tables', href: '/collections/meeting-tables' },
-        ]},
-        { label: 'Office Chairs', href: '/collections/office-chairs', children: [
-          { label: 'Manager Chairs', href: '/collections/manager-chairs' },
-          { label: 'Executive Chairs', href: '/collections/executive-chairs' },
-          { label: 'CEO Chairs', href: '/collections/ceo-chairs' },
-          { label: 'High Back Chairs', href: '/collections/high-back-chairs' },
-          { label: 'Visitor Chairs', href: '/collections/office-chairs-visitor-chairs' },
-          { label: 'Cafe Chairs', href: '/collections/cafeteria-chairs' },
-        ]},
-        { label: 'Office Sofas', href: '/collections/office-sofas', children: [
-          { label: 'Office Sofa Set', href: '/collections/office-sofa-set' },
-          { label: 'Office Executive Furniture', href: '/collections/office-executive-furniture-sets' },
-        ]},
-        { label: 'Office Storage', href: '/collections/office-storage', children: [
-          { label: 'Filing Cabinets', href: '/collections/filing-cabinets' },
-          { label: 'Drawer Pedestals', href: '/collections/drawer-pedestals' },
-        ]},
-        { label: 'Co-working Spaces', href: '/collections/co-working-spaces' },
-      ],
-    },
-    {
-      label: 'Kitchens', href: '/collections/kitchens',
-      children: [
-        { label: 'Kitchen Design', href: '/collections/kitchen-designs' },
-        { label: 'Kitchen Cabinets', href: '/collections/kitchens' },
-        { label: 'Small Kitchen Design', href: '/collections/small-kitchen-design' },
-        { label: 'Kitchen Accessories', href: '/collections/kitchen-accessories' },
-        { label: 'Kitchen Sink', href: '/collections/kitchen-sink' },
-        { label: 'Kitchen Appliances', href: '/collections/kitchen-appliances' },
-      ],
-    },
-    {
-      label: 'Doors', href: '/collections/doors',
-      children: [
-        { label: 'Main Doors', href: '/collections/main-doors' },
-        { label: 'Panel Doors', href: '/collections/panel-doors' },
-        { label: 'Glass Doors', href: '/collections/glass-door' },
-        { label: 'Veneer Doors', href: '/collections/veneer-door' },
-        { label: 'Thermoset Doors', href: '/collections/thermoset-doors' },
-        { label: 'Sliding Doors', href: '/collections/sliding-door' },
-      ],
-    },
-    {
-      label: 'Wardrobes', href: '/collections/wardrobes-1',
-      children: [
-        { label: 'Wardrobe Design', href: '/collections/wardrobes-1' },
-        { label: 'Sliding Wardrobes', href: '/collections/sliding-wardrobes' },
-        { label: 'Built-in Wardrobes', href: '/collections/built-in-wardrobes' },
-        { label: '2 Door Wardrobes', href: '/collections/2-doors-wardrobes' },
-        { label: '3 Door Wardrobes', href: '/collections/3-doors-wardrobes' },
-        { label: '4 Door Wardrobes', href: '/collections/4-doors-wardrobes' },
-      ],
-    },
-    {
-      label: 'Decor', href: '/collections/decor-acc',
-      children: [
-        { label: 'Cushions', href: '/collections/cushions' },
-        { label: 'Table Runners', href: '/collections/table-runners' },
-        { label: 'Lamps & Lighting', href: '/collections/lamps-and-lighting' },
-        { label: 'Wall Clocks', href: '/collections/clocks' },
-        { label: 'Paintings', href: '/collections/art-frames' },
-        { label: 'Candles & Holders', href: '/collections/candles' },
-        { label: 'Accent Mirrors', href: '/collections/accent-mirrors' },
-      ],
-    },
-    { label: 'Flooring', href: '/collections/laminate-flooring' },
-    { label: 'Sale', href: '/collections/sale', badge: 'SALE' },
-  ];
-
-  async function createMenu(items: MenuSpec[], location: string, parentId: number | null = null) {
-    let i = 0;
-    for (const it of items) {
-      const created = await prisma.menuItem.create({
-        data: { label: it.label, href: it.href, location, parentId, position: i++, badge: it.badge ?? null },
-      });
-      if (it.children?.length) await createMenu(it.children, location, created.id);
-    }
-  }
-  await createMenu(MAIN, 'MAIN');
-
-  const FOOTER_ABOUT: MenuSpec[] = [
-    { label: 'About Us', href: '/pages/about-us' }, { label: 'Store Locator', href: '/pages/store-locator' },
-    { label: 'Product Catalogues', href: '/pages/catalogues' }, { label: 'Blog', href: '/blogs/news' },
-    { label: 'Payments', href: '/pages/payment' }, { label: 'Shipping', href: '/pages/shipping-and-delivery' },
-    { label: 'Authorized Dealers', href: '/pages/authorized' }, { label: 'Careers', href: '/pages/contact' },
-    { label: 'Terms of Offers for Sale', href: '/pages/terms-of-offers-for-sale' },
-    { label: 'Terms of Use', href: '/pages/terms-of-use' }, { label: 'Privacy Policy', href: '/pages/privacy-policy' },
-  ];
-  const FOOTER_SUPPORT: MenuSpec[] = [
-    { label: 'Contact Us', href: '/pages/contact' }, { label: 'Corporate', href: '/pages/contact' },
-    { label: 'Information/Lead Form', href: '/pages/lead-form' }, { label: 'Rewards', href: '/pages/rewards' },
-    { label: 'Loyalty Form', href: '/pages/loyalty-form' }, { label: 'Customer Service', href: '/pages/support-complaint-form' },
-    { label: 'Track My Ticket', href: '/pages/track-your-ticket' }, { label: 'Track Your Order', href: '/track' },
-    { label: 'Buy Now Pay Later', href: '/pages/buy-now-pay-later' },
-  ];
-  const FOOTER_SHOP: MenuSpec[] = [
-    { label: 'Bedroom Furniture', href: '/collections/bedroom' }, { label: 'Living Room Furniture', href: '/collections/living' },
-    { label: 'Dining Furniture', href: '/collections/dining' }, { label: 'Office Furniture', href: '/collections/office' },
-    { label: 'Kitchen Design', href: '/collections/kitchen-designs' }, { label: 'Wardrobes', href: '/collections/wardrobes-1' },
-    { label: 'Doors', href: '/collections/doors' }, { label: 'Flooring', href: '/collections/laminate-flooring' },
-    { label: 'Kids Furniture', href: '/collections/kids' }, { label: 'Sale', href: '/collections/sale' },
-  ];
-  await createMenu(FOOTER_ABOUT, 'FOOTER_1');
-  await createMenu(FOOTER_SUPPORT, 'FOOTER_2');
-  await createMenu(FOOTER_SHOP, 'FOOTER_3');
-  await createMenu([
-    { label: 'Free Delivery & Installation Nationwide', href: '/pages/shipping-and-delivery' },
-    { label: 'Wedding Packages', href: '/pages/wedding-package-builder' },
-    { label: 'Buy Now, Pay Later', href: '/pages/buy-now-pay-later' },
-    { label: 'Store Locator', href: '/pages/store-locator' },
-  ], 'TOPBAR');
+  // Live chrome menus (MAIN mega menu, footer INFORMATION / USER AREA, footer SEO link sections)
+  // are shared with scripts/fidelity/global.ts so a reseed stays faithful to the live site.
+  for (const [location, items] of Object.entries(GLOBAL_MENUS)) await createMenuTree(prisma, items, location);
   console.log('menus seeded');
 
   // ---------- featured category tiles (homepage) ----------
@@ -602,7 +424,7 @@ async function main() {
 
   // ---------- settings ----------
   const settings: Record<string, string> = {
-    announcement: 'Free Delivery & Installation Nationwide — Cozy Furnitures',
+    ...GLOBAL_SETTINGS, // announcement bar copy + links (live verbatim)
     phone: '+92-42-111-269-926',
     email: 'info@cozyfurnitures.pk',
     complaintsEmail: 'complaints@cozyfurnitures.pk',

@@ -1,202 +1,230 @@
 'use client';
 
 import { useState } from 'react';
-import { formatPKR } from '@/lib/money';
-import { SearchIcon, PhoneIcon, PackageIcon, MapPinIcon } from '@/components/icons';
 import { StatusTimeline } from '@/components/checkout/StatusTimeline';
-
-type TrackedItem = { title: string; variantTitle: string; price: number; quantity: number; image: string };
 
 type TrackedOrder = {
   orderNumber: string;
-  customerName: string;
-  city: string;
   status: string;
-  subtotal: number;
-  total: number;
   createdAt: string;
-  items: TrackedItem[];
+  updatedAt?: string;
 };
 
-type LookupResponse = { ok: boolean; status?: string; order?: TrackedOrder; error?: string };
+type LookupResponse = { ok: boolean; order?: TrackedOrder; error?: string };
 
-const STATUS_STYLES: Record<string, string> = {
-  PENDING: 'bg-gold/15 text-ink-dark border-gold/40',
-  CONFIRMED: 'bg-brand-50 text-brand-700 border-brand-200',
-  PROCESSING: 'bg-brand-100 text-brand-700 border-brand-300',
-  SHIPPED: 'bg-terra/10 text-terra-dark border-terra/30',
-  DELIVERED: 'bg-brand text-white border-brand',
-  CANCELLED: 'bg-sale/10 text-sale border-sale/30',
+const STATUS_TITLE: Record<string, string> = {
+  PENDING: 'Order Placed',
+  CONFIRMED: 'Order Confirmed',
+  PROCESSING: 'In Production',
+  SHIPPED: 'Out for Delivery',
+  DELIVERED: 'Delivered',
+  CANCELLED: 'Order Cancelled',
 };
 
-/** Order lookup form + result panel for /track. */
+/** "#100020", "100020", "cf-100020" → "CF-100020" (stored numbers are uppercase CF-xxxxxx). */
+function normalizeOrderNumber(input: string): string {
+  const v = input.trim().replace(/^#/, '').trim().toUpperCase();
+  return /^\d+$/.test(v) ? `CF-${v}` : v;
+}
+
+function formatWhen(iso?: string): string {
+  if (!iso) return 'Not available';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return 'Not available';
+  return d.toLocaleString('en-PK', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function TruckGlyph() {
+  return (
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M3 7.5C3 6.12 4.12 5 5.5 5H15V16H5.5C4.12 16 3 14.88 3 13.5V7.5Z" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M15 8H18.2C18.7 8 19.16 8.25 19.43 8.67L21 11.1V16H15V8Z" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M7.5 19C8.33 19 9 18.33 9 17.5C9 16.67 8.33 16 7.5 16C6.67 16 6 16.67 6 17.5C6 18.33 6.67 19 7.5 19Z" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M17.5 19C18.33 19 19 18.33 19 17.5C19 16.67 18.33 16 17.5 16C16.67 16 16 16.67 16 17.5C16 18.33 16.67 19 17.5 19Z" stroke="currentColor" strokeWidth="1.7" />
+    </svg>
+  );
+}
+
+const inputClass =
+  'mb-5 block h-[52px] min-h-12 w-full rounded-[10px] border border-[#d6d6d6] bg-white px-[14px] py-3 text-[15px] leading-[1.15] text-[#222] outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-transparent focus:border-[#087443] focus:shadow-[0_0_0_3px_rgba(0,120,80,0.12)]';
+
+function Result({ order }: { order: TrackedOrder }) {
+  const delivered = order.status === 'DELIVERED';
+  const cancelled = order.status === 'CANCELLED';
+  const pill = delivered
+    ? { text: 'Delivered', cls: 'bg-[#e6f7ef] text-[#087443]' }
+    : cancelled
+      ? { text: 'Action Required', cls: 'bg-[#fdecec] text-[#b42318]' }
+      : { text: 'In Progress', cls: 'bg-[#fff7e6] text-[#9a5b00]' };
+  const title = STATUS_TITLE[order.status] ?? order.status;
+  const updated = order.updatedAt ?? order.createdAt;
+
+  const rows: [string, string][] = [
+    ['Order Number', order.orderNumber],
+    ['Courier', 'Cozy Furnitures Delivery'],
+    ['Tracking Number', order.status === 'SHIPPED' || delivered ? order.orderNumber : 'Tracking will be available after shipment booking'],
+    ['Order Reference', order.orderNumber],
+    ['Delivery Date', delivered ? formatWhen(updated) : 'Not delivered yet'],
+    ['Last Updated', formatWhen(updated)],
+  ];
+
+  const events = [{ status: 'Order Placed', meta: formatWhen(order.createdAt) }];
+  if (order.status !== 'PENDING') events.push({ status: title, meta: formatWhen(updated) });
+
+  return (
+    <div className="mt-6 overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white">
+      <div className="border-b border-[#e2e8f0] bg-[#f8fafc] p-[22px]">
+        <div className="flex flex-wrap items-center justify-between gap-[14px]">
+          <h2 className="m-0 text-[24px] font-extrabold leading-[1.2] text-[#1f2937]">{title}</h2>
+          <span className={`inline-flex items-center rounded-full px-3 py-[7px] text-[13px] font-bold leading-[1.4] ${pill.cls}`}>
+            {pill.text}
+          </span>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2">
+        {rows.map(([label, value]) => (
+          <div key={label} className="border-b border-[#eef2f7] px-[22px] py-4 md:odd:border-r">
+            <span className="mb-[5px] block text-[13px] leading-[1.4] text-[#6b7280]">{label}</span>
+            <span className="break-words text-[15px] font-[650] leading-[1.5] text-[#111827]">{value}</span>
+          </div>
+        ))}
+      </div>
+      <div className="p-[22px]">
+        <h3 className="m-0 mb-4 text-[18px] font-extrabold leading-[1.3] text-[#1f2937]">Tracking Timeline</h3>
+        <StatusTimeline events={events} />
+      </div>
+      {cancelled && (
+        <div className="mx-[22px] mb-[22px] rounded-xl bg-[#f9fafb] px-4 py-[14px] text-[14px] leading-[1.55] text-[#555]">
+          <strong className="font-medium">Need help?</strong> Your shipment could not be completed by the courier. Please
+          contact Cozy Furnitures customer support for assistance.
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Live "Track Your Order" card (`.iw-track-card`): icon header, 3-column inline form, note, result card. */
 export function TrackForm({ initialOrder = '' }: { initialOrder?: string }) {
   const [orderNo, setOrderNo] = useState(initialOrder);
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [message, setMessage] = useState<{ text: string; type: 'error' | 'info' } | null>(null);
   const [result, setResult] = useState<TrackedOrder | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function trackOrder() {
     if (loading) return;
-    setError('');
     setResult(null);
-
-    if (!orderNo.trim() || !phone.trim()) {
-      setError('Please enter both your order number and the phone number used at checkout.');
+    const order = orderNo.trim();
+    const mobile = phone.trim();
+    if (!order || !mobile) {
+      setMessage({ text: 'Please enter both order number and mobile number.', type: 'error' });
       return;
     }
-
+    if (mobile.replace(/\D/g, '').length < 10) {
+      setMessage({ text: 'Please enter a valid mobile number.', type: 'error' });
+      return;
+    }
     setLoading(true);
+    setMessage({ text: 'Checking your order status...', type: 'info' });
     try {
-      const qs = new URLSearchParams({ order: orderNo.trim(), phone: phone.trim() });
+      const qs = new URLSearchParams({ order: normalizeOrderNumber(order), phone: mobile });
       const res = await fetch(`/api/orders/lookup?${qs.toString()}`, { headers: { Accept: 'application/json' } });
       const data = (await res.json().catch(() => null)) as LookupResponse | null;
-      if (res.ok && data?.ok && data.order) {
-        setResult(data.order);
-      } else {
-        setError(data?.error ?? 'We could not find that order. Please check your details and try again.');
+      if (!res.ok || !data?.ok || !data.order) {
+        setMessage({
+          text:
+            res.status === 429 && data?.error
+              ? data.error
+              : 'Order not found. Please check your order number and mobile number.',
+          type: 'error',
+        });
+        return;
       }
+      setMessage(null);
+      setResult(data.order);
     } catch {
-      setError('Something went wrong while looking up your order. Please try again.');
+      setMessage({ text: 'Unable to fetch tracking status right now. Please try again later.', type: 'error' });
     } finally {
       setLoading(false);
     }
   }
 
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      trackOrder();
+    }
+  };
+
   return (
-    <div className="mx-auto max-w-3xl">
-      <form
-        onSubmit={handleSubmit}
-        className="rounded-2xl bg-white p-5 shadow-card sm:p-6"
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="track-order" className="label">
-              Order Number
-            </label>
-            <input
-              id="track-order"
-              type="text"
-              value={orderNo}
-              onChange={(e) => setOrderNo(e.target.value)}
-              placeholder="CF-100001"
-              autoComplete="off"
-              className="input rounded-full uppercase placeholder:normal-case"
-            />
-          </div>
-          <div>
-            <label htmlFor="track-phone" className="label">
-              Phone Number
-            </label>
-            <input
-              id="track-phone"
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="0300 1234567"
-              autoComplete="tel"
-              className="input rounded-full"
-            />
-          </div>
+    <div className="rounded-[14px] border border-[#e7e7e7] bg-white p-[22px] shadow-[0_10px_30px_rgba(0,0,0,0.06)] md:rounded-[18px] md:p-[34px]">
+      <div className="mb-7 flex flex-col items-start gap-4 md:flex-row">
+        <div className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-2xl bg-[#087443] text-white">
+          <TruckGlyph />
         </div>
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-ink-muted">
-            You can find your order number in the confirmation shown after checkout.
+        <div>
+          <h1 className="m-0 mb-2 text-[26px] font-bold leading-[1.15] text-[#222] md:text-[32px]">Track Your Order</h1>
+          <p className="m-0 text-[16px] leading-[1.6] text-[#666]">
+            Enter your order number and mobile number to check the latest delivery status.
           </p>
-          <button type="submit" disabled={loading} className="btn-primary shrink-0">
-            <SearchIcon className="h-4 w-4" />
-            {loading ? 'Looking up…' : 'Track Order'}
-          </button>
         </div>
-      </form>
+      </div>
 
-      {error && (
-        <div role="alert" className="mt-5 rounded-2xl bg-sale/5 px-5 py-4 text-sm font-medium text-sale">
-          {error}
+      <div className="grid grid-cols-1 items-end gap-[14px] md:grid-cols-[1fr_1fr_auto]">
+        <div>
+          <label htmlFor="iwOrderNumber" className="mb-[7px] block text-[14px] font-semibold leading-[1.75] tracking-soft text-[#333]">
+            Order Number
+          </label>
+          <input
+            id="iwOrderNumber"
+            type="text"
+            value={orderNo}
+            onChange={(e) => setOrderNo(e.target.value)}
+            onKeyDown={onKeyDown}
+            placeholder="Example: 9868 or #9868"
+            autoComplete="off"
+            className={inputClass}
+          />
         </div>
-      )}
-
-      {result && (
-        <div className="mt-6 animate-fadeIn rounded-2xl bg-white p-5 shadow-card sm:p-6">
-          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-cream-border pb-4">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-ink-muted">Order</p>
-              <p className="font-heading text-lg font-bold text-ink-dark">{result.orderNumber}</p>
-              <p className="mt-0.5 text-xs text-ink-muted">
-                Placed on {new Date(result.createdAt).toLocaleDateString('en-PK', { day: 'numeric', month: 'long', year: 'numeric' })}
-              </p>
-            </div>
-            <span
-              className={`rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-wide ${
-                STATUS_STYLES[result.status] ?? 'bg-cream text-ink-dark border-cream-border'
-              }`}
-            >
-              {result.status}
-            </span>
-          </div>
-
-          <div className="grid gap-6 py-5 sm:grid-cols-[1fr_minmax(220px,2fr)]">
-            <div>
-              <h3 className="mb-4 font-heading text-sm font-semibold uppercase tracking-wide text-ink-muted">
-                Order Progress
-              </h3>
-              <StatusTimeline status={result.status} />
-            </div>
-
-            <div>
-              <h3 className="mb-4 font-heading text-sm font-semibold uppercase tracking-wide text-ink-muted">
-                Order Details
-              </h3>
-              <ul className="space-y-2.5">
-                {result.items.map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-3 rounded-2xl bg-cream-soft p-3">
-                    <span className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-white">
-                      {item.image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.image} alt={item.title} loading="lazy" className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="flex h-full items-center justify-center text-ink-light">
-                          <PackageIcon className="h-5 w-5" />
-                        </span>
-                      )}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[13px] font-medium text-ink-dark" title={item.title}>
-                        {item.title}
-                      </span>
-                      {item.variantTitle && item.variantTitle !== 'Default Title' && (
-                        <span className="block truncate text-xs text-ink-muted">{item.variantTitle}</span>
-                      )}
-                      <span className="block text-xs text-ink-muted">
-                        Qty {item.quantity} × {formatPKR(item.price)}
-                      </span>
-                    </span>
-                    <span className="shrink-0 text-sm font-semibold text-ink-dark">
-                      {formatPKR(item.price * item.quantity)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-3 flex items-center justify-between rounded-xl bg-cream px-4 py-3 text-sm">
-                <span className="font-medium text-ink-muted">Total (incl. free delivery)</span>
-                <span className="font-heading text-base font-bold text-brand">{formatPKR(result.total)}</span>
-              </div>
-              <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
-                <span className="inline-flex items-center gap-1.5">
-                  <PhoneIcon className="h-3.5 w-3.5 text-brand" />
-                  {result.customerName}
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <MapPinIcon className="h-3.5 w-3.5 text-brand" />
-                  {result.city}
-                </span>
-              </p>
-            </div>
-          </div>
+        <div>
+          <label htmlFor="iwPhone" className="mb-[7px] block text-[14px] font-semibold leading-[1.75] tracking-soft text-[#333]">
+            Mobile Number
+          </label>
+          <input
+            id="iwPhone"
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            onKeyDown={onKeyDown}
+            placeholder="Example: 03001234567"
+            autoComplete="tel"
+            className={inputClass}
+          />
         </div>
-      )}
+        <button
+          type="button"
+          onClick={trackOrder}
+          disabled={loading}
+          className="min-h-12 w-full whitespace-nowrap rounded-[10px] border-0 bg-[#087443] px-[22px] py-3 text-[15px] font-bold leading-none text-white transition-[transform,opacity] duration-150 hover:-translate-y-px hover:opacity-[.92] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-[.65] md:w-auto"
+        >
+          {loading ? 'Checking...' : 'Track Order'}
+        </button>
+      </div>
+
+      <div
+        role={message?.type === 'error' ? 'alert' : 'status'}
+        className={`text-[15px] font-semibold ${message?.text ? 'mt-[18px]' : ''} ${
+          message?.type === 'error' ? 'text-[#b42318]' : 'text-[#444]'
+        }`}
+      >
+        {message?.text}
+      </div>
+
+      {result && <Result order={result} />}
+
+      <div className="mt-[18px] rounded-xl bg-[#f9fafb] px-4 py-[14px] text-[14px] leading-[1.55] text-[#555]">
+        <strong className="font-medium">Note:</strong> Please enter the same mobile number used at the time of order placement.
+      </div>
     </div>
   );
 }
