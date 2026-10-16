@@ -8,6 +8,7 @@ import { Testimonials } from '@/components/home/Testimonials';
 import { SeoTextBlock } from '@/components/home/SeoTextBlock';
 import { HOT_SELLING } from '@/components/home/hotSelling';
 import { HOME_REVIEWS } from '@/components/home/homeReviews';
+import { CARD_SWATCH_SELECT, buildCardSwatches } from '@/lib/card-swatches';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +33,15 @@ async function getCollectionsByHandles(handles: readonly string[]): Promise<Cate
   return handles.map((h) => byHandle.get(h)).filter((c): c is CategoryTile => Boolean(c));
 }
 
-/** The live "Hot Selling Products" cards, in live order, with the live per-card extras. */
+/** Biggest per-variant discount, like the catalog cards (live sale circle). */
+function maxSalePercent(variants: { price: number; compareAtPrice: number | null }[]): number | null {
+  const pcts = variants
+    .filter((v) => v.compareAtPrice != null && v.compareAtPrice > v.price && v.price > 0)
+    .map((v) => Math.round((((v.compareAtPrice as number) - v.price) / (v.compareAtPrice as number)) * 100));
+  return pcts.length ? Math.max(...pcts) : null;
+}
+
+/** The "Hot Selling Products" cards, in live order, built from the database (SPEC §5.2.4). */
 async function getHotSelling(): Promise<CarouselProduct[]> {
   const rows = await prisma.product.findMany({
     where: { handle: { in: HOT_SELLING.map((h) => h.handle) }, status: 'ACTIVE' },
@@ -44,29 +53,22 @@ async function getHotSelling(): Promise<CarouselProduct[]> {
       rating: true,
       reviewCount: true,
       productType: true,
-      images: { orderBy: { position: 'asc' }, take: 2, select: { src: true, alt: true } },
-      variants: { orderBy: { position: 'asc' }, select: { price: true, compareAtPrice: true, inventory: true } },
+      variants: { orderBy: { position: 'asc' }, select: { price: true, compareAtPrice: true, status: true } },
+      ...CARD_SWATCH_SELECT,
     },
   });
   const byHandle = new Map(rows.map((r) => [r.handle, r]));
   return HOT_SELLING.flatMap((spec) => {
     const row = byHandle.get(spec.handle);
     if (!row) return [];
-    const card = toCard(row);
-    // Ringed swatch (ProductCardExtras.activeSwatch; undefined = first, null = none).
-    const swatchState = spec.activeSwatch !== undefined ? { activeSwatch: spec.activeSwatch } : {};
+    const card = toCard({ ...row, images: row.images.slice(0, 1).map((im) => ({ src: im.src, alt: '' })) });
     return [
       {
         ...card,
-        compareAtPrice: spec.compareAt !== undefined ? spec.compareAt : card.compareAtPrice,
         hoverImage: row.images[1]?.src ?? null,
-        salePercent: spec.salePercent,
-        statusLabel: card.inventory > 0 ? 'Ready to ship' : 'Sold out',
-        showRating: spec.rating != null,
-        rating: spec.rating ?? card.rating,
-        reviewCount: spec.rating != null ? 1 : 0,
-        swatches: spec.swatches,
-        ...swatchState,
+        salePercent: spec.salePercent !== undefined ? spec.salePercent : maxSalePercent(row.variants),
+        showRating: row.reviewCount > 0,
+        swatches: buildCardSwatches(row),
       },
     ];
   });
@@ -74,7 +76,7 @@ async function getHotSelling(): Promise<CarouselProduct[]> {
 
 export default async function HomePage() {
   const [bannerRows, hot, tiles, settings] = await Promise.all([
-    getBanners('HOME_HERO'),
+    getBanners(),
     getHotSelling(),
     getCollectionsByHandles(CATEGORY_TILE_HANDLES),
     getSettingsMap(),

@@ -1,199 +1,298 @@
 import Link from 'next/link';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { formatPKR } from '@/lib/money';
-import { AdminPageHeader, AdminTable, Badge, EmptyRow } from '@/components/admin/ui';
-import { StarIcon, TrashIcon } from '@/components/icons';
-import { deleteProductAction, toggleProductHotAction } from '@/app/admin/actions/catalog';
-import { ConfirmSubmit } from '../_catalog/ConfirmSubmit';
+import { AdminPageHeader, Notice } from '@/components/admin/ui';
+import { StarIcon } from '@/components/icons';
+import { ExternalLinkIcon } from '@/components/admin/icons';
+import { formatRs } from '@/components/ui/Price';
+import { displayPrice } from '@/lib/queries';
+import { VARIANT_STATUSES, VARIANT_STATUS_COPY } from '@/lib/variant-status';
+import { toggleProductHotAction } from '@/app/admin/actions/products';
 import { Pager } from '../_catalog/Pager';
+import { ProductRowActions } from './_components/ProductRowActions';
 
 export const dynamic = 'force-dynamic';
 
 const PER_PAGE = 20;
-const STATUSES = ['ALL', 'ACTIVE', 'DRAFT', 'ARCHIVED'] as const;
+const STATUS_FILTERS = { published: 'ACTIVE', draft: 'DRAFT', archived: 'ARCHIVED' } as const;
+type StatusFilter = keyof typeof STATUS_FILTERS;
 
-const inputCls = 'rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
+const PILL: Record<string, { label: string; cls: string }> = {
+  ACTIVE: { label: 'Published', cls: 'bg-emerald-100 text-emerald-800' },
+  DRAFT: { label: 'Draft', cls: 'bg-gray-100 text-gray-600' },
+  ARCHIVED: { label: 'Archived', cls: 'bg-gray-200 text-gray-600' },
+};
 
-export default async function AdminProductsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+const inputCls =
+  'min-h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20';
+
+const dateFmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Karachi' });
+
+function priceRange(prices: number[]): string {
+  const min = displayPrice(prices);
+  if (min == null) return 'Price on request';
+  const max = Math.max(...prices.filter((p) => p > 0));
+  return min === max ? formatRs(min) : `${formatRs(min)} – ${formatRs(max)}`;
+}
+
+function availability(statuses: string[]): string {
+  if (!statuses.length) return 'No combinations';
+  const short: Record<string, string> = { READY_TO_SHIP: 'ready', MADE_TO_ORDER: 'made to order', PRE_ORDER: 'pre-order', SOLD_OUT: 'sold out' };
+  return VARIANT_STATUSES.map((s) => [s, statuses.filter((x) => x === s).length] as const)
+    .filter(([, n]) => n > 0)
+    .map(([s, n]) => (statuses.length === 1 ? VARIANT_STATUS_COPY[s].label : `${n} ${short[s]}`))
+    .join(' · ');
+}
+
+export default async function AdminProductsPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const sp = await searchParams;
-  const q = typeof sp.q === 'string' ? sp.q.trim() : '';
-  const status = typeof sp.status === 'string' && (STATUSES as readonly string[]).includes(sp.status) ? sp.status : 'ALL';
-  const page = Math.max(1, Number.parseInt(typeof sp.page === 'string' ? sp.page : '1', 10) || 1);
-  const error = typeof sp.error === 'string' ? sp.error : undefined;
-  const deleted = sp.deleted === '1';
+  const one = (k: string) => (typeof sp[k] === 'string' ? (sp[k] as string) : '');
+  const q = one('q').trim().slice(0, 100);
+  const status = (one('status') in STATUS_FILTERS ? one('status') : '') as StatusFilter | '';
+  const missingPhotos = one('photos') === 'missing';
+  const soldOut = one('availability') === 'soldout';
+  const collectionId = /^\d+$/.test(one('collection')) ? Number(one('collection')) : null;
+  const page = Math.max(1, Number.parseInt(one('page') || '1', 10) || 1);
+  const deleted = one('deleted') === '1';
 
-  const where = {
-    ...(status !== 'ALL' ? { status } : {}),
-    ...(q ? { OR: [{ title: { contains: q } }, { handle: { contains: q } }] } : {}),
+  const where: Prisma.ProductWhereInput = {
+    ...(status ? { status: STATUS_FILTERS[status] } : {}),
+    ...(q ? { title: { contains: q } } : {}),
+    ...(missingPhotos ? { images: { none: {} } } : {}),
+    ...(soldOut ? { variants: { some: {}, every: { status: 'SOLD_OUT' } } } : {}),
+    ...(collectionId ? { collections: { some: { id: collectionId } } } : {}),
   };
 
-  const [total, products] = await Promise.all([
+  const [total, products, collections] = await Promise.all([
     prisma.product.count({ where }),
     prisma.product.findMany({
       where,
-      orderBy: [{ id: 'desc' }],
+      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
       skip: (page - 1) * PER_PAGE,
       take: PER_PAGE,
-      include: {
-        images: { orderBy: { position: 'asc' }, take: 1, select: { src: true } },
-        variants: { select: { price: true } },
+      select: {
+        id: true,
+        title: true,
+        handle: true,
+        status: true,
+        hot: true,
+        updatedAt: true,
+        images: { orderBy: [{ position: 'asc' }, { id: 'asc' }], take: 1, select: { src: true } },
+        variants: { select: { price: true, status: true } },
       },
     }),
+    prisma.collection.findMany({ orderBy: { title: 'asc' }, select: { id: true, title: true } }),
   ]);
   const pages = Math.max(1, Math.ceil(total / PER_PAGE));
 
   const query: Record<string, string> = {};
   if (q) query.q = q;
-  if (status !== 'ALL') query.status = status;
+  if (status) query.status = status;
+  if (missingPhotos) query.photos = 'missing';
+  if (soldOut) query.availability = 'soldout';
+  if (collectionId) query.collection = String(collectionId);
+  const filtered = Object.keys(query).length > 0;
 
-  const pill = (value: string, label: string) => {
-    const active = status === value;
-    const params = new URLSearchParams();
-    if (q) params.set('q', q);
-    if (value !== 'ALL') params.set('status', value);
-    const qs = params.toString();
-    return (
-      <Link
-        key={value}
-        href={qs ? `/admin/products?${qs}` : '/admin/products'}
-        className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-          active ? 'bg-brand text-white' : 'bg-white text-gray-600 hover:text-brand'
-        }`}
-      >
-        {label}
-      </Link>
+  const rows = products.map((p) => ({
+    ...p,
+    price: priceRange(p.variants.map((v) => v.price)),
+    avail: availability(p.variants.map((v) => v.status)),
+    pill: PILL[p.status] ?? PILL.DRAFT,
+    updated: dateFmt.format(p.updatedAt),
+  }));
+
+  const Thumb = ({ src }: { src?: string }) =>
+    src ? (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={src} alt="" width={48} height={48} className="h-12 w-12 shrink-0 rounded-lg border border-gray-200 bg-white object-contain" />
+    ) : (
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 text-[10px] font-semibold text-gray-400">
+        No photo
+      </span>
     );
-  };
+
+  const Star = ({ id, hot }: { id: number; hot: boolean }) => (
+    <form action={toggleProductHotAction}>
+      <input type="hidden" name="id" value={id} />
+      <button
+        type="submit"
+        aria-label={hot ? 'Best seller — click to remove the star' : 'Click to mark as best seller'}
+        title={hot ? 'Best seller — click to remove the star' : 'Mark as best seller'}
+        className={`inline-flex h-10 w-10 items-center justify-center rounded-lg transition hover:bg-gray-100 ${hot ? 'text-amber-500' : 'text-gray-300 hover:text-amber-400'}`}
+      >
+        <StarIcon className="h-5 w-5" filled={hot} />
+      </button>
+    </form>
+  );
+
+  const ViewLink = ({ handle, status: st }: { handle: string; status: string }) =>
+    st === 'ACTIVE' ? (
+      <a
+        href={`/products/${handle}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="View on store"
+        title="View on store"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-ink-dark"
+      >
+        <ExternalLinkIcon className="h-4 w-4" />
+      </a>
+    ) : (
+      <span title="Publish to see it on the store" className="inline-flex h-10 w-10 cursor-not-allowed items-center justify-center text-gray-300">
+        <ExternalLinkIcon className="h-4 w-4" />
+      </span>
+    );
 
   return (
     <div>
       <AdminPageHeader
         title="Products"
-        subtitle={`${total} product${total === 1 ? '' : 's'} in the catalog`}
+        subtitle={`${total} product${total === 1 ? '' : 's'}${filtered ? ' match' : ' in the catalogue'}`}
         actions={
           <Link
             href="/admin/products/new"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600"
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-brand px-4 text-sm font-semibold text-white transition hover:bg-brand-600"
           >
             + New product
           </Link>
         }
       />
 
-      {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700" role="alert">
-          {error}
-        </div>
-      )}
       {deleted && (
-        <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700" role="status">
-          Product deleted.
+        <div className="mb-4">
+          <Notice tone="success">Product deleted.</Notice>
         </div>
       )}
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <form action="/admin/products" method="get" className="flex flex-wrap items-center gap-2">
-          <input type="search" name="q" defaultValue={q} placeholder="Search title or handle…" className={`${inputCls} w-56`} />
-          <select name="status" defaultValue={status} className={`${inputCls} w-40`} aria-label="Status filter">
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s === 'ALL' ? 'All statuses' : s}
-              </option>
-            ))}
-          </select>
-          <button type="submit" className="rounded-lg bg-brand-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand">
-            Search
+      <form action="/admin/products" method="get" className="mb-4 grid gap-2 rounded-xl border border-gray-200 bg-white p-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto]">
+        <input type="search" name="q" defaultValue={q} placeholder="Search by title…" aria-label="Search products" className={`${inputCls} w-full`} />
+        <select name="status" defaultValue={status} aria-label="Status" className={`${inputCls} w-full`}>
+          <option value="">All statuses</option>
+          <option value="published">Published</option>
+          <option value="draft">Draft</option>
+          <option value="archived">Archived</option>
+        </select>
+        <select name="collection" defaultValue={collectionId ?? ''} aria-label="Collection" className={`${inputCls} w-full`}>
+          <option value="">All collections</option>
+          {collections.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.title}
+            </option>
+          ))}
+        </select>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:col-span-2 lg:col-span-1">
+          <label className="flex min-h-10 items-center gap-2 text-sm text-gray-700">
+            <input type="checkbox" name="photos" value="missing" defaultChecked={missingPhotos} className="h-5 w-5 rounded border-gray-300" />
+            Missing photos
+          </label>
+          <label className="flex min-h-10 items-center gap-2 text-sm text-gray-700">
+            <input type="checkbox" name="availability" value="soldout" defaultChecked={soldOut} className="h-5 w-5 rounded border-gray-300" />
+            Sold out
+          </label>
+        </div>
+        <div className="flex items-center gap-2 sm:col-span-2 lg:col-span-4">
+          <button type="submit" className="inline-flex min-h-10 items-center rounded-lg bg-brand-900 px-4 text-sm font-semibold text-white transition hover:bg-brand">
+            Show products
           </button>
-          {(q || status !== 'ALL') && (
-            <Link href="/admin/products" className="px-2 text-sm font-medium text-gray-400 hover:text-brand">
-              Clear
+          {filtered && (
+            <Link href="/admin/products" className="inline-flex min-h-10 items-center px-2 text-sm font-semibold text-gray-500 hover:text-brand">
+              Clear filters
             </Link>
           )}
-        </form>
-        <div className="flex items-center gap-1.5">
-          {pill('ALL', 'All')}
-          {pill('ACTIVE', 'Active')}
-          {pill('DRAFT', 'Draft')}
-          {pill('ARCHIVED', 'Archived')}
         </div>
-      </div>
+      </form>
 
-      <AdminTable head={['', 'Product', 'Type', 'Variants', 'Price', 'Status', 'Hot', 'Actions']}>
-        {products.length === 0 && <EmptyRow colSpan={8} message={q ? `No products match “${q}”.` : 'No products yet.'} />}
-        {products.map((p) => {
-          const prices = p.variants.map((v) => v.price);
-          const min = prices.length ? Math.min(...prices) : null;
-          const max = prices.length ? Math.max(...prices) : null;
-          return (
-            <tr key={p.id} className="hover:bg-gray-50/70">
-              <td className="px-4 py-2.5">
-                {p.images[0] ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.images[0].src} alt="" width={44} height={44} className="h-11 w-11 rounded-lg border border-gray-200 object-cover" />
-                ) : (
-                  <span className="flex h-11 w-11 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-[9px] font-semibold text-gray-300">
-                    IMG
-                  </span>
-                )}
-              </td>
-              <td className="px-4 py-2.5">
-                <a
-                  href={`/products/${p.handle}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-medium text-ink-dark hover:text-brand"
-                  title="View on store (opens new tab)"
-                >
-                  {p.title}
-                </a>
-                <span className="block font-mono text-[11px] text-gray-400">{p.handle}</span>
-              </td>
-              <td className="px-4 py-2.5 text-gray-600">{p.productType || '—'}</td>
-              <td className="px-4 py-2.5 text-gray-600">{p.variants.length}</td>
-              <td className="whitespace-nowrap px-4 py-2.5 text-gray-700">
-                {min == null ? '—' : min === max ? formatPKR(min) : `${formatPKR(min)} – ${formatPKR(max ?? min)}`}
-              </td>
-              <td className="px-4 py-2.5">
-                <Badge>{p.status}</Badge>
-              </td>
-              <td className="px-4 py-2.5">
-                <form action={toggleProductHotAction}>
-                  <input type="hidden" name="id" value={p.id} />
-                  <button
-                    type="submit"
-                    title={p.hot ? 'Hot — click to remove' : 'Click to mark as hot'}
-                    className={`transition ${p.hot ? 'text-amber-500 hover:text-amber-400' : 'text-gray-300 hover:text-amber-400'}`}
-                  >
-                    <StarIcon className="h-5 w-5" filled={p.hot} />
-                  </button>
-                </form>
-              </td>
-              <td className="px-4 py-2.5">
-                <div className="flex items-center gap-3">
-                  <Link href={`/admin/products/${p.id}`} className="text-sm font-semibold text-brand hover:text-brand-600">
+      {rows.length === 0 && (
+        <div className="rounded-xl border border-gray-200 bg-white px-4 py-10 text-center text-sm text-gray-500">
+          {filtered ? 'No products match these filters.' : 'No products yet.'}
+        </div>
+      )}
+
+      {rows.length > 0 && (
+        <>
+          {/* phones: cards */}
+          <ul className="space-y-2 sm:hidden">
+            {rows.map((p) => (
+              <li key={p.id} data-testid="product-row" className="rounded-xl border border-gray-200 bg-white p-3">
+                <div className="flex gap-3">
+                  <Thumb src={p.images[0]?.src} />
+                  <div className="min-w-0 flex-1">
+                    <Link href={`/admin/products/${p.id}`} className="block break-words text-sm font-semibold text-ink-dark hover:text-brand">
+                      {p.title}
+                    </Link>
+                    <p className="text-xs text-gray-600">{p.price}</p>
+                    <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-gray-500">
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${p.pill.cls}`}>{p.pill.label}</span>
+                      {p.variants.length} combination{p.variants.length === 1 ? '' : 's'} · {p.avail}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-2 flex items-center justify-between border-t border-gray-100 pt-1">
+                  <Link href={`/admin/products/${p.id}`} className="inline-flex min-h-10 items-center px-1 text-sm font-semibold text-brand-600">
                     Edit
                   </Link>
-                  <form action={deleteProductAction}>
-                    <input type="hidden" name="id" value={p.id} />
-                    <ConfirmSubmit
-                      message={`Delete “${p.title}”? This also removes its variants, images and reviews.`}
-                      title="Delete product"
-                      className="text-gray-400 transition hover:text-red-600"
-                    >
-                      <span className="sr-only">Delete</span>
-                      <TrashIcon className="h-4 w-4" />
-                    </ConfirmSubmit>
-                  </form>
+                  <span className="flex items-center">
+                    <Star id={p.id} hot={p.hot} />
+                    <ViewLink handle={p.handle} status={p.status} />
+                    <ProductRowActions id={p.id} title={p.title} />
+                  </span>
                 </div>
-              </td>
-            </tr>
-          );
-        })}
-      </AdminTable>
+              </li>
+            ))}
+          </ul>
+
+          {/* wider screens: table */}
+          <div className="hidden overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm sm:block">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50 text-[11px] uppercase tracking-wide text-gray-500">
+                  <th className="px-3 py-3 font-semibold">
+                    <span className="sr-only">Photo</span>
+                  </th>
+                  <th className="px-3 py-3 font-semibold">Product</th>
+                  <th className="px-3 py-3 font-semibold">Status</th>
+                  <th className="px-3 py-3 font-semibold">Combinations</th>
+                  <th className="hidden px-3 py-3 font-semibold lg:table-cell">Updated</th>
+                  <th className="px-3 py-3 text-right font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {rows.map((p) => (
+                  <tr key={p.id} data-testid="product-row" className="hover:bg-gray-50/70">
+                    <td className="px-3 py-2">
+                      <Thumb src={p.images[0]?.src} />
+                    </td>
+                    <td className="max-w-xs px-3 py-2">
+                      <Link href={`/admin/products/${p.id}`} className="font-medium text-ink-dark hover:text-brand">
+                        {p.title}
+                      </Link>
+                      <span className="block text-xs text-gray-500">{p.price}</span>
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${p.pill.cls}`}>{p.pill.label}</span>
+                    </td>
+                    <td className="px-3 py-2 text-gray-600">
+                      {p.variants.length}
+                      <span className="block text-xs text-gray-500">{p.avail}</span>
+                    </td>
+                    <td className="hidden whitespace-nowrap px-3 py-2 text-xs text-gray-500 lg:table-cell">{p.updated}</td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center justify-end">
+                        <Link href={`/admin/products/${p.id}`} className="mr-1 inline-flex min-h-10 items-center px-2 text-sm font-semibold text-brand-600 hover:underline">
+                          Edit
+                        </Link>
+                        <Star id={p.id} hot={p.hot} />
+                        <ViewLink handle={p.handle} status={p.status} />
+                        <ProductRowActions id={p.id} title={p.title} />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
 
       <Pager page={page} pages={pages} basePath="/admin/products" query={query} />
     </div>

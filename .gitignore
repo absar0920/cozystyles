@@ -4,3 +4,9 @@ out/
 *.tsbuildinfo
 .DS_Store
 *.log
+/storage/
+/prisma/backups/
+/prisma/dev.db.bak-*
+/test-results/
+/playwright-report/
+/tests/.auth/

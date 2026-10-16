@@ -4,6 +4,7 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { markMessageAction, deleteMessageAction } from '@/app/admin/actions/messages';
 import { AdminPageHeader, AdminTable, Badge, EmptyRow } from '@/components/admin/ui';
+import { ConfirmDelete } from '@/components/admin/ConfirmDelete';
 import { ChevronDown, ChevronLeft, ChevronRight, SearchIcon } from '@/components/icons';
 
 export const dynamic = 'force-dynamic';
@@ -17,7 +18,11 @@ const PER_PAGE = 20;
 const STATUS_FILTERS = ['NEW', 'READ', 'CLOSED'] as const;
 
 const fmtDate = (d: Date) =>
-  new Date(d).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' });
+  new Date(d).toLocaleDateString('en-PK', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 
 const ghostBtn =
   'inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-50';
@@ -48,8 +53,12 @@ export default async function MessagesPage({
 
   const [total, grouped, items] = await Promise.all([
     prisma.contactSubmission.count({ where }),
-    prisma.contactSubmission.groupBy({ by: ['status'], _count: { _all: true } }),
+    prisma.contactSubmission.groupBy({
+      by: ['status'],
+      _count: { _all: true },
+    }),
     prisma.contactSubmission.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * PER_PAGE,
       take: PER_PAGE,
@@ -92,21 +101,21 @@ export default async function MessagesPage({
         title="Messages"
         subtitle="Contact form submissions from the storefront"
         actions={
-          <form action="/admin/messages" method="get" className="flex items-center gap-2">
+          <form action="/admin/messages" method="get" className="flex w-full items-center gap-2 sm:w-auto">
             {status && <input type="hidden" name="status" value={status} />}
-            <div className="relative">
+            <div className="relative min-w-0 flex-1">
               <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="search"
                 name="q"
                 defaultValue={q}
                 placeholder="Search name, subject, email…"
-                className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm outline-none transition placeholder:text-gray-300 focus:border-brand focus:ring-2 focus:ring-brand/20 sm:w-72"
+                className="min-h-10 w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm outline-none transition placeholder:text-gray-300 focus:border-brand focus:ring-2 focus:ring-brand/20 sm:w-72"
               />
             </div>
             <button
               type="submit"
-              className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600"
+              className="min-h-10 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600"
             >
               Search
             </button>
@@ -122,7 +131,7 @@ export default async function MessagesPage({
             <Link
               key={t.label}
               href={href({ status: t.value || null, page: null, open: null })}
-              className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+              className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold transition ${
                 active ? 'bg-brand-900 text-white' : 'border border-gray-300 bg-white text-gray-500 hover:bg-gray-50'
               }`}
             >
@@ -139,24 +148,35 @@ export default async function MessagesPage({
         })}
       </div>
 
-      <AdminTable head={['Name', 'Subject', 'Contact', 'Status', 'Date', '']}>
+      <ul className="space-y-3 sm:hidden">
         {items.length === 0 ? (
-          <EmptyRow colSpan={6} message={q || status ? 'No messages match your filters.' : 'No messages yet.'} />
+          <li className="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center text-sm text-gray-400">
+            {q || status ? 'No messages match your filters.' : 'No messages yet.'}
+          </li>
         ) : (
-          items.map((m) => {
-            const isOpen = openId === m.id;
-            return (
-              <MessageRows key={m.id} m={m} isOpen={isOpen} href={href} />
-            );
-          })
+          items.map((m) => <MessageCard key={m.id} m={m} isOpen={openId === m.id} href={href} />)
         )}
-      </AdminTable>
+      </ul>
+
+      <div className="hidden sm:block">
+        <AdminTable head={['Name', 'Subject', 'Contact', 'Status', 'Date', '']}>
+          {items.length === 0 ? (
+            <EmptyRow colSpan={6} message={q || status ? 'No messages match your filters.' : 'No messages yet.'} />
+          ) : (
+            items.map((m) => {
+              const isOpen = openId === m.id;
+              return <MessageRows key={m.id} m={m} isOpen={isOpen} href={href} />;
+            })
+          )}
+        </AdminTable>
+      </div>
 
       {/* ---------- Pagination ---------- */}
       {pages > 1 && (
         <div className="mt-4 flex items-center justify-between">
           <p className="text-xs text-gray-400">
-            Page {page} of {pages} · {total.toLocaleString('en-PK')} message{total === 1 ? '' : 's'}
+            Page {page} of {pages} · {total.toLocaleString('en-PK')} message
+            {total === 1 ? '' : 's'}
           </p>
           <div className="flex items-center gap-2">
             {page > 1 ? (
@@ -184,6 +204,11 @@ export default async function MessagesPage({
   );
 }
 
+/** "The message from Ali (ali@x.pk), received 3 Oct 2026, and its text" */
+function deleteConsequence(m: { name: string; email: string; createdAt: Date }): string {
+  return `The message from ${m.name}${m.email ? ` (${m.email})` : ''}, received ${fmtDate(m.createdAt)}, and its text`;
+}
+
 /* ---------------- Row renderer (summary row + optional expanded detail row) ---------------- */
 
 type Message = Prisma.ContactSubmissionGetPayload<{}>;
@@ -199,7 +224,9 @@ function MessageRows({
 }) {
   return (
     <>
-      <tr className={`transition hover:bg-gray-50/70 ${isOpen ? 'bg-brand-50/50' : m.status === 'NEW' ? 'bg-amber-50/40' : ''}`}>
+      <tr
+        className={`transition hover:bg-gray-50/70 ${isOpen ? 'bg-brand-50/50' : m.status === 'NEW' ? 'bg-amber-50/40' : ''}`}
+      >
         <td className="px-4 py-3">
           <span className={`text-ink-dark ${m.status === 'NEW' ? 'font-semibold' : 'font-medium'}`}>{m.name}</span>
         </td>
@@ -235,71 +262,113 @@ function MessageRows({
       {isOpen && (
         <tr>
           <td colSpan={6} className="border-l-4 border-brand bg-gray-50/80 px-6 py-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="font-heading text-sm font-bold text-ink-dark">
-                  {m.subject || '(no subject)'}
-                </p>
-                <p className="mt-0.5 text-xs text-gray-400">
-                  From {m.name}
-                  {m.email && <> · {m.email}</>}
-                  {m.phone && <> · {m.phone}</>} · {fmtDate(m.createdAt)}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {m.status !== 'READ' && (
-                  <form action={markMessageAction}>
-                    <input type="hidden" name="id" value={m.id} />
-                    <input type="hidden" name="status" value="READ" />
-                    <button type="submit" className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-50">
-                      Mark as Read
-                    </button>
-                  </form>
-                )}
-                {m.status !== 'CLOSED' && (
-                  <form action={markMessageAction}>
-                    <input type="hidden" name="id" value={m.id} />
-                    <input type="hidden" name="status" value="CLOSED" />
-                    <button type="submit" className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-50">
-                      Mark as Closed
-                    </button>
-                  </form>
-                )}
-                <details className="relative inline-block text-left">
-                  <summary className="inline-flex cursor-pointer select-none items-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 [&::-webkit-details-marker]:hidden">
-                    Delete
-                  </summary>
-                  <div className="absolute right-0 z-10 mt-2 w-60 rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
-                    <p className="text-xs text-gray-500">Permanently delete this message? This cannot be undone.</p>
-                    <form action={deleteMessageAction} className="mt-2">
-                      <input type="hidden" name="id" value={m.id} />
-                      <button
-                        type="submit"
-                        className="w-full rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700"
-                      >
-                        Yes, delete permanently
-                      </button>
-                    </form>
-                  </div>
-                </details>
-              </div>
-            </div>
-
-            <div className="mt-4 rounded-lg border border-gray-200 bg-white p-4 text-sm leading-relaxed text-ink">
-              <p className="whitespace-pre-wrap">{m.message}</p>
-            </div>
-
-            {m.email && (
-              <a
-                href={`mailto:${m.email}?subject=${encodeURIComponent(`Re: ${m.subject || 'Your enquiry'}`)}`}
-                className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline"
-              >
-                Reply by email →
-              </a>
-            )}
+            <MessageDetail m={m} />
           </td>
         </tr>
       )}
     </>
+  );
+}
+
+function MessageDetail({ m }: { m: Message }) {
+  return (
+    <>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="font-heading text-sm font-bold text-ink-dark">{m.subject || '(no subject)'}</p>
+          <p className="mt-0.5 text-xs text-gray-400">
+            From {m.name}
+            {m.email && <> · {m.email}</>}
+            {m.phone && <> · {m.phone}</>} · {fmtDate(m.createdAt)}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {m.status !== 'READ' && (
+            <form action={markMessageAction}>
+              <input type="hidden" name="id" value={m.id} />
+              <input type="hidden" name="status" value="READ" />
+              <button
+                type="submit"
+                className="inline-flex min-h-10 items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-50"
+              >
+                Mark as Read
+              </button>
+            </form>
+          )}
+          {m.status !== 'CLOSED' && (
+            <form action={markMessageAction}>
+              <input type="hidden" name="id" value={m.id} />
+              <input type="hidden" name="status" value="CLOSED" />
+              <button
+                type="submit"
+                className="inline-flex min-h-10 items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-50"
+              >
+                Mark as Closed
+              </button>
+            </form>
+          )}
+          <ConfirmDelete
+            action={deleteMessageAction}
+            fields={{ id: String(m.id) }}
+            title="Delete this message?"
+            consequences={[deleteConsequence(m)]}
+          />
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-lg border border-gray-200 bg-white p-4 text-sm leading-relaxed text-ink">
+        <p className="whitespace-pre-wrap">{m.message}</p>
+      </div>
+
+      {m.email && (
+        <a
+          href={`mailto:${m.email}?subject=${encodeURIComponent(`Re: ${m.subject || 'Your enquiry'}`)}`}
+          className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline"
+        >
+          Reply by email →
+        </a>
+      )}
+    </>
+  );
+}
+
+/** Phones (below 640px): one card per message; the open one shows its text and actions. */
+function MessageCard({
+  m,
+  isOpen,
+  href,
+}: {
+  m: Message;
+  isOpen: boolean;
+  href: (over?: Record<string, string | number | null>) => string;
+}) {
+  return (
+    <li
+      className={`rounded-xl border bg-white p-4 shadow-sm ${isOpen ? 'border-brand-300' : m.status === 'NEW' ? 'border-amber-200' : 'border-gray-200'}`}
+    >
+      <Link href={isOpen ? href({ open: null }) : href({ open: m.id })} className="block">
+        <div className="flex items-center justify-between gap-2">
+          <span className={`min-w-0 truncate text-ink-dark ${m.status === 'NEW' ? 'font-semibold' : 'font-medium'}`}>
+            {m.name}
+          </span>
+          <Badge>{m.status}</Badge>
+        </div>
+        <p className="mt-1 truncate text-sm text-ink">
+          {m.subject || <span className="text-gray-300">(no subject)</span>}
+        </p>
+        <p className="mt-1 text-xs text-gray-400">
+          {[m.phone, m.email, fmtDate(m.createdAt)].filter(Boolean).join(' · ')}
+        </p>
+        <span className="mt-2 inline-flex min-h-10 items-center gap-1 text-xs font-semibold text-brand">
+          {isOpen ? 'Close' : 'Read message'}
+          <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </span>
+      </Link>
+      {isOpen && (
+        <div className="mt-3 border-t border-gray-100 pt-3">
+          <MessageDetail m={m} />
+        </div>
+      )}
+    </li>
   );
 }

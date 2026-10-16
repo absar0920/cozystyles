@@ -3,8 +3,11 @@ import { discountPercent } from '@/lib/money';
 import type { ProductCardData } from '@/lib/queries';
 import { Price } from '@/components/ui/Price';
 
-/** `active` mirrors live `.product-card-swatch.active` (ringed); when no swatch says, see `activeSwatch`. */
-export type CardSwatch = { name: string; color: string; active?: boolean };
+/**
+ * `active` mirrors live `.product-card-swatch.active` (ringed); when no swatch says, see `activeSwatch`.
+ * `swatchImage` (a fabric/finish photo) wins over `color`.
+ */
+export type CardSwatch = { name: string; color: string; swatchImage?: string | null; active?: boolean };
 
 /** Optional extras a page can attach to the base card data (all default to the live "plain" card). */
 export type ProductCardExtras = {
@@ -15,7 +18,7 @@ export type ProductCardExtras = {
   isNew?: boolean;
   /** Yellow "Limited Edition" bar stacked above the status bar. */
   limitedEdition?: boolean;
-  /** Overrides the status bar text. Default: "Ready to ship" when in stock, otherwise "Pre-Order". */
+  /** Overrides the status bar text. Default: the card data's `statusLabel` (from the variant statuses). */
   statusLabel?: string | null;
   /** Sale circle % (live = max over variants). Default: computed from price vs compareAtPrice. */
   salePercent?: number | null;
@@ -48,7 +51,7 @@ export function ProductCard({
 }) {
   const href = `/products/${product.handle}`;
   const pct = product.salePercent !== undefined ? product.salePercent : discountPercent(product.price, product.compareAtPrice ?? null);
-  const status = product.statusLabel !== undefined ? product.statusLabel : product.inventory > 0 ? 'Ready to ship' : 'Pre-Order';
+  const status = product.statusLabel;
   const ratio = product.imageRatio ?? 700 / 920;
   const hover = product.hoverImage && product.hoverImage !== product.image ? product.hoverImage : null;
   const ratingPct = `${Math.max(0, Math.min(5, product.rating)) * 20}%`;
@@ -135,7 +138,10 @@ export function ProductCard({
                 title={s.name}
                 className={`relative inline-flex h-[18px] w-[18px] rounded-[7px] p-[3px] ${i === ringed ? 'shadow-[inset_0_0_0_1px_#103a3a]' : ''}`}
               >
-                <span className="h-full w-full rounded-full" style={{ background: s.color }} />
+                <span
+                  className="h-full w-full rounded-full"
+                  style={{ background: s.swatchImage ? `center / cover no-repeat url("${s.swatchImage.replace(/"/g, '%22')}")` : s.color }}
+                />
               </span>
             ))}
           </div>

@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Poppins, Work_Sans } from 'next/font/google';
 import localFont from 'next/font/local';
-import { CartProvider } from '@/lib/cart';
 import './globals.css';
 
 // Live theme font: Poppins everywhere (body, headings, buttons, prices, footer). Live loads only the
@@ -47,7 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${poppins.variable} ${poppinsThin.variable} ${workSans.variable}`}>
       <body>
-        <CartProvider>{children}</CartProvider>
+        {children}
       </body>
     </html>
   );

@@ -5,8 +5,8 @@ export type OptionGroup = {
   index: number;
   name: string;
   values: string[];
-  /** value → swatch colour (only for colour options). */
-  swatches?: Record<string, string>;
+  /** value → swatch colour or photo (only for colour / finish options). */
+  swatches?: Record<string, { color: string; image: string | null }>;
 };
 
 /**
@@ -61,7 +61,7 @@ export function VariantPicker({
                     >
                       <span
                         className={`absolute left-[3px] top-[3px] h-7 w-7 rounded-full ${disabled ? 'opacity-40' : ''}`}
-                        style={{ background: group.swatches?.[value] ?? '#ccc' }}
+                        style={swatchStyle(group.swatches?.[value])}
                       />
                       {disabled && <Strike />}
                     </button>
@@ -96,6 +96,11 @@ export function VariantPicker({
       })}
     </div>
   );
+}
+
+function swatchStyle(s: { color: string; image: string | null } | undefined): React.CSSProperties {
+  if (s?.image) return { background: `center / cover no-repeat url("${s.image.replace(/"/g, '%22')}")` };
+  return { background: s?.color ?? '#cccccc' };
 }
 
 /** Live `.is-disabled + label::before`: a 2px #dedede diagonal across the label's padding box. */

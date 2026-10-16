@@ -1,4 +1,5 @@
 /** Serializable product types shared between the product detail page (server) and its client components. */
+import { isAvailable } from '@/lib/variant-status';
 
 export type ProductOption = {
   name: string;
@@ -11,7 +12,8 @@ export type VariantInfo = {
   sku: string | null;
   price: number;
   compareAtPrice: number | null;
-  inventory: number;
+  /** READY_TO_SHIP | MADE_TO_ORDER | PRE_ORDER | SOLD_OUT */
+  status: string;
   option1: string | null;
   option2: string | null;
   option3: string | null;
@@ -25,9 +27,15 @@ export function optionAt(variant: VariantInfo, index: number): string {
   return '';
 }
 
+/** A product photo; `tag` = the option value it shows ("Shows: Color: Grey"), null = any option. */
+export type ProductImageInfo = { src: string; alt: string; tag: { optionIndex: number; value: string } | null };
+
+/** Swatch per option position → value: colour (neutral fallback) or photo. Only colour/finish options. */
+export type SwatchMap = Record<number, Record<string, { color: string; image: string | null }>>;
+
 /**
  * Option values to strike through (live Habitat `createAvailableOptionsTree`): a value is available
- * when some in-stock variant carries it and matches all but at most one of the current selections;
+ * when some available (not sold out) variant carries it and matches all but at most one of the current selections;
  * a first-option value is available when any in-stock variant carries it; and while the current
  * variant is sold out, its selected values are marked unavailable (first option excepted when
  * another in-stock variant carries it). Returns option position → unavailable values.
@@ -39,7 +47,7 @@ export function unavailableValues(
 ): Record<number, Set<string>> {
   const state = new Map<number, Map<string, boolean>>();
   for (const v of variants) {
-    const available = v.inventory > 0;
+    const available = isAvailable(v.status);
     const matches = selected.reduce((n, s) => (optionAt(v, s.index) === s.value ? n + 1 : n), 0);
     for (const index of [0, 1, 2]) {
       const value = index === 0 ? v.option1 : index === 1 ? v.option2 : v.option3;

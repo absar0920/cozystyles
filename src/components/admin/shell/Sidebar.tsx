@@ -8,35 +8,34 @@ import { LogoutButton } from './LogoutButton';
 import {
   CheckIcon,
   CubeIcon,
-  EditIcon,
   FilterIcon,
-  HeartIcon,
   MailIcon,
   MenuIcon,
-  PackageIcon,
   StarIcon,
   TruckIcon,
   UserIcon,
   XIcon,
 } from '@/components/icons';
+import { ChatIcon, DocumentIcon, ExternalLinkIcon, ImagesIcon, KeyIcon, NewspaperIcon } from '@/components/admin/icons';
 
 type NavItem = {
   label: string;
   href: string;
   icon: ComponentType<{ className?: string }>;
-  badge?: 'pendingOrders' | 'newMessages';
+  badge?: 'inquiriesToday' | 'newMessages';
   badgeStyle?: string;
 };
 
 const NAV: NavItem[] = [
   { label: 'Dashboard', href: '/admin', icon: CubeIcon },
-  { label: 'Orders', href: '/admin/orders', icon: PackageIcon, badge: 'pendingOrders', badgeStyle: 'bg-amber-400 text-brand-950' },
+  { label: 'WhatsApp inquiries', href: '/admin/inquiries', icon: ChatIcon, badge: 'inquiriesToday', badgeStyle: 'bg-leaf text-white' },
   { label: 'Products', href: '/admin/products', icon: TruckIcon },
   { label: 'Collections', href: '/admin/collections', icon: CheckIcon },
   { label: 'Reviews', href: '/admin/reviews', icon: StarIcon },
-  { label: 'Banners', href: '/admin/banners', icon: HeartIcon },
+  { label: 'Home banners', href: '/admin/banners', icon: ImagesIcon },
   { label: 'Menus', href: '/admin/menus', icon: FilterIcon },
-  { label: 'Pages', href: '/admin/pages', icon: EditIcon },
+  { label: 'Pages', href: '/admin/pages', icon: DocumentIcon },
+  { label: 'Blog posts', href: '/admin/blog', icon: NewspaperIcon },
   { label: 'Messages', href: '/admin/messages', icon: MailIcon, badge: 'newMessages', badgeStyle: 'bg-red-500 text-white' },
   { label: 'Settings', href: '/admin/settings', icon: UserIcon },
 ];
@@ -53,12 +52,12 @@ function initials(name: string): string {
 export function Sidebar({
   adminName,
   adminEmail,
-  pendingOrders = 0,
+  inquiriesToday = 0,
   newMessages = 0,
 }: {
   adminName: string;
   adminEmail: string;
-  pendingOrders?: number;
+  inquiriesToday?: number;
   newMessages?: number;
 }) {
   const pathname = usePathname();
@@ -68,7 +67,7 @@ export function Sidebar({
     href === '/admin' ? pathname === '/admin' : pathname === href || pathname.startsWith(`${href}/`);
 
   const badgeValue = (item: NavItem) =>
-    item.badge === 'pendingOrders' ? pendingOrders : item.badge === 'newMessages' ? newMessages : 0;
+    item.badge === 'inquiriesToday' ? inquiriesToday : item.badge === 'newMessages' ? newMessages : 0;
 
   const navLinks = (onNavigate?: () => void) => (
     <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
@@ -101,8 +100,8 @@ export function Sidebar({
     </nav>
   );
 
-  const adminBlock = (compact = false) => (
-    <div className={`border-t border-white/10 ${compact ? 'p-4' : 'p-4'}`}>
+  const adminBlock = (onNavigate?: () => void) => (
+    <div className="border-t border-white/10 p-4">
       <div className="mb-3 flex items-center gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 font-heading text-xs font-bold text-white">
           {initials(adminName)}
@@ -111,6 +110,25 @@ export function Sidebar({
           <span className="block truncate text-sm font-semibold text-white">{adminName}</span>
           <span className="block truncate text-xs text-white/40">{adminEmail}</span>
         </span>
+      </div>
+      <div className="mb-2 grid grid-cols-1 gap-2">
+        <Link
+          href="/admin/account/password"
+          onClick={onNavigate}
+          className="flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-white/5 px-2 text-xs font-semibold text-white/70 hover:bg-white/10 hover:text-white"
+        >
+          <KeyIcon className="h-3.5 w-3.5" />
+          Change password
+        </Link>
+        <a
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-white/5 px-2 text-xs font-semibold text-white/70 hover:bg-white/10 hover:text-white"
+        >
+          View store
+          <ExternalLinkIcon className="h-3.5 w-3.5" />
+        </a>
       </div>
       <LogoutButton />
     </div>
@@ -152,11 +170,11 @@ export function Sidebar({
         </Link>
         <Link
           href="/"
-          className="rounded-lg px-2 py-1.5 text-xs font-semibold text-white/60 hover:text-white"
+          className="whitespace-nowrap rounded-lg px-2 py-1.5 text-xs font-semibold text-white/60 hover:text-white"
           target="_blank"
           rel="noreferrer"
         >
-          Storefront
+          Store ↗
         </Link>
       </header>
 
@@ -187,7 +205,7 @@ export function Sidebar({
           </button>
         </div>
         {navLinks(() => setOpen(false))}
-        {adminBlock(true)}
+        {adminBlock(() => setOpen(false))}
       </aside>
     </>
   );

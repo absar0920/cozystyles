@@ -1,5 +1,6 @@
 /**
- * Catalog fidelity data (live interwood.pk → Cozy Furnitures). Idempotent; re-run after `npm run db:seed`:
+ * Catalog fidelity data (live interwood.pk → Cozy Furnitures). Idempotent; part of `npm run db:seed`
+ * (applyCatalogFidelity, offline). Standalone:
  *
  *   npx tsx scripts/fidelity/catalog.ts            # DB updates + download any missing collection images
  *   npx tsx scripts/fidelity/catalog.ts --offline  # DB updates only (uses images already in public/)
@@ -12,15 +13,9 @@
  * 3. /collections index images: download the live collection image (800px wide) for every index card
  *    into public/images/collections/{handle}.{ext} and point `Collection.image` at it.
  *    Images that carry the old brand's logo are listed in SKIP_IMAGES and fall back to the placeholder.
- * 4. Card swatches: for every product with a colour option, the image each swatch shows and which swatch
- *    is `.active` → src/components/catalog/swatch-variants.json (read by catalog-data.ts). Live (Habitat
- *    product-card) takes the selected-or-first-available variant, and per colour value picks the variant
- *    with that colour + the selected variant's other options (else the first with that colour); its
- *    featured image is the swatch image, and the swatch is `active` only when that image is the
- *    product's featured image. Image = Shopify image position (= ProductImage.position).
- * 5. Sold out: handles whose every live variant is unavailable → src/components/catalog/live-sold-out.json.
- *    catalog-data.ts shows live's "Sold Out" status bar for them when no live status metafield is known.
- * 6. (--refresh-search only) Live search order: the product handles of the first 10 live result pages
+ * (Card swatch photos and the sold-out list used to be written to JSON files here; they now live in the
+ *  database: ProductImage.optionValueId and Variant.status, set by scripts/migrate-admin-easy-mode.ts.)
+ * 4. (--refresh-search only) Live search order: the product handles of the first 10 live result pages
  *    for SEARCH_QUERIES → src/components/catalog/live-search-order.json (read by catalog-data.ts).
  */
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
@@ -31,14 +26,12 @@ const ROOT = path.resolve(__dirname, '../..');
 const RAW = path.join(ROOT, 'data/raw');
 const IMG_DIR = path.join(ROOT, 'public/images/collections');
 const INDEX: { handle: string; title: string; image?: string; placeholder?: number }[] = JSON.parse(
-  readFileSync(path.join(ROOT, 'src/components/catalog/collections-index.json'), 'utf8'),
+  readFileSync(path.join(ROOT, 'prisma/easy-mode-data/collections-index.json'), 'utf8'),
 );
 
 /** Index images that show the old brand's logo/wordmark at full resolution (verified by eye). */
 const SKIP_IMAGES = new Set<string>([]);
 
-const offline = process.argv.includes('--offline');
-const refreshSearch = process.argv.includes('--refresh-search') && !offline;
 const SEARCH_ORDER_FILE = path.join(ROOT, 'src/components/catalog/live-search-order.json');
 const SEARCH_QUERIES = [
   'sofa', 'bed', 'table', 'chair', 'dining', 'wardrobe', 'desk', 'mirror', 'cabinet', 'office', 'mattress', 'sofa set',
@@ -65,56 +58,6 @@ async function snapshotSearchOrder() {
   }
   writeFileSync(SEARCH_ORDER_FILE, `${JSON.stringify(out, null, 0)}\n`);
 }
-const prisma = new PrismaClient();
-
-const SWATCH_FILE = path.join(ROOT, 'src/components/catalog/swatch-variants.json');
-const COLOR_OPTION = /^colou?rs?$/i;
-type RawVariant = { option1: string | null; option2: string | null; option3: string | null; available?: boolean; featured_image?: { id: number } | null };
-type RawProduct = { handle: string; options: { name: string; values: string[] }[]; variants: RawVariant[]; images: { id: number; position: number }[] };
-
-function writeSwatchVariants() {
-  const dir = path.join(RAW, 'products');
-  const products: RawProduct[] = readdirSync(dir)
-    .filter((f) => f.endsWith('.json'))
-    .flatMap((f) => JSON.parse(readFileSync(path.join(dir, f), 'utf8')).products);
-  const out: Record<string, { active: string | null; images: Record<string, number> }> = {};
-  for (const p of products) {
-    const idx = p.options.findIndex((o) => COLOR_OPTION.test(o.name.trim()));
-    if (idx < 0 || !p.variants.length) continue;
-    const opt = (v: RawVariant, j: number) => [v.option1, v.option2, v.option3][j];
-    const selected = p.variants.find((v) => v.available) ?? p.variants[0];
-    const positionOf = new Map(p.images.map((im) => [im.id, im.position]));
-    const featuredId = p.images[0]?.id;
-    const entry: { active: string | null; images: Record<string, number> } = { active: null, images: {} };
-    for (const value of p.options[idx].values) {
-      const withColour = p.variants.filter((v) => opt(v, idx) === value);
-      const v =
-        withColour.find((c) => p.options.every((_, j) => j === idx || opt(c, j) === opt(selected, j))) ?? withColour[0];
-      const imageId = v?.featured_image?.id;
-      const pos = imageId != null ? positionOf.get(imageId) : undefined;
-      if (pos != null) entry.images[value] = pos;
-      if (imageId != null && imageId === featuredId && entry.active == null) entry.active = value;
-    }
-    out[p.handle] = entry;
-  }
-  writeFileSync(SWATCH_FILE, `${JSON.stringify(out, null, 0)}\n`);
-  return Object.keys(out).length;
-}
-
-const SOLD_OUT_FILE = path.join(ROOT, 'src/components/catalog/live-sold-out.json');
-
-function writeSoldOut() {
-  const dir = path.join(RAW, 'products');
-  const handles = readdirSync(dir)
-    .filter((f) => f.endsWith('.json'))
-    .flatMap((f) => JSON.parse(readFileSync(path.join(dir, f), 'utf8')).products as RawProduct[])
-    .filter((p) => p.variants.length > 0 && p.variants.every((v) => v.available === false))
-    .map((p) => p.handle)
-    .sort();
-  writeFileSync(SOLD_OUT_FILE, `${JSON.stringify(handles, null, 0)}\n`);
-  return handles.length;
-}
-
 /** Same rebrand rules as prisma/seed.ts (longest patterns first). */
 function rebrand(s: string): string {
   if (!s) return s;
@@ -153,7 +96,7 @@ function localImage(handle: string): string | null {
   return f ? `/images/collections/${f}` : null;
 }
 
-async function download(handle: string, url: string): Promise<string | null> {
+async function download(handle: string, url: string, offline: boolean): Promise<string | null> {
   const existing = localImage(handle);
   if (existing || offline) return existing;
   const ext = (url.match(/\.([a-z0-9]+)(?:\?|$)/i)?.[1] ?? 'jpg').toLowerCase();
@@ -169,7 +112,10 @@ async function download(handle: string, url: string): Promise<string | null> {
   }
 }
 
-async function main() {
+export async function applyCatalogFidelity(
+  prisma: PrismaClient,
+  { offline = false, refreshSearch = false }: { offline?: boolean; refreshSearch?: boolean } = {},
+) {
   const raw: { handle: string; description?: string | null }[] = JSON.parse(
     readFileSync(path.join(RAW, 'collections.json'), 'utf8'),
   ).collections;
@@ -201,7 +147,7 @@ async function main() {
 
     const liveImage = imageByHandle.get(c.handle);
     if (liveImage && !SKIP_IMAGES.has(c.handle)) {
-      const img = c.image ?? (await download(c.handle, liveImage));
+      const img = c.image ?? (await download(c.handle, liveImage, offline));
       if (img && img !== c.image) {
         data.image = img;
         images++;
@@ -217,20 +163,20 @@ async function main() {
   // Virtual index cards (frontpage / all / all-1) have no DB row: just make sure their image is on disk.
   const known = new Set(collections.map((c) => c.handle));
   for (const c of INDEX) {
-    if (!known.has(c.handle) && c.image && !SKIP_IMAGES.has(c.handle)) await download(c.handle, c.image);
+    if (!known.has(c.handle) && c.image && !SKIP_IMAGES.has(c.handle)) await download(c.handle, c.image, offline);
   }
 
-  const swatchProducts = writeSwatchVariants();
-  const soldOut = writeSoldOut();
-  console.log(
-    `catalog fidelity: ${descs} descriptions, ${orders} product orders, ${images} images updated, ${swatchProducts} swatch products, ${soldOut} sold out`,
-  );
-  if (refreshSearch) await snapshotSearchOrder();
+  console.log(`catalog fidelity: ${descs} descriptions, ${orders} product orders, ${images} images updated`);
+  if (refreshSearch && !offline) await snapshotSearchOrder();
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());
+if (require.main === module) {
+  const prisma = new PrismaClient();
+  const offline = process.argv.includes('--offline');
+  applyCatalogFidelity(prisma, { offline, refreshSearch: process.argv.includes('--refresh-search') })
+    .catch((e) => {
+      console.error(e);
+      process.exitCode = 1;
+    })
+    .finally(() => prisma.$disconnect());
+}

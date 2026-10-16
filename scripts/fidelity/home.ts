@@ -1,7 +1,7 @@
 /**
  * Homepage fidelity data (live interwood.pk → Cozy Furnitures).
  *
- * Idempotent. Re-run after `npm run db:seed`:
+ * Idempotent. Part of `npm run db:seed` (applyHomeFidelity); can also be run on its own:
  *
  *   npx tsx scripts/fidelity/home.ts
  *
@@ -12,8 +12,6 @@
  * - Judge.me header summary on the reviews carousel: "4.92 ★ (102)".
  */
 import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
 
 /** Desktop image → live state. `href: null` keeps the existing href. */
 const HERO: Record<string, { active: boolean; href: string | null }> = {
@@ -31,8 +29,8 @@ const SETTINGS: Record<string, string> = {
   ratingSummaryCount: '102',
 };
 
-async function main() {
-  const banners = await prisma.banner.findMany({ where: { location: 'HOME_HERO' } });
+export async function applyHomeFidelity(prisma: PrismaClient) {
+  const banners = await prisma.banner.findMany();
   for (const b of banners) {
     const spec = b.image ? HERO[b.image] : undefined;
     if (!spec) continue;
@@ -45,16 +43,19 @@ async function main() {
     await prisma.siteSetting.upsert({ where: { key }, update: { value }, create: { key, value } });
   }
   const active = await prisma.banner.findMany({
-    where: { location: 'HOME_HERO', active: true },
+    where: { active: true },
     orderBy: { position: 'asc' },
     select: { id: true, href: true, image: true },
   });
-  console.log('HOME_HERO active slides:', active);
+  console.log('active home slides:', active);
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exitCode = 1;
-  })
-  .finally(() => prisma.$disconnect());
+if (require.main === module) {
+  const prisma = new PrismaClient();
+  applyHomeFidelity(prisma)
+    .catch((e) => {
+      console.error(e);
+      process.exitCode = 1;
+    })
+    .finally(() => prisma.$disconnect());
+}

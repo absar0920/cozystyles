@@ -3,19 +3,65 @@
 import { useEffect, useState } from 'react';
 
 /**
- * Live /pages/payment: clicking "Online Bank Transfer (view details)" (`#openPopup` inside the
- * rich text) opens a centred white box with the bank details and a red "X" close button
- * (page inline style: 50% wide, 100% under 800px, 100vw shadow as the backdrop).
+ * Live /pages/payment: clicking "Online Bank Transfer (view details)" opens a centred white box with the bank
+ * details and a red "X" close button (page inline style: 50% wide, 100% under 800px, 100vw shadow as the backdrop).
+ *
+ * The page text is owner-edited rich text, which carries no ids, so the trigger is found by its words: the list
+ * item starting "Online Bank Transfer" (its underlined "(view details)" is the visible cue). A link to
+ * `#bank-details` and the legacy `#openPopup` element also open it.
  */
+const TRIGGER_TEXT = /^\s*online bank transfer/i;
+
+function findTriggers(): HTMLElement[] {
+  const out: HTMLElement[] = [];
+  const legacy = document.getElementById('openPopup');
+  if (legacy) out.push(legacy);
+  document.querySelectorAll<HTMLElement>('.page-content-width li, .rte li').forEach((li) => {
+    // the item's own text, without nested lists
+    const own = Array.from(li.childNodes)
+      .filter((n) => !(n instanceof HTMLElement && (n.tagName === 'UL' || n.tagName === 'OL')))
+      .map((n) => n.textContent ?? '')
+      .join('');
+    if (TRIGGER_TEXT.test(own)) out.push(li);
+  });
+  return out;
+}
+
 export function PaymentPopup() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const trigger = document.getElementById('openPopup');
-    if (!trigger) return;
-    const show = () => setOpen(true);
-    trigger.addEventListener('click', show);
-    return () => trigger.removeEventListener('click', show);
+    const triggers = findTriggers();
+    const cues: HTMLElement[] = [];
+    triggers.forEach((t) => {
+      // make the "(view details)" cue (or the whole line) look and act like a button
+      const cue = t.querySelector<HTMLElement>('u') ?? t;
+      cue.style.cursor = 'pointer';
+      cue.setAttribute('role', 'button');
+      cue.setAttribute('tabindex', '0');
+      cues.push(cue);
+    });
+    const onClick = (e: MouseEvent) => {
+      const el = e.target as Element | null;
+      if (!el) return;
+      const link = el.closest('a[href="#bank-details"]');
+      if (link || triggers.some((t) => t.contains(el) && !el.closest('a[href]:not([href="#bank-details"])'))) {
+        if (link) e.preventDefault();
+        setOpen(true);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.key === 'Enter' || e.key === ' ') && cues.includes(e.target as HTMLElement)) {
+        e.preventDefault();
+        setOpen(true);
+      }
+    };
+    document.addEventListener('click', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('click', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
   }, []);
 
   useEffect(() => {

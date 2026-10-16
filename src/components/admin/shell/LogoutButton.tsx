@@ -2,6 +2,7 @@
 
 import { useFormStatus } from 'react-dom';
 import { logoutAction } from '@/app/admin/actions/auth';
+import { skipSessionCheckBriefly } from '@/components/admin/SessionGuard';
 
 function SubmitInner() {
   const { pending } = useFormStatus();
@@ -22,7 +23,7 @@ function SubmitInner() {
 /** Sign-out button for the admin sidebar (posts to the logout server action). */
 export function LogoutButton() {
   return (
-    <form action={logoutAction}>
+    <form action={logoutAction} onSubmit={skipSessionCheckBriefly}>
       <SubmitInner />
     </form>
   );

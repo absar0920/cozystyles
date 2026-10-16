@@ -273,3 +273,20 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* ---------- admin rich-text editor content (src/components/admin/RichTextEditor.tsx) ---------- */
+.admin-rte { @apply text-[15px] leading-relaxed text-gray-800; }
+.admin-rte > * + * { @apply mt-3; }
+.admin-rte h1 { @apply text-2xl font-bold text-ink-dark; }
+.admin-rte h2 { @apply text-xl font-bold text-ink-dark; }
+.admin-rte h3 { @apply text-lg font-semibold text-ink-dark; }
+.admin-rte h4, .admin-rte h5, .admin-rte h6 { @apply text-base font-semibold text-ink-dark; }
+.admin-rte ul { @apply ml-5 list-disc; }
+.admin-rte ol { @apply ml-5 list-decimal; }
+.admin-rte li > p { @apply m-0; }
+.admin-rte a { @apply text-brand-600 underline underline-offset-2; }
+.admin-rte strong { @apply font-semibold; }
+.admin-rte img { @apply h-auto max-w-full rounded; }
+.admin-rte img.ProseMirror-selectednode { @apply ring-2 ring-brand-400; }
+.admin-rte div[data-youtube-video] iframe { @apply aspect-video h-auto w-full max-w-full rounded; }
+.admin-rte div[data-youtube-video].ProseMirror-selectednode { @apply ring-2 ring-brand-400; }

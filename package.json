@@ -10,22 +10,42 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "scrape": "node scripts/scrape.mjs",
-    "images": "node scripts/download-images.mjs"
+    "images": "node scripts/download-images.mjs",
+    "db:backup": "tsx scripts/backup-db.ts",
+    "db:migrate-easy-mode": "tsx scripts/migrate-admin-easy-mode.ts",
+    "test:e2e": "playwright test"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@dnd-kit/core": "6.3.1",
+    "@dnd-kit/sortable": "10.0.0",
+    "@dnd-kit/utilities": "3.2.2",
     "@prisma/client": "^6.16.2",
+    "@tiptap/core": "3.31.4",
+    "@tiptap/extension-image": "3.31.4",
+    "@tiptap/extension-text-align": "3.31.4",
+    "@tiptap/extension-text-style": "3.31.4",
+    "@tiptap/extension-youtube": "3.31.4",
+    "@tiptap/pm": "3.31.4",
+    "@tiptap/react": "3.31.4",
+    "@tiptap/starter-kit": "3.31.4",
     "bcryptjs": "^3.0.2",
+    "heic-decode": "2.1.0",
     "next": "^15.5.4",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "sanitize-html": "2.17.7",
+    "server-only": "0.0.1",
+    "sharp": "0.35.5"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@types/node": "^22.10.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
+    "@types/sanitize-html": "2.16.1",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.5.0",
     "prisma": "^6.16.2",

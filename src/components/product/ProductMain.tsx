@@ -1,66 +1,89 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
-import { useCart } from '@/lib/cart';
 import { formatRs } from '@/components/ui/Price';
-import { ProductGallery, type GalleryImage } from './ProductGallery';
+import { OrderOnWhatsAppButton } from '@/components/whatsapp/OrderOnWhatsApp';
+import { NEUTRAL_SWATCH, isSwatchOptionName } from '@/lib/product-options';
+import { isAvailable } from '@/lib/variant-status';
+import type { WhatsAppConfig } from '@/lib/whatsapp';
+import { ProductGallery } from './ProductGallery';
 import { VariantPicker, type OptionGroup } from './VariantPicker';
 import { PreOrderModal } from './PreOrderModal';
 import { MinusIcon, PlusIcon } from './icons';
-import { optionAt, unavailableValues, type ProductOption, type VariantInfo } from './types';
+import { optionAt, unavailableValues, type ProductImageInfo, type ProductOption, type SwatchMap, type VariantInfo } from './types';
 
 export type ProductMainData = {
   id: number;
   handle: string;
   title: string;
-  images: GalleryImage[];
+  /** in gallery order, each with its "Shows" tag */
+  images: ProductImageInfo[];
   options: ProductOption[];
   variants: VariantInfo[];
-  /** value → hex for colour options */
-  swatches: Record<string, string>;
-  /** SKU → gallery index of the variant image */
-  variantImages: Record<string, number>;
+  /** option position → value → swatch (colour / finish options only) */
+  swatches: SwatchMap;
   initialVariantId: number | null;
   isNew: boolean;
-  /** Tag "Delivered in …" (also triggers the red FREE DELIVERY! tag like live). */
+  /** "Delivered in …" (also triggers the red FREE DELIVERY! tag like live). */
   deliveryLine: string | null;
-  /** SKUs sold as pre-order (live ReStock selling plan). */
-  preOrderSkus: string[];
 };
 
-const COLOR_OPTION = /colou?r/i;
+const GENERIC_OPTION_NAME = /^option \d+$/i;
 
 /**
  * Main product section (live `.thb-product-detail`): gallery (7/12, sticky) + information (5/12):
- * title, SKU, price + badges, FREE DELIVERY tag, variant pickers, qty + ADD TO CART / PRE-ORDER,
- * delivery status, then the server-rendered description and share row (`children`).
+ * title, SKU, price + badges, FREE DELIVERY tag, variant pickers, qty + ORDER ON WHATSAPP / ASK ABOUT
+ * AVAILABILITY, delivery status, then the server-rendered description and share row (`children`).
+ * Availability comes from each variant's status; the gallery leads with the photo tagged with the
+ * selected option value ("Shows").
  */
-export function ProductMain({ product, children }: { product: ProductMainData; children?: React.ReactNode }) {
-  const { addItem } = useCart();
-
+export function ProductMain({
+  product,
+  whatsapp,
+  children,
+}: {
+  product: ProductMainData;
+  whatsapp: WhatsAppConfig | null;
+  children?: React.ReactNode;
+}) {
   const groups = useMemo<OptionGroup[]>(() => {
     const out: OptionGroup[] = [];
     product.options.forEach((opt, index) => {
       const values = opt.values.filter((v) => product.variants.some((variant) => optionAt(variant, index) === v));
-      if (values.length === 0 || (values.length === 1 && values[0] === 'Default Title')) return;
-      const swatches = COLOR_OPTION.test(opt.name)
-        ? Object.fromEntries(values.map((v) => [v, product.swatches[v] ?? '#ccc']))
-        : undefined;
+      // a single value is not a choice (Shopify hides those pickers too)
+      if (values.length <= 1) return;
+      const sw = product.swatches[index];
+      const swatches = sw ? Object.fromEntries(values.map((v) => [v, sw[v] ?? { color: NEUTRAL_SWATCH, image: null }])) : undefined;
       out.push({ index, name: opt.name, values, swatches });
     });
     return out;
   }, [product]);
 
+  const tagged = useCallback(
+    (optionIndex: number, value: string) => product.images.findIndex((im) => im.tag?.optionIndex === optionIndex && im.tag.value === value),
+    [product.images],
+  );
+  /** Option positions, colour/finish options first: the order lead photos are looked up in. */
+  const lookupOrder = useMemo(() => {
+    const idx = product.options.map((_, i) => i);
+    return [...idx.filter((i) => isSwatchOptionName(product.options[i].name)), ...idx.filter((i) => !isSwatchOptionName(product.options[i].name))];
+  }, [product.options]);
+
   const [variantId, setVariantId] = useState<number | null>(
-    product.initialVariantId ?? product.variants.find((v) => v.inventory > 0)?.id ?? product.variants[0]?.id ?? null,
+    product.initialVariantId ?? product.variants.find((v) => isAvailable(v.status))?.id ?? product.variants[0]?.id ?? null,
   );
   const variant = product.variants.find((v) => v.id === variantId) ?? product.variants[0] ?? null;
 
-  // Gallery order: the selected variant's image moves first, and is re-led on every variant change
-  // (live Habitat re-renders the media list with the variant media first and selects it).
-  const [lead, setLead] = useState<number | undefined>(() =>
-    variant?.sku != null ? product.variantImages[variant.sku] : undefined,
-  );
+  // Gallery order: the lead photo (tagged with a selected value) moves first, like live Habitat
+  // re-rendering the media list with the variant media first.
+  const [lead, setLead] = useState<number | undefined>(() => {
+    if (!variant) return undefined;
+    for (const i of lookupOrder) {
+      const at = tagged(i, optionAt(variant, i));
+      if (at >= 0) return at;
+    }
+    return undefined;
+  });
   const order = useMemo(() => {
     const idx = product.images.map((_, i) => i);
     if (lead != null && lead > 0 && lead < idx.length) {
@@ -69,10 +92,12 @@ export function ProductMain({ product, children }: { product: ProductMainData; c
     }
     return idx;
   }, [product.images, lead]);
-  const galleryImages = useMemo(() => order.map((i) => product.images[i]), [order, product.images]);
+  const galleryImages = useMemo(() => order.map((i) => ({ src: product.images[i].src, alt: product.images[i].alt })), [order, product.images]);
   const [slide, setSlide] = useState(0);
 
   const [qty, setQty] = useState(1);
+  /** what the customer is typing in the quantity box (null = show `qty`) */
+  const [qtyDraft, setQtyDraft] = useState<string | null>(null);
   const [preOrderOpen, setPreOrderOpen] = useState(false);
 
   const selected = useMemo(() => {
@@ -88,7 +113,7 @@ export function ProductMain({ product, children }: { product: ProductMainData; c
       unavailableValues(
         product.variants,
         groups.map((g) => ({ index: g.index, value: selected[g.index] ?? '' })),
-        (variant?.inventory ?? 0) > 0,
+        variant ? isAvailable(variant.status) : false,
       ),
     [product.variants, groups, selected, variant],
   );
@@ -101,8 +126,19 @@ export function ProductMain({ product, children }: { product: ProductMainData; c
         product.variants.find((v) => optionAt(v, index) === value);
       if (!next) return;
       setVariantId(next.id);
-      const img = next.sku != null ? product.variantImages[next.sku] : undefined;
-      if (img != null && img < product.images.length) {
+      let img = tagged(index, value);
+      if (img < 0) {
+        // no photo for the clicked value: keep the current lead, unless a selected colour/finish has one
+        for (const i of lookupOrder) {
+          if (i === index || !isSwatchOptionName(product.options[i].name)) continue;
+          const at = tagged(i, optionAt(next, i));
+          if (at >= 0) {
+            img = at;
+            break;
+          }
+        }
+      }
+      if (img >= 0 && img !== lead) {
         setLead(img);
         setSlide(0);
       }
@@ -110,33 +146,23 @@ export function ProductMain({ product, children }: { product: ProductMainData; c
       url.searchParams.set('variant', String(next.id));
       window.history.replaceState(window.history.state, '', url);
     },
-    [selected, product.variants, product.variantImages, product.images.length, groups],
+    [selected, product.variants, product.options, groups, tagged, lookupOrder, lead],
   );
 
-  const inStock = (variant?.inventory ?? 0) > 0;
-  const preOrder = inStock && variant?.sku != null && product.preOrderSkus.includes(variant.sku);
-  const soldOut = !inStock;
+  const status = variant?.status ?? 'SOLD_OUT';
+  const soldOut = status === 'SOLD_OUT';
+  const preOrder = status === 'PRE_ORDER';
+  const madeToOrder = status === 'MADE_TO_ORDER';
   const onSale = variant != null && variant.compareAtPrice != null && variant.compareAtPrice > variant.price;
   const pct = onSale && variant ? Math.round((((variant.compareAtPrice as number) - variant.price) / (variant.compareAtPrice as number)) * 100) : 0;
-  const variantImage =
-    (variant?.sku != null && product.images[product.variantImages[variant.sku] ?? -1]?.src) || product.images[0]?.src || '';
 
-  const addToCart = () => {
-    if (!variant || soldOut) return;
-    addItem(
-      {
-        productId: product.id,
-        variantId: variant.id,
-        handle: product.handle,
-        title: product.title,
-        variantTitle: variant.title && variant.title !== 'Default Title' ? variant.title : '',
-        price: variant.price,
-        compareAtPrice: variant.compareAtPrice,
-        image: variantImage,
-      },
-      qty,
-    );
-  };
+  // the message lists every chosen option (single-value options too, unless they only have a placeholder name)
+  const messageOptions = variant
+    ? product.options
+        .map((o, i) => ({ name: o.name, value: optionAt(variant, i), shown: groups.some((g) => g.index === i) }))
+        .filter((o) => o.value && (o.shown || !GENERIC_OPTION_NAME.test(o.name)))
+        .map(({ name, value }) => ({ name, value }))
+    : [];
 
   return (
     <div className="mx-auto flow-root max-w-[1360px] lg:mt-10 lg:flex lg:items-start">
@@ -157,16 +183,22 @@ export function ProductMain({ product, children }: { product: ProductMainData; c
             )}
             <h1 className="mb-[5px] text-[30px] font-normal leading-[38px] text-accent">{product.title}</h1>
             {variant?.sku && <div className="text-[17px] leading-[29.75px]">SKU:{variant.sku}</div>}
-            {variant && variant.price > 0 && (
+            {variant && (
               <div className="ml-2 flex flex-wrap items-center pb-1 text-[20px] leading-[18px] tracking-[0.4px] lg:ml-0 lg:pb-0 lg:leading-[35px]">
-                <ins className="font-medium no-underline">{formatRs(variant.price)}</ins>
-                {onSale && (
+                {/* a Regular price of 0 means "Price on request" (spec §5.1.4); its status badges still show */}
+                {variant.price > 0 ? (
+                  <ins className="font-medium no-underline">{formatRs(variant.price)}</ins>
+                ) : (
+                  <span className="font-medium" data-testid="price-on-request">Price on request</span>
+                )}
+                {variant.price > 0 && onSale && (
                   <del className="ml-[5px] text-[18px] font-semibold opacity-40">{formatRs(variant.compareAtPrice as number)}</del>
                 )}
-                {(pct > 0 || soldOut) && (
+                {(pct > 0 || soldOut || preOrder) && (
                   <span className="ml-[10px] flex items-center gap-[10px] lg:ml-[18px]">
                     {pct > 0 && <Badge className="bg-accent2">{pct}% off</Badge>}
                     {soldOut && <Badge className="bg-soldout">Sold out</Badge>}
+                    {preOrder && <Badge className="bg-accent2">Pre-order</Badge>}
                   </span>
                 )}
               </div>
@@ -182,40 +214,46 @@ export function ProductMain({ product, children }: { product: ProductMainData; c
 
           {variant && (
             <div className="mt-[30px]">
-              <div className="flex h-[52px] items-stretch">
-                <div className="qty mr-[10px] w-[87px] shrink-0">
-                  <button type="button" aria-label="Decrease quantity" className="!w-[30px]" onClick={() => setQty((q) => Math.max(1, q - 1))}>
-                    <MinusIcon className="h-[2px] w-2" />
-                  </button>
-                  <input
-                    type="number"
-                    min={1}
-                    max={99}
-                    value={qty}
-                    aria-label="Quantity"
-                    onChange={(e) => {
-                      const n = parseInt(e.target.value, 10);
-                      setQty(Number.isFinite(n) ? Math.min(99, Math.max(1, n)) : 1);
-                    }}
+              {whatsapp && (
+                <div className="flex h-[52px] items-stretch">
+                  <div className="qty mr-[10px] w-[87px] shrink-0">
+                    <button type="button" aria-label="Decrease quantity" className="!w-[30px]" onClick={() => {
+                      setQtyDraft(null);
+                      setQty((q) => Math.max(1, q - 1));
+                    }}>
+                      <MinusIcon className="h-[2px] w-2" />
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      max={99}
+                      value={qtyDraft ?? qty}
+                      aria-label="Quantity"
+                      onChange={(e) => {
+                        // keep what is typed (an emptied box stays empty); the order uses the last valid number
+                        const raw = e.target.value;
+                        setQtyDraft(raw);
+                        const n = parseInt(raw, 10);
+                        if (Number.isFinite(n) && n >= 1) setQty(Math.min(99, n));
+                      }}
+                      onBlur={() => setQtyDraft(null)}
+                    />
+                    <button type="button" aria-label="Increase quantity" className="!w-[30px]" onClick={() => {
+                      setQtyDraft(null);
+                      setQty((q) => Math.min(99, q + 1));
+                    }}>
+                      <PlusIcon className="h-2 w-2" />
+                    </button>
+                  </div>
+                  <OrderOnWhatsAppButton
+                    config={whatsapp}
+                    product={{ id: product.id, title: product.title, handle: product.handle }}
+                    variant={{ id: variant.id, price: variant.price, compareAtPrice: variant.compareAtPrice, status: variant.status }}
+                    options={messageOptions}
+                    quantity={qty}
                   />
-                  <button type="button" aria-label="Increase quantity" className="!w-[30px]" onClick={() => setQty((q) => Math.min(99, q + 1))}>
-                    <PlusIcon className="h-2 w-2" />
-                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={addToCart}
-                  disabled={soldOut}
-                  className={
-                    soldOut
-                      ? // live `.button.sold-out`: transparent with a 1px #eee edge, a 3% black ::before wash, text at 50%
-                        'flex h-[52px] flex-1 cursor-not-allowed items-center justify-center rounded-btn border border-line bg-black/[0.03] px-[27px] text-[13px] font-bold uppercase leading-[13px] tracking-[2.6px] text-accent'
-                      : 'btn h-[52px] flex-1'
-                  }
-                >
-                  <span className={soldOut ? 'opacity-50' : undefined}>{soldOut ? 'Sold out' : preOrder ? 'Pre-order' : 'Add to cart'}</span>
-                </button>
-              </div>
+              )}
 
               {preOrder ? (
                 <>
@@ -236,7 +274,8 @@ export function ProductMain({ product, children }: { product: ProductMainData; c
                 <div className="mb-[10px] mt-[25px] text-[13px] leading-[22.75px] text-black">
                   {/* live asks for weight 300 but only loads Poppins 400–700, so it renders at 400 */}
                   {!soldOut && product.deliveryLine && <p className="leading-[22.1px]">{product.deliveryLine}</p>}
-                  {!soldOut && <p>Our team will get in touch with you to communicate the exact delivery time.</p>}
+                  {!soldOut && !madeToOrder && <p>Our team will get in touch with you to communicate the exact delivery time.</p>}
+                  {madeToOrder && <p>Made to Order — our team will confirm the delivery time with you.</p>}
                 </div>
               )}
             </div>

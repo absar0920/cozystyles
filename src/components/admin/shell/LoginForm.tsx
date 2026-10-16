@@ -6,11 +6,12 @@ import { SubmitButton } from '@/components/admin/SubmitButton';
 
 const INITIAL: LoginState = { error: null };
 
-export function LoginForm() {
+export function LoginForm({ next = '/admin' }: { next?: string }) {
   const [state, formAction] = useActionState(loginAction, INITIAL);
 
   return (
     <form action={formAction} className="space-y-4" noValidate>
+      <input type="hidden" name="next" value={next} />
       {state.error && (
         <p
           role="alert"

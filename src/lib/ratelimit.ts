@@ -2,7 +2,7 @@
  * Tiny in-memory rate limiter (fixed window).
  *
  * Counters live in a plain Map keyed by caller-chosen strings, e.g.
- * `login:admin@x`, `lookup:IW-100001:1.2.3.4`, `contact:1.2.3.4`.
+ * `login:admin@x`, `pw:12`, `wa:1.2.3.4`, `contact:1.2.3.4`.
  * This is per-process — fine for this single-node VPS deployment where the
  * app runs as one Next.js server. If the app is ever scaled horizontally,
  * swap this for a shared store (e.g. Redis).
@@ -55,12 +55,38 @@ export function resetRateLimit(key: string): void {
   buckets.delete(key);
 }
 
-/** Best-effort client IP for rate-limit keys (behind a proxy this is X-Forwarded-For). */
+/**
+ * Number of reverse proxies in front of the app that append to `X-Forwarded-For` (env `TRUSTED_PROXY_HOPS`,
+ * default 0). Only the entries those proxies added can be trusted; anything to their left was sent by the client.
+ */
+function trustedProxyHops(): number {
+  const n = Number.parseInt(process.env.TRUSTED_PROXY_HOPS ?? '', 10);
+  return Number.isInteger(n) && n > 0 ? Math.min(n, 10) : 0;
+}
+
+/**
+ * Client IP for rate-limit keys, read only from headers that can't be forged.
+ *
+ * - `TRUSTED_PROXY_HOPS=N` (e.g. 1 behind one nginx using `$proxy_add_x_forwarded_for`): the N-th
+ *   `X-Forwarded-For` entry from the right, i.e. the address our outermost proxy saw. Entries further left are
+ *   client-supplied and ignored.
+ * - Unset / 0 (the app is reached directly): the headers are entirely client-controlled, and App Router route
+ *   handlers can't see the socket address, so every caller shares the `'unknown'` key. Per-IP limits then act as
+ *   one global limit, which is safe (spoofing the header can't buy extra attempts) but strict — set the variable in
+ *   production behind a proxy.
+ */
 export function clientIpFromHeaders(headers: Headers): string {
-  const fwd = headers.get('x-forwarded-for');
-  if (fwd) {
-    const first = fwd.split(',')[0]?.trim();
-    if (first) return first;
-  }
-  return headers.get('x-real-ip')?.trim() || 'unknown';
+  return clientIp(headers) ?? 'unknown';
+}
+
+/** Same as `clientIpFromHeaders`, but `null` when the address can't be trusted (no proxy configured). */
+export function clientIp(headers: Headers): string | null {
+  const hops = trustedProxyHops();
+  if (hops === 0) return null;
+  const chain = (headers.get('x-forwarded-for') ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (chain.length < hops) return null;
+  return chain[chain.length - hops] || null;
 }

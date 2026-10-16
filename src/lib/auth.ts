@@ -22,30 +22,33 @@ function sign(payload: string): string {
   return createHmac('sha256', secret()).update(payload).digest('base64url');
 }
 
-export function createSessionToken(adminId: number): string {
+/** Token: `${id}.${sessionVersion}.${exp}.${sig}` with the HMAC over `${id}.${ver}.${exp}`. */
+export function createSessionToken(admin: { id: number; sessionVersion: number }): string {
   const exp = Math.floor(Date.now() / 1000) + MAX_AGE_S;
-  const payload = `${adminId}.${exp}`;
+  const payload = `${admin.id}.${admin.sessionVersion}.${exp}`;
   return `${payload}.${sign(payload)}`;
 }
 
-export function verifySessionToken(token: string | undefined | null): number | null {
+/** Verified `{ id, ver }` or null. Old 3-part tokens are rejected (one extra login after the upgrade). */
+export function verifySessionToken(token: string | undefined | null): { id: number; ver: number } | null {
   if (!token) return null;
   const parts = token.split('.');
-  if (parts.length !== 3) return null;
-  const [idStr, expStr, sig] = parts;
-  const payload = `${idStr}.${expStr}`;
+  if (parts.length !== 4) return null;
+  const [idStr, verStr, expStr, sig] = parts;
+  const payload = `${idStr}.${verStr}.${expStr}`;
   const expected = sign(payload);
   const a = Buffer.from(sig);
   const b = Buffer.from(expected);
   if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
   if (Number(expStr) < Math.floor(Date.now() / 1000)) return null;
   const id = Number(idStr);
-  return Number.isFinite(id) ? id : null;
+  const ver = Number(verStr);
+  return Number.isInteger(id) && Number.isInteger(ver) ? { id, ver } : null;
 }
 
-export async function setSessionCookie(adminId: number) {
+export async function setSessionCookie(admin: { id: number; sessionVersion: number }) {
   const store = await cookies();
-  store.set(COOKIE_NAME, createSessionToken(adminId), {
+  store.set(COOKIE_NAME, createSessionToken(admin), {
     httpOnly: true,
     sameSite: 'lax',
     // Secure cookies require HTTPS. Plain-HTTP VPS deployments must opt in
@@ -65,7 +68,9 @@ export async function clearSessionCookie() {
 /** Returns the logged-in admin (validating the session against the DB) or null. */
 export async function getCurrentAdmin(): Promise<AdminUser | null> {
   const store = await cookies();
-  const id = verifySessionToken(store.get(COOKIE_NAME)?.value);
-  if (id == null) return null;
-  return prisma.adminUser.findUnique({ where: { id } });
+  const session = verifySessionToken(store.get(COOKIE_NAME)?.value);
+  if (session == null) return null;
+  const admin = await prisma.adminUser.findUnique({ where: { id: session.id } });
+  // A password change bumps sessionVersion, which ends every other session.
+  return admin && admin.sessionVersion === session.ver ? admin : null;
 }

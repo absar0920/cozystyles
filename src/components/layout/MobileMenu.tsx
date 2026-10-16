@@ -6,6 +6,16 @@ import type { MenuNode } from '@/lib/queries';
 import { ChevronDown, ThemeAccountIcon } from '@/components/icons';
 import { isSpacer, megaColumns } from '@/components/layout/menu';
 
+/** A menu link; an item without a link renders as plain text with the same look (SPEC R27). */
+function MenuLink({ href, className, onClick, tabIndex, children }: { href: string; className: string; onClick?: () => void; tabIndex?: number; children: React.ReactNode }) {
+  if (!href) return <span className={className}>{children}</span>;
+  return (
+    <Link href={href} onClick={onClick} tabIndex={tabIndex} className={className}>
+      {children}
+    </Link>
+  );
+}
+
 /**
  * Live mobile menu (<1068px): a full-width white panel that opens in place directly under the
  * header (no side drawer). 51px Work Sans rows with #eee rules, maroon first row, chevron
@@ -15,6 +25,15 @@ export function MobileMenu({ menu, open, onClose }: { menu: MenuNode[]; open: bo
   const ref = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | undefined>(undefined);
   const [expanded, setExpanded] = useState<number | null>(null);
+
+  // The floating WhatsApp / back-to-top buttons hide while the menu is open: they would sit on the "Login" row.
+  useLayoutEffect(() => {
+    if (!open) return;
+    document.documentElement.dataset.mobileMenu = 'open';
+    return () => {
+      delete document.documentElement.dataset.mobileMenu;
+    };
+  }, [open]);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -42,7 +61,7 @@ export function MobileMenu({ menu, open, onClose }: { menu: MenuNode[]; open: bo
             return (
               <li key={item.id} className="relative">
                 <div className="relative">
-                  <Link
+                  <MenuLink
                     href={item.href}
                     onClick={onClose}
                     tabIndex={open ? 0 : -1}
@@ -51,7 +70,7 @@ export function MobileMenu({ menu, open, onClose }: { menu: MenuNode[]; open: bo
                     }`}
                   >
                     {item.label}
-                  </Link>
+                  </MenuLink>
                   {hasDrop && (
                     <button
                       type="button"
@@ -95,25 +114,25 @@ function MobileDropdown({ item, onNavigate }: { item: MenuNode; onNavigate: () =
       {columns.flat().map((group, gi) => (
         <li key={group.heading?.id ?? `flat-${gi}`} className="px-[15px] py-3">
           {group.heading && (
-            <Link
+            <MenuLink
               href={group.heading.href}
               onClick={onNavigate}
               className="mb-[7px] block border-b border-cream-border pb-3 text-[14px] font-semibold leading-[23.8px] text-menuRed hover:text-menuRed"
             >
               <span className="block bg-black/[.03] p-[10px]">{group.heading.label}</span>
-            </Link>
+            </MenuLink>
           )}
           <ul>
             {group.links.map((link) =>
               isSpacer(link) ? null : (
                 <li key={link.id}>
-                  <Link
+                  <MenuLink
                     href={link.href}
                     onClick={onNavigate}
                     className="flex border-b border-line py-[5px] text-[13px] font-normal leading-5 text-ink-dark hover:text-black"
                   >
                     {link.label}
-                  </Link>
+                  </MenuLink>
                 </li>
               ),
             )}

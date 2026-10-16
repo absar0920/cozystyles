@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Roboto } from 'next/font/google';
 import { SITE } from '@/lib/constants';
+import { GENERAL_QUESTION_TEXT, waLink, type WhatsAppConfig } from '@/lib/whatsapp';
+import { currentPath, logWhatsAppClick } from '@/components/whatsapp/log-click';
 import { ThemeForm } from './ContactForm';
 
 /** the reCAPTCHA anchor's own face (`Roboto, helvetica, arial, sans-serif`) */
@@ -59,7 +61,12 @@ const iwLabel = 'mb-[6px] block text-[14px] font-semibold tracking-[.02em] text-
 const iwText = `${iwInput} text-black`;
 
 /** Live /pages/support-complaint-form (custom liquid): info panel + "Submit a Complaint" card, coral submit. */
-export function ComplaintForm() {
+/** "923092050463" → "92-309-205-0463" (the way live prints its WhatsApp number). */
+function displayWhatsApp(number: string): string {
+  return `${number.slice(0, 2)}-${number.slice(2, 5)}-${number.slice(5, 8)}-${number.slice(8)}`;
+}
+
+export function ComplaintForm({ whatsapp }: { whatsapp: WhatsAppConfig | null }) {
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState('');
 
@@ -133,12 +140,19 @@ export function ComplaintForm() {
             <p>
               <strong className="font-medium">Need quick help?</strong>
             </p>
-            <p>
-              WhatsApp:{' '}
-              <a href="https://wa.me/923458203203" target="_blank" rel="noopener noreferrer">
-                92-345-820-3203
-              </a>
-            </p>
+            {whatsapp && (
+              <p>
+                WhatsApp:{' '}
+                <a
+                  href={waLink(whatsapp.number, GENERAL_QUESTION_TEXT)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => logWhatsAppClick({ kind: 'GENERAL', path: currentPath() })}
+                >
+                  {displayWhatsApp(whatsapp.number)}
+                </a>
+              </p>
+            )}
             <p>
               {/* live's unbreakable address is 295px wide and sets the mobile column's min-content (the cards
                   overflow a 390 viewport to 391px); the shorter local address keeps that footprint */}

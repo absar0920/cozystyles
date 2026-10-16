@@ -1,10 +1,9 @@
 /**
  * Content pages + blog fidelity data (live interwood.pk → Cozy Furnitures).
  *
- *   npx tsx scripts/fidelity/content.ts
- *
- * Idempotent: re-derives everything from the raw scrape in data/raw, so it can be re-run after
- * `npm run db:seed`. What it fixes in `Page`:
+ * Part of `npm run db:seed` only (applyContentFidelity runs before the admin easy-mode migration, which
+ * turns these bodies into clean rich text and blog fields). Running it on its own after the migration would
+ * overwrite the clean blog bodies, so the standalone run is disabled. What it fixes in `Page`:
  *  - Rich-text pages (privacy, payment, rewards, shipping, terms…): the seed stored the whole
  *    Shopify HTML document. Replace it with the inner HTML of the theme's `.page-content-width.rte`.
  *  - Blog posts: the seed stored the article chrome (breadcrumbs, sticky nav, share bar…) and the
@@ -243,11 +242,6 @@ export async function applyContentFidelity(prisma: PrismaClient) {
 }
 
 if (require.main === module) {
-  const prisma = new PrismaClient();
-  applyContentFidelity(prisma)
-    .catch((e) => {
-      console.error(e);
-      process.exitCode = 1;
-    })
-    .finally(() => prisma.$disconnect());
+  console.log('Run npm run db:seed (content fidelity is part of the seed now).');
+  process.exit(1);
 }

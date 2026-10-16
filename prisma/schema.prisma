@@ -11,130 +11,186 @@ datasource db {
 }
 
 model AdminUser {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
-  passwordHash String
-  name         String
-  role         String   @default("ADMIN") // ADMIN | SUPERADMIN
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  email          String   @unique
+  passwordHash   String
+  name           String
+  role           String   @default("ADMIN") // ADMIN | SUPERADMIN
+  sessionVersion Int      @default(0) // bumped on password change; part of the session token
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Product {
-  id             Int          @id @default(autoincrement())
-  handle         String       @unique
+  id             Int               @id @default(autoincrement())
+  handle         String            @unique
   title          String
-  bodyHtml       String       @default("")
-  vendor         String       @default("Interwood")
-  productType    String       @default("")
-  status         String       @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED
-  featured       Boolean      @default(false)
-  hot            Boolean      @default(false)
-  tags           String       @default("") // comma separated
-  options        String       @default("[]") // JSON: [{name:"Size", values:[...]}]
-  rating         Float        @default(4.9)
-  reviewCount    Int          @default(0)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  bodyHtml       String            @default("")
+  vendor         String            @default("Cozy Furnitures")
+  productType    String            @default("")
+  status         String            @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED
+  hot            Boolean           @default(false)
+  tags           String            @default("") // comma separated
+  legacyOptions  String            @default("[]") @map("options") // old JSON options; read only by the easy-mode migration
+  rating         Float             @default(4.9)
+  reviewCount    Int               @default(0)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
   variants       Variant[]
   images         ProductImage[]
-  collections    Collection[] @relation("ProductCollections")
+  collections    Collection[]      @relation("ProductCollections")
   reviews        Review[]
-  orderItems     OrderItem[]
+  isNew          Boolean           @default(false) // "New arrival" (red NEW label)
+  limitedEdition Boolean           @default(false) // "Limited edition" (yellow bar on cards)
+  layout         String            @default("default") // key from src/lib/product-layouts.ts
+  deliveryTime   String            @default("") // e.g. "Delivered in 20 to 30 working days"; non-empty → FREE DELIVERY tag + PDP line
+  discountGroup  Int? // 10|20|30|40|50: the mobile "Discount %" filter bucket
+  cardImageRatio Float? // product card photo box height/width (live fidelity); null → 700/920
+  trackStock     Boolean           @default(false) // show the optional stock count column in admin
+  productOptions ProductOption[]
+  inquiries      WhatsAppInquiry[]
 
   @@index([status, hot])
   @@index([title])
 }
 
 model Variant {
-  id            Int      @id @default(autoincrement())
-  productId     Int
-  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  title         String   @default("Default Title")
-  sku           String?
-  price         Int
-  compareAtPrice Int?
-  option1       String?
-  option2       String?
-  option3       String?
-  inventory     Int      @default(50)
-  position      Int      @default(0)
-  weightGrams   Int      @default(0)
+  id              Int     @id @default(autoincrement())
+  productId       Int
+  product         Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  title           String  @default("Default Title")
+  sku             String?
+  price           Int
+  compareAtPrice  Int?
+  option1         String?
+  option2         String?
+  option3         String?
+  legacyInventory Int     @default(50) @map("inventory") // read only by the easy-mode migration
+  position        Int     @default(0)
+  weightGrams     Int     @default(0)
+  status          String  @default("READY_TO_SHIP") // READY_TO_SHIP | MADE_TO_ORDER | PRE_ORDER | SOLD_OUT
+  stock           Int? // optional stock count; null = not tracked (admin only, never drives the storefront)
 
   @@index([productId])
 }
 
 model ProductImage {
-  id        Int     @id @default(autoincrement())
+  id            Int                 @id @default(autoincrement())
+  productId     Int
+  product       Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  src           String
+  alt           String              @default("")
+  position      Int                 @default(0)
+  optionValueId Int? // "Shows: <value>"
+  optionValue   ProductOptionValue? @relation(fields: [optionValueId], references: [id], onDelete: SetNull)
+  width         Int? // known for uploads
+  height        Int?
+
+  @@index([productId])
+  @@index([optionValueId])
+}
+
+/// One product option (max 3 per product). position 0|1|2 ↔ Variant.option1|option2|option3.
+model ProductOption {
+  id        Int                  @id @default(autoincrement())
   productId Int
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  src       String
-  alt       String  @default("")
-  position  Int     @default(0)
+  product   Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String
+  position  Int
+  values    ProductOptionValue[]
 
   @@index([productId])
 }
 
+model ProductOptionValue {
+  id          Int            @id @default(autoincrement())
+  optionId    Int
+  option      ProductOption  @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  value       String
+  position    Int            @default(0)
+  swatchColor String? // "#rrggbb" (only meaningful for Color/Colour/Finish options)
+  swatchImage String? // photo swatch: /uploads/… or /images/…; wins over swatchColor
+  images      ProductImage[]
+
+  @@index([optionId])
+}
+
 model Collection {
-  id          Int       @id @default(autoincrement())
-  handle      String    @unique
+  id          Int                  @id @default(autoincrement())
+  handle      String               @unique
   title       String
-  description String    @default("")
+  description String               @default("")
   image       String?
   parentId    Int?
-  parent      Collection? @relation("CollectionTree", fields: [parentId], references: [id])
-  children    Collection[] @relation("CollectionTree")
-  products    Product[] @relation("ProductCollections")
-  featured    Boolean   @default(false)
-  showInNav   Boolean   @default(true)
-  position    Int       @default(0)
-  kind        String    @default("CATEGORY") // CATEGORY | ROOM | LOOKBOOK | HELPER
-  metafield   String    @default("{}") // JSON free-form (e.g. footer column)
+  parent      Collection?          @relation("CollectionTree", fields: [parentId], references: [id])
+  children    Collection[]         @relation("CollectionTree")
+  products    Product[]            @relation("ProductCollections")
+  metafield   String               @default("{}") // JSON free-form (e.g. footer column)
+  indexCard   CollectionIndexCard?
 
   @@index([parentId])
 }
 
+/// A card on the /collections index page ("Shop by Category"), in display order.
+model CollectionIndexCard {
+  id           Int         @id @default(autoincrement())
+  position     Int         @default(0)
+  collectionId Int?        @unique
+  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  /// Cards with no Collection row: the built-in "all products" cards (frontpage | all | all-1).
+  systemHandle String?     @unique
+  systemTitle  String?
+  systemImage  String?
+  /// 1..6 Shopify line-art placeholder used when the card has no photo (live fidelity).
+  placeholder  Int         @default(1)
+}
+
 model MenuItem {
-  id        Int        @id @default(autoincrement())
-  label     String
-  href      String
-  location  String     @default("MAIN") // MAIN | FOOTER_1 | FOOTER_2 | ... | TOPBAR | MOBILE
-  parentId  Int?
-  parent    MenuItem?  @relation("MenuTree", fields: [parentId], references: [id], onDelete: Cascade)
-  children  MenuItem[] @relation("MenuTree")
-  position  Int        @default(0)
-  badge     String?    // e.g. "NEW", "SALE"
-  enabled   Boolean    @default(true)
+  id          Int        @id @default(autoincrement())
+  label       String
+  href        String
+  location    String     @default("MAIN") // MAIN | FOOTER_1 | FOOTER_2 | ... | TOPBAR | MOBILE
+  parentId    Int?
+  parent      MenuItem?  @relation("MenuTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children    MenuItem[] @relation("MenuTree")
+  position    Int        @default(0)
+  legacyBadge String?    @map("badge") // old: only "STACK" had meaning (→ newColumn=false); read only by the migration
+  enabled     Boolean    @default(true)
+  newColumn   Boolean    @default(true) // MAIN level-2 headings: false = stack under the previous group
 
   @@index([location, parentId])
 }
 
 model Banner {
-  id        Int     @id @default(autoincrement())
-  location  String  @default("HOME_HERO") // HOME_HERO | HOME_STRIP_1 | HOME_STRIP_2 | HOME_GRID | POPUP
-  title     String  @default("")
-  subtitle  String  @default("")
-  ctaLabel  String?
-  href      String?
-  image     String
+  id          Int     @id @default(autoincrement())
+  title       String  @default("")
+  href        String?
+  image       String
   mobileImage String?
-  position  Int     @default(0)
-  active    Boolean @default(true)
-  textColor String  @default("#ffffff")
-  overlay   Int     @default(20) // percent dark overlay behind text
+  position    Int     @default(0)
+  active      Boolean @default(true)
 }
 
 model Page {
-  id          Int      @id @default(autoincrement())
-  handle      String   @unique
-  title       String
-  bodyHtml    String   @default("")
-  published   Boolean  @default(true)
-  isBlogPost  Boolean  @default(false)
-  seoTitle    String?
-  seoDescription String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                  Int       @id @default(autoincrement())
+  handle              String    @unique
+  title               String
+  bodyHtml            String    @default("")
+  published           Boolean   @default(true)
+  legacyIsBlogPost    Boolean   @default(false) @map("isBlogPost") // read only by the easy-mode migration
+  seoTitle            String?
+  seoDescription      String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  kind                String    @default("TEXT") // TEXT | BLOG | DESIGNED
+  publishedAt         DateTime? // blog date (null → createdAt)
+  author              String    @default("") // blog author
+  featuredImage       String? // blog featured image
+  featuredImageWidth  Int?
+  featuredImageHeight Int?
+  tags                String    @default("") // blog tags, comma separated labels
+
+  @@index([kind, published])
 }
 
 model Review {
@@ -149,44 +205,6 @@ model Review {
   createdAt DateTime @default(now())
 }
 
-model Order {
-  id            Int      @id @default(autoincrement())
-  orderNumber   String   @unique // IW-100001
-  customerName  String
-  phone         String
-  email         String?
-  address       String
-  city          String
-  province      String   @default("Punjab")
-  notes         String   @default("")
-  paymentMethod String   @default("COD") // COD | CARD | BANK_TRANSFER | INSTALLMENTS
-  status        String   @default("PENDING") // PENDING | CONFIRMED | PROCESSING | SHIPPED | DELIVERED | CANCELLED
-  subtotal      Int
-  discount      Int      @default(0)
-  shippingFee   Int      @default(0)
-  total         Int
-  adminNotes    String   @default("")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  items         OrderItem[]
-}
-
-model OrderItem {
-  id          Int     @id @default(autoincrement())
-  orderId     Int
-  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId   Int?
-  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-  variantId   Int?
-  title       String
-  variantTitle String @default("")
-  price       Int
-  quantity    Int
-  image       String  @default("")
-
-  @@index([orderId])
-}
-
 model ContactSubmission {
   id        Int      @id @default(autoincrement())
   name      String
@@ -199,6 +217,47 @@ model ContactSubmission {
 }
 
 model SiteSetting {
-  key       String   @id
-  value     String   @default("") // scalar strings; JSON for structured values
+  key   String @id
+  value String @default("") // scalar strings; JSON for structured values
+}
+
+/// Every uploaded file (one row per stored object).
+model Upload {
+  id           Int      @id @default(autoincrement())
+  key          String   @unique // "2026/10/grey-sofa-front-a1b2c3d4.webp"
+  url          String   @unique // "/uploads/2026/10/grey-sofa-front-a1b2c3d4.webp"
+  originalName String   @default("")
+  mime         String   @default("image/webp")
+  width        Int
+  height       Int
+  bytes        Int
+  purpose      String   @default("") // product | swatch | banner | collection | blog | editor
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+/// One row per click on a WhatsApp button (no personal data).
+model WhatsAppInquiry {
+  id             Int      @id @default(autoincrement())
+  createdAt      DateTime @default(now())
+  kind           String // ORDER | AVAILABILITY | GENERAL | TRACK
+  productId      Int?
+  product        Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productTitle   String   @default("") // snapshot at click time
+  variantId      Int? // no FK: variants may be deleted later
+  variantSummary String   @default("") // "Size: 3 Seater · Color: Grey"
+  quantity       Int      @default(1)
+  unitPrice      Int? // PKR snapshot (null for GENERAL/TRACK, 0 = price on request)
+  pagePath       String   @default("") // "/products/alexa-sofa-chair?variant=123"
+
+  @@index([createdAt])
+  @@index([productId, createdAt])
+}
+
+/// Ledger for scripts/migrate-admin-easy-mode.ts: one row per completed step.
+model MigrationStep {
+  id        String   @id // e.g. "easy-mode:variant-status"
+  appliedAt DateTime @default(now())
+  summary   String   @default("")
 }

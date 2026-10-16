@@ -1,108 +1,83 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
+import { sanitizeRichText } from '@/lib/rich-text/sanitize';
 import { AdminPageHeader } from '@/components/admin/ui';
-import { deleteCollectionAction } from '@/app/admin/actions/catalog';
-import { ConfirmSubmit } from '../../_catalog/ConfirmSubmit';
+import { ViewOnStoreLink } from '@/components/admin/ViewOnStoreLink';
+import { ConfirmDelete } from '@/components/admin/ConfirmDelete';
+import { deleteCollectionAction } from '@/app/admin/actions/collections';
 import { CollectionForm } from '../_components/CollectionForm';
+import { collectionDeleteConsequences } from '../_lib/consequences';
 
 export const dynamic = 'force-dynamic';
 
 /** Edit an existing collection, or create a new one when the id segment is "new". */
-export default async function EditCollectionPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+export default async function EditCollectionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const sp = await searchParams;
   const isNew = id === 'new';
-  const collectionId = isNew ? null : Number(id);
   if (!isNew && !/^\d+$/.test(id)) notFound();
-
-  const error = typeof sp.error === 'string' ? sp.error : undefined;
-  const saved = sp.saved === '1';
+  const collectionId = isNew ? null : Number(id);
 
   const [collection, allCollections, products] = await Promise.all([
-    collectionId != null && Number.isFinite(collectionId)
+    collectionId != null
       ? prisma.collection.findUnique({
           where: { id: collectionId },
-          include: { products: { select: { id: true } } },
+          include: {
+            products: { select: { id: true } },
+            indexCard: { select: { id: true } },
+            _count: { select: { products: true, children: true } },
+          },
         })
       : Promise.resolve(null),
-    prisma.collection.findMany({ orderBy: [{ position: 'asc' }, { title: 'asc' }], select: { id: true, title: true } }),
-    prisma.product.findMany({ orderBy: { title: 'asc' }, select: { id: true, title: true, handle: true } }),
+    prisma.collection.findMany({ orderBy: { title: 'asc' }, select: { id: true, title: true } }),
+    prisma.product.findMany({ orderBy: { title: 'asc' }, select: { id: true, title: true, status: true } }),
   ]);
-
   if (!isNew && !collection) notFound();
 
-  // A collection can never be its own parent.
-  const parentOptions = allCollections.filter((c) => !collection || c.id !== collection.id);
+  const consequences = collection ? await collectionDeleteConsequences(collection) : [];
 
   return (
-    <div>
+    <div className="pb-28">
+      <div className="mb-3">
+        <Link href="/admin/collections" className="inline-flex min-h-10 items-center text-sm font-semibold text-brand hover:text-brand-600">
+          ← Collections
+        </Link>
+      </div>
       <AdminPageHeader
-        title={isNew ? 'New collection' : collection!.title}
-        subtitle={isNew ? 'Group products into a category, room or lookbook' : `Editing /collections/${collection!.handle}`}
+        title={collection ? collection.title : 'New collection'}
+        subtitle={collection ? undefined : 'Group products so customers can browse them together'}
         actions={
-          <>
-            {!isNew && (
-              <a
-                href={`/collections/${collection!.handle}`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50"
-              >
-                View on store ↗
-              </a>
-            )}
-            {!isNew && (
-              <form action={deleteCollectionAction}>
-                <input type="hidden" name="id" value={collection!.id} />
-                <ConfirmSubmit
-                  message={`Delete “${collection!.title}”? Its sub-collections will move to the top level.`}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
-                >
-                  Delete
-                </ConfirmSubmit>
-              </form>
-            )}
-          </>
+          collection ? (
+            <>
+              <ViewOnStoreLink href={`/collections/${collection.handle}`} />
+              <ConfirmDelete
+                action={deleteCollectionAction}
+                fields={{ id: String(collection.id) }}
+                title={`Delete “${collection.title}”?`}
+                consequences={consequences}
+              />
+            </>
+          ) : (
+            <ViewOnStoreLink href={null} disabledReason="Save to see it on the store" />
+          )
         }
       />
 
       <CollectionForm
-        createMode={isNew}
-        error={error}
-        saved={saved}
-        parentOptions={parentOptions}
+        key={collection ? `c${collection.id}` : 'new'}
+        parentOptions={allCollections.filter((c) => c.id !== collection?.id)}
         products={products}
-        collection={
-          isNew
-            ? null
-            : {
-                id: collection!.id,
-                title: collection!.title,
-                handle: collection!.handle,
-                description: collection!.description,
-                image: collection!.image ?? '',
-                parentId: collection!.parentId,
-                kind: collection!.kind,
-                featured: collection!.featured,
-                showInNav: collection!.showInNav,
-                position: collection!.position,
-                productIds: collection!.products.map((p) => p.id),
-              }
-        }
+        initial={{
+          id: collection?.id ?? null,
+          title: collection?.title ?? '',
+          handle: collection?.handle ?? '',
+          description: sanitizeRichText(collection?.description ?? ''),
+          image: collection?.image ?? '',
+          parentId: collection?.parentId != null ? String(collection.parentId) : '',
+          productIds: collection?.products.map((p) => p.id) ?? [],
+          showOnIndex: collection ? !!collection.indexCard : true,
+        }}
       />
-
-      <div className="mt-4">
-        <Link href="/admin/collections" className="text-sm font-semibold text-brand hover:text-brand-600">
-          ← Back to collections
-        </Link>
-      </div>
     </div>
   );
 }

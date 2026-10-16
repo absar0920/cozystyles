@@ -7,7 +7,9 @@ import { ExpandableRte } from '@/components/catalog/ExpandableRte';
 import { EmptyState } from '@/components/catalog/EmptyState';
 import { getCatalog, getCatalogCollection } from '@/components/catalog/catalog-data';
 import { COLLECTION_PER_PAGE } from '@/components/catalog/constants';
-import { sanitizeRte, truncateRte } from '@/components/catalog/rte';
+import { truncateRte } from '@/components/catalog/rte';
+import { sanitizeRichText } from '@/lib/rich-text/sanitize';
+import { stripHtml } from '@/components/pages/content';
 import {
   catalogHref,
   COLLECTION_SORTS,
@@ -20,15 +22,6 @@ import { loadCollectionPage } from './actions';
 export const dynamic = 'force-dynamic';
 
 type PageParams = Promise<{ handle: string }>;
-
-function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
 
 export async function generateMetadata({ params }: { params: PageParams }): Promise<Metadata> {
   const { handle } = await params;
@@ -94,7 +87,7 @@ export default async function CollectionPage({
   const basePath = `/collections/${handle}`;
   const params_ = filterParams(filters);
   const query = new URLSearchParams(params_).toString();
-  const description = sanitizeRte(collection?.description ?? '');
+  const description = sanitizeRichText(collection?.description ?? '');
 
   return (
     <>

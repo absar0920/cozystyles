@@ -1,12 +1,21 @@
 /**
  * Seed the database from data/raw/ (scraped from interwood.pk).
  * Run: npm run db:seed  (after npm run images so local image paths exist)
+ *
+ * After the raw seed it applies every fidelity step (global, home, catalog, product, content — all offline)
+ * and then the admin easy-mode migration, so a fresh reseed reaches the same end state as a migrated database.
+ * Uploaded files (Upload rows + storage/uploads) are left alone; the orphan sweep removes unused ones later.
  */
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
-import { GLOBAL_MENUS, GLOBAL_SETTINGS, createMenuTree } from '../scripts/fidelity/global';
+import { GLOBAL_MENUS, GLOBAL_SETTINGS, applyGlobalFidelity, createMenuTree } from '../scripts/fidelity/global';
+import { applyHomeFidelity } from '../scripts/fidelity/home';
+import { applyCatalogFidelity } from '../scripts/fidelity/catalog';
+import { applyProductFidelity } from '../scripts/fidelity/product';
+import { applyContentFidelity } from '../scripts/fidelity/content';
+import { printReport, runAdminEasyModeMigration } from '../scripts/migrate-admin-easy-mode';
 
 const prisma = new PrismaClient();
 const RAW = 'data/raw';
@@ -97,7 +106,9 @@ async function main() {
 
   // ---------- wipe ----------
   await prisma.$transaction([
-    prisma.orderItem.deleteMany(), prisma.order.deleteMany(), prisma.review.deleteMany(),
+    prisma.whatsAppInquiry.deleteMany(), prisma.migrationStep.deleteMany(), prisma.collectionIndexCard.deleteMany(),
+    prisma.productOptionValue.deleteMany(), prisma.productOption.deleteMany(),
+    prisma.review.deleteMany(),
     prisma.contactSubmission.deleteMany(), prisma.banner.deleteMany(), prisma.menuItem.deleteMany(),
     prisma.productImage.deleteMany(), prisma.variant.deleteMany(),
     prisma.$executeRawUnsafe('DELETE FROM _ProductCollections'),
@@ -110,7 +121,7 @@ async function main() {
     data: {
       email: (process.env.ADMIN_EMAIL ?? 'admin@cozyfurnitures.pk').toLowerCase(),
       passwordHash: await bcrypt.hash(process.env.ADMIN_PASSWORD ?? 'CozyAdmin@2026', 10),
-      name: 'Interwood Admin',
+      name: 'Cozy Furnitures Admin',
       role: 'SUPERADMIN',
     },
   });
@@ -153,7 +164,7 @@ async function main() {
         status: 'ACTIVE',
         hot: hotHandles.has(p.handle),
         tags,
-        options: JSON.stringify(opts),
+        legacyOptions: JSON.stringify(opts), // the easy-mode migration turns this into ProductOption rows
         createdAt: p.created_at ? new Date(p.created_at) : new Date(),
         variants: {
           create: variants.map((v, i) => ({
@@ -164,7 +175,7 @@ async function main() {
             option1: v.option1 && v.option1 !== 'Default Title' ? v.option1 : null,
             option2: v.option2 ?? null,
             option3: v.option3 ?? null,
-            inventory: v.available === false ? 0 : (v.inventory_quantity ?? 25 > 0 ? Math.max(5, v.inventory_quantity ?? 25) : 25),
+            legacyInventory: v.available === false ? 0 : (v.inventory_quantity ?? 25 > 0 ? Math.max(5, v.inventory_quantity ?? 25) : 25),
             position: v.position ?? i + 1,
             weightGrams: v.grams ?? 0,
           })),
@@ -241,7 +252,6 @@ async function main() {
   for (const c of dedup.values()) handlesByTitle.set(c.title.trim().toLowerCase(), c.handle);
 
   const collectionIdByHandle = new Map<string, number>();
-  let pos = 0;
   for (const c of dedup.values()) {
     if (c.handle === 'all' || c.handle === 'frontpage' || c.handle === 'all-1') continue;
     const parentHandle = parentIdFor[c.handle];
@@ -254,9 +264,6 @@ async function main() {
         description: rebrand(c.body_html ?? ''),
         image: img,
         parentId: parent ?? null,
-        position: pos++,
-        kind: parentHandle ? 'CATEGORY' : (['furniture', 'office', 'kitchens', 'wardrobes-1', 'doors', 'decor-acc', 'laminate-flooring'].includes(c.handle) ? 'CATEGORY' : 'HELPER'),
-        showInNav: true,
       },
     });
     collectionIdByHandle.set(c.handle, created.id);
@@ -300,8 +307,6 @@ async function main() {
         title: u.title,
         description: `The ${u.title} collection — designed to bring it all together.`,
         image: prods.map((p) => p.images[0]?.src).find(Boolean) ?? null,
-        position: 300,
-        kind: 'LOOKBOOK',
         products: { connect: prods.map((p) => ({ id: p.id })) },
       },
     });
@@ -319,7 +324,6 @@ async function main() {
         handle,
         title: rebrand(titleFromHtml(html)),
         bodyHtml: rebrand(extractPageBody(html)),
-        isBlogPost: false,
       },
     });
   }
@@ -331,7 +335,7 @@ async function main() {
       const html = readFileSync(path.join(blogsDir, f), 'utf8');
       const handle = f.replace('.html', '');
       await prisma.page.create({
-        data: { handle: `news-${handle}`, title: rebrand(titleFromHtml(html)), bodyHtml: rebrand(extractPageBody(html)), isBlogPost: true },
+        data: { handle: `news-${handle}`, title: rebrand(titleFromHtml(html)), bodyHtml: rebrand(extractPageBody(html)), legacyIsBlogPost: true },
       });
     }
   }
@@ -361,19 +365,19 @@ async function main() {
       image = (await prisma.collection.findUnique({ where: { handle: spec.fallback }, select: { image: true } }))?.image ?? null;
     }
     if (!image) image = col.products.map((p) => p.images[0]?.src).find(Boolean) ?? null;
-    await prisma.collection.update({ where: { handle: spec.handle }, data: { featured: true, ...(image ? { image } : {}) } });
+    if (image) await prisma.collection.update({ where: { handle: spec.handle }, data: { image } });
   }
   console.log('featured tiles configured');
 
   // ---------- banners (hero slider) ----------
   const heroBannerNames = [
-    { n: 'home-02', m: 'home-03', title: 'Wedding Season Sale', subtitle: 'Up to 40% Off — Complete packages for your new home', href: '/collections/wedding-campaign-products', cta: 'Shop Wedding Packages' },
-    { n: 'home-06', m: 'home-07', title: 'Free Nationwide Delivery', subtitle: 'Free delivery & installation across Pakistan', href: '/collections/all', cta: 'Start Shopping' },
-    { n: 'home-10', m: 'home-11', title: 'Spaces Evolve — New Arrivals', subtitle: 'Elevate your space with the all-new Evolve collection', href: '/collections/new-arrivals', cta: 'Explore Now' },
-    { n: 'home-14', m: 'home-15', title: 'Coalesce Office', subtitle: 'Next-generation workspace solutions', href: '/collections/coalesce-office', cta: 'Shop Office' },
-    { n: 'home-18', m: 'home-19', title: 'Berlin Collection', subtitle: 'German-inspired design, crafted for Pakistan', href: '/collections/berlin', cta: 'Discover Berlin' },
-    { n: 'home-22', m: 'home-23', title: 'Cushions Collection', subtitle: 'Soft furnishings to style every room', href: '/collections/cushions', cta: 'Shop Cushions' },
-    { n: 'home-26', m: 'home-27', title: 'Coalesce Home', subtitle: 'Design that brings it all together', href: '/collections/coalesce-home', cta: 'Explore Coalesce' },
+    { n: 'home-02', m: 'home-03', title: 'Wedding Season Sale', href: '/collections/wedding-campaign-products' },
+    { n: 'home-06', m: 'home-07', title: 'Free Nationwide Delivery', href: '/collections/all' },
+    { n: 'home-10', m: 'home-11', title: 'Spaces Evolve — New Arrivals', href: '/collections/new-arrivals' },
+    { n: 'home-14', m: 'home-15', title: 'Coalesce Office', href: '/collections/coalesce-office' },
+    { n: 'home-18', m: 'home-19', title: 'Berlin Collection', href: '/collections/berlin' },
+    { n: 'home-22', m: 'home-23', title: 'Cushions Collection', href: '/collections/cushions' },
+    { n: 'home-26', m: 'home-27', title: 'Coalesce Home', href: '/collections/coalesce-home' },
   ];
   let bpos = 0;
   for (const b of heroBannerNames) {
@@ -381,7 +385,7 @@ async function main() {
     const mob = Object.values(manifest).find((v) => v.includes(b.m));
     if (!local) { console.log('banner image missing:', b.n); continue; }
     await prisma.banner.create({
-      data: { location: 'HOME_HERO', title: b.title, subtitle: b.subtitle, ctaLabel: b.cta, href: b.href, image: local, mobileImage: mob ?? null, position: bpos++ },
+      data: { title: b.title, href: b.href, image: local, mobileImage: mob ?? null, position: bpos++ },
     });
   }
   console.log('banners seeded');
@@ -428,18 +432,25 @@ async function main() {
     phone: '+92-42-111-269-926',
     email: 'info@cozyfurnitures.pk',
     complaintsEmail: 'complaints@cozyfurnitures.pk',
-    whatsapp: '+9242111269926',
+    whatsapp: '923092050463',
     address: 'Main Boulevard, Gulberg III, Lahore, Pakistan',
     facebook: '#',
     instagram: '#',
     youtube: '#',
     linkedin: '#',
-    shippingFee: '0',
-    freeShippingThreshold: '0',
     ratingSummary: '4.92',
     ratingSummaryCount: '2,500+ verified reviews',
   };
   for (const [key, value] of Object.entries(settings)) await prisma.siteSetting.create({ data: { key, value } });
+
+  // ---------- fidelity (live data) + admin easy-mode migration ----------
+  await applyGlobalFidelity(prisma);
+  console.log('global fidelity applied');
+  await applyHomeFidelity(prisma);
+  await applyCatalogFidelity(prisma, { offline: true });
+  await applyProductFidelity(prisma, { offline: true });
+  await applyContentFidelity(prisma);
+  printReport(await runAdminEasyModeMigration(prisma, { backup: false }));
 
   console.log('SEED COMPLETE');
 }

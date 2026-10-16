@@ -9,7 +9,7 @@ export type JudgeReview = {
   rating: number;
   title: string;
   body: string;
-  /** ISO date */
+  /** ISO date; '' when unknown (no date is shown) */
   createdAt: string;
 };
 
@@ -161,7 +161,7 @@ export function JudgeReviews({ productId, reviews }: { productId: number; review
             <div key={r.id} className={`py-4 ${i > 0 ? 'border-t border-judge/10' : ''}`}>
               <div className="flex items-start justify-between">
                 <Stars rating={r.rating} className="h-[18px] w-[18px]" gap="gap-[2px]" />
-                <span className="text-[13.6px] leading-[19px] text-[#7b7b7b]">{ddmmyyyy(r.createdAt)}</span>
+                {r.createdAt && <span className="text-[13.6px] leading-[19px] text-[#7b7b7b]">{ddmmyyyy(r.createdAt)}</span>}
               </div>
               <div className="mt-[6px] flex items-center gap-2">
                 <span className="flex h-9 w-9 items-center justify-center bg-[rgba(224,224,224,0.5)] text-judge">

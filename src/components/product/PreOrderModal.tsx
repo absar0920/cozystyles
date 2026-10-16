@@ -37,13 +37,10 @@ export function PreOrderModal({ onClose }: { onClose: () => void }) {
           ‘Pre-Order’ means that a product is not currently available in our stock, but you can pre-order it and we will
           deliver it to you as soon as it is available.
           <br />
-          You can purchase in-stock and pre-order items together in the same order and we will deliver your in-stock items
-          on the given timeline, while your pre-ordered items will be delivered at a later date.
-          <br />
           Please note that delivery dates for pre-order items are subject to change so your product may arrive a little
           earlier or later than estimated.
           <br />
-          For any help regarding orders, feel free to reach out to us on {localPhone(SITE.phone)}.
+          For any help, message us on WhatsApp or call {localPhone(SITE.phone)}.
           <br />
         </p>
         <button

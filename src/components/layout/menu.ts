@@ -4,10 +4,9 @@ import type { MenuNode } from '@/lib/queries';
  * MAIN menu encoding (see scripts/fidelity/global.ts):
  * - level-2 node WITH children  = a column heading group
  * - level-2 node WITHOUT children = a plain link (flat dropdown)
- * - badge "STACK" on a heading  = render in the same column, below the previous group
- * - blank label                 = an empty 30px spacer row
+ * - newColumn=false on a heading = render in the same column, below the previous group
+ * - blank label                 = an empty 30px spacer row (after a heading group: inside that group's column)
  */
-export const STACK_BADGE = 'STACK';
 
 export type MenuGroup = { heading: MenuNode | null; links: MenuNode[] };
 
@@ -22,9 +21,13 @@ export function megaColumns(item: MenuNode): MenuGroup[][] {
   for (const child of item.children) {
     if (child.children.length > 0) {
       flat = null;
-      const group: MenuGroup = { heading: child, links: child.children };
-      if (child.badge === STACK_BADGE && columns.length > 0) columns[columns.length - 1].push(group);
+      const group: MenuGroup = { heading: child, links: [...child.children] };
+      if (!child.newColumn && columns.length > 0) columns[columns.length - 1].push(group);
       else columns.push([group]);
+    } else if (isSpacer(child) && !flat && columns.length > 0) {
+      // an empty row after a heading group adds space inside that column, not a new empty column
+      const column = columns[columns.length - 1];
+      column[column.length - 1].links.push(child);
     } else {
       if (!flat) {
         flat = { heading: null, links: [] };

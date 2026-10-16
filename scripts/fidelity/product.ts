@@ -1,5 +1,6 @@
 /**
- * Product page fidelity data (live interwood.pk → Cozy Furnitures). Idempotent; re-run after `npm run db:seed`:
+ * Product page fidelity data (live interwood.pk → Cozy Furnitures). Idempotent; part of `npm run db:seed`
+ * (applyProductFidelity, offline). Standalone:
  *
  *   npx tsx scripts/fidelity/product.ts            # fetch any uncached live review widgets, then update the DB
  *   npx tsx scripts/fidelity/product.ts --offline  # DB updates only, from data/raw/reviews.json
@@ -17,7 +18,7 @@ import { PrismaClient } from '@prisma/client';
 
 const ROOT = path.resolve(__dirname, '../..');
 const CACHE = path.join(ROOT, 'data/raw/reviews.json');
-const LIVE_CARD_DATA = path.join(ROOT, 'src/components/catalog/live-card-data.json');
+const LIVE_CARD_DATA = path.join(ROOT, 'prisma/easy-mode-data/live-card-data.json');
 
 type LiveReview = { author: string; rating: number; title: string; body: string; createdAt: string };
 type LiveWidget = { count: number; average: number; reviews: LiveReview[] };
@@ -27,8 +28,6 @@ const SEED_NAMES = ['Ayesha K.', 'Hamza R.', 'Fatima S.', 'Ali R.', 'Zainab M.',
 const SEED_CITIES = ['Lahore', 'Karachi', 'Islamabad', 'Faisalabad', 'Multan', 'Rawalpindi'];
 const SEEDED_AUTHORS = new Set(SEED_NAMES.flatMap((n) => SEED_CITIES.map((c) => `${n} — ${c}`)));
 
-const offline = process.argv.includes('--offline');
-const prisma = new PrismaClient();
 
 function decode(s: string): string {
   return s
@@ -62,7 +61,10 @@ function parseReviews(html: string): LiveReview[] {
     const title = text(block.match(/class='jdgm-rev__title'>([\s\S]*?)<\/b>/)?.[1] ?? '');
     const body = text(block.match(/class='jdgm-rev__body'>([\s\S]*?)<\/div>/)?.[1] ?? '');
     const ts = block.match(/class='jdgm-rev__timestamp[^']*'[^>]*data-content='([^']+)'/)?.[1] ?? '';
-    const createdAt = ts ? new Date(ts.replace(' UTC', 'Z').replace(' ', 'T')).toISOString() : new Date(0).toISOString();
+    // No (or an unreadable) timestamp: stored as 1970-01-01, which the store and admin treat as "date unknown"
+    // and show without a date (never as 01/01/1970).
+    const parsed = ts ? new Date(ts.replace(' UTC', 'Z').replace(' ', 'T')) : null;
+    const createdAt = (parsed && !Number.isNaN(parsed.getTime()) ? parsed : new Date(0)).toISOString();
     reviews.push({ author: rebrand(author), rating, title: rebrand(title), body: rebrand(body), createdAt });
   }
   return reviews;
@@ -109,7 +111,7 @@ async function fetchWidget(handle: string): Promise<LiveWidget | null> {
   return null;
 }
 
-async function main() {
+export async function applyProductFidelity(prisma: PrismaClient, { offline = false }: { offline?: boolean } = {}) {
   const cache: Record<string, LiveWidget> = existsSync(CACHE) ? JSON.parse(readFileSync(CACHE, 'utf8')) : {};
   const liveRated = Object.keys((JSON.parse(readFileSync(LIVE_CARD_DATA, 'utf8')).ratings ?? {}) as Record<string, number>);
 
@@ -174,9 +176,12 @@ async function main() {
   console.log(`product fidelity: ${targets.size} products checked, ${cleared} seeded reviews removed, ${imported} live reviews imported`);
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exitCode = 1;
-  })
-  .finally(() => prisma.$disconnect());
+if (require.main === module) {
+  const prisma = new PrismaClient();
+  applyProductFidelity(prisma, { offline: process.argv.includes('--offline') })
+    .catch((e) => {
+      console.error(e);
+      process.exitCode = 1;
+    })
+    .finally(() => prisma.$disconnect());
+}

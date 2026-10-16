@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import type { MenuNode } from '@/lib/queries';
 import { NewsletterForm } from '@/components/layout/NewsletterForm';
-
-export { WhatsappButton } from '@/components/layout/FloatingButtons';
+import { FacebookIcon, InstagramIcon, LinkedinIcon, YoutubeIcon } from '@/components/icons';
 
 export type FooterSeoGroup = { title: string; items: MenuNode[] };
 
@@ -12,6 +11,13 @@ type FooterProps = {
   seo: FooterSeoGroup[];
   settings: Record<string, string>;
 };
+
+const SOCIALS = [
+  { key: 'facebook', label: 'Facebook', Icon: FacebookIcon },
+  { key: 'instagram', label: 'Instagram', Icon: InstagramIcon },
+  { key: 'youtube', label: 'YouTube', Icon: YoutubeIcon },
+  { key: 'linkedin', label: 'LinkedIn', Icon: LinkedinIcon },
+] as const;
 
 const CERTIFICATIONS = [
   { src: '/images/theme/FSC_new.png', alt: 'FSC certified' },
@@ -25,6 +31,8 @@ export function Footer({ information, userArea, seo, settings }: FooterProps) {
   const phone = settings.phone ?? '';
   const email = settings.complaintsEmail || settings.email || '';
   const year = new Date().getFullYear();
+  const addressLines = (settings.address ?? '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const socials = SOCIALS.filter((s) => /^https?:\/\//i.test(settings[s.key] ?? ''));
 
   return (
     <>
@@ -41,6 +49,16 @@ export function Footer({ information, userArea, seo, settings }: FooterProps) {
                 {phone && email && <br />}
                 {email && <a href={`mailto:${email}`}>{email}</a>}
               </p>
+              {addressLines.length > 0 && (
+                <p className="m-0 mt-[10px] text-[15px] leading-[25.5px]">
+                  {addressLines.map((line, i) => (
+                    <span key={i}>
+                      {i > 0 && <br />}
+                      {line}
+                    </span>
+                  ))}
+                </p>
+              )}
               <h4 className="m-0 mt-5 text-[20px] font-semibold leading-[36px] text-accent md:leading-[38px]">Certified by</h4>
               <ul className="flex flex-wrap">
                 {CERTIFICATIONS.map((c) => (
@@ -58,8 +76,15 @@ export function Footer({ information, userArea, seo, settings }: FooterProps) {
               <p className="m-0 mb-[25px] text-[16px] font-semibold uppercase leading-none tracking-[.1rem] text-accent max-[480px]:mb-[30px]">
                 Follow Us
               </p>
-              {/* live renders an empty social-links list here */}
-              <ul className="m-0 list-none p-0" />
+              <ul className="m-0 list-none p-0">
+                {socials.map(({ key, label, Icon }) => (
+                  <li key={key} className="mr-[15px] inline-block">
+                    <a href={settings[key]} target="_blank" rel="noopener noreferrer" aria-label={label}>
+                      <Icon className="h-5 w-5 text-accent hover:text-accent2" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
               <WidgetTitle>Join our mailing list</WidgetTitle>
               <p className="m-0 mb-[25px] text-[15px] leading-[25.5px]">
                 Subscribe to our newsletter to get the latest news and product updates directly to your email. Just a
@@ -92,12 +117,18 @@ export function Footer({ information, userArea, seo, settings }: FooterProps) {
                     {group.items.map((item, i) => (
                       <li key={item.id} className="contents">
                         {i > 0 && ' '}
-                        <Link
-                          href={item.href}
-                          className="text-[15.5px] font-light leading-[1.5] text-ink-seo no-underline hover:text-accent2"
-                        >
-                          {i > 0 ? `, ${item.label}` : item.label}
-                        </Link>
+                        {item.href ? (
+                          <Link
+                            href={item.href}
+                            className="text-[15.5px] font-light leading-[1.5] text-ink-seo no-underline hover:text-accent2"
+                          >
+                            {i > 0 ? `, ${item.label}` : item.label}
+                          </Link>
+                        ) : (
+                          <span className="text-[15.5px] font-light leading-[1.5] text-ink-seo no-underline">
+                            {i > 0 ? `, ${item.label}` : item.label}
+                          </span>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -130,9 +161,13 @@ function FooterMenu({ title, items, className = '' }: { title: string; items: Me
         <ul className="m-0 list-none p-0">
           {items.map((item) => (
             <li key={item.id} className="mb-[5px] leading-[25.5px] last:mb-0">
-              <Link href={item.href} className="text-[15px] leading-[25.5px] text-accent hover:text-accent2">
-                {item.label}
-              </Link>
+              {item.href ? (
+                <Link href={item.href} className="text-[15px] leading-[25.5px] text-accent hover:text-accent2">
+                  {item.label}
+                </Link>
+              ) : (
+                <span className="text-[15px] leading-[25.5px] text-accent">{item.label}</span>
+              )}
             </li>
           ))}
         </ul>

@@ -1,11 +1,13 @@
 import { prisma } from '@/lib/db';
 import type { Prisma } from '@prisma/client';
+import { cardStatusLabel, isAvailable } from '@/lib/variant-status';
 
 export type MenuNode = {
   id: number;
   label: string;
   href: string;
-  badge: string | null;
+  /** MAIN level-2 headings: false = stacked under the previous group in the same mega-menu column. */
+  newColumn: boolean;
   children: MenuNode[];
 };
 
@@ -18,26 +20,26 @@ export async function getSettingsMap(): Promise<Record<string, string>> {
 
 export async function getMenu(location: string): Promise<MenuNode[]> {
   const items = await prisma.menuItem.findMany({
-    where: { location, enabled: true },
+    where: { location },
     orderBy: [{ position: 'asc' }, { id: 'asc' }],
   });
-  const build = (parentId: number | null): MenuNode[] =>
+  // Hidden items are dropped. A dropdown heading (below the top level) whose links are all hidden is dropped
+  // too, so it never turns into a plain link in its own column.
+  const build = (parentId: number | null, depth: number): MenuNode[] =>
     items
-      .filter((i) => i.parentId === parentId)
-      .map((i) => ({ id: i.id, label: i.label, href: i.href, badge: i.badge, children: build(i.id) }));
-  return build(null);
+      .filter((i) => i.parentId === parentId && i.enabled)
+      .flatMap((i) => {
+        const children = build(i.id, depth + 1);
+        const hadChildren = items.some((c) => c.parentId === i.id);
+        if (depth > 0 && hadChildren && children.length === 0) return [];
+        return [{ id: i.id, label: i.label, href: i.href, newColumn: i.newColumn, children }];
+      });
+  return build(null, 0);
 }
 
-export async function getBanners(location: string) {
-  return prisma.banner.findMany({ where: { location, active: true }, orderBy: [{ position: 'asc' }, { id: 'asc' }] });
-}
-
-export async function getAllNavCollections() {
-  return prisma.collection.findMany({
-    where: { showInNav: true },
-    orderBy: [{ position: 'asc' }, { id: 'asc' }],
-    select: { id: true, handle: true, title: true, parentId: true, image: true, kind: true, featured: true },
-  });
+/** Home slideshow banners (the only banner location), in display order. */
+export async function getBanners() {
+  return prisma.banner.findMany({ where: { active: true }, orderBy: [{ position: 'asc' }, { id: 'asc' }] });
 }
 
 export type ProductCardData = {
@@ -52,7 +54,10 @@ export type ProductCardData = {
   rating: number;
   reviewCount: number;
   productType: string;
-  inventory: number;
+  /** Some variant is not SOLD_OUT. */
+  available: boolean;
+  /** Card status bar (cardStatusLabel): 'Ready to ship' | 'Pre-Order' | 'Sold Out' | null (no bar). */
+  statusLabel: string | null;
 };
 
 const cardSelect = {
@@ -64,7 +69,7 @@ const cardSelect = {
   reviewCount: true,
   productType: true,
   images: { orderBy: { position: 'asc' as const }, take: 1, select: { src: true, alt: true } },
-  variants: { orderBy: { position: 'asc' as const }, select: { price: true, compareAtPrice: true, inventory: true } },
+  variants: { orderBy: { position: 'asc' as const }, select: { price: true, compareAtPrice: true, status: true } },
 } satisfies Prisma.ProductSelect;
 
 type CardRaw = Prisma.ProductGetPayload<{ select: typeof cardSelect }>;
@@ -93,7 +98,8 @@ export function toCard(p: CardRaw): ProductCardData & { compareAtPrice: number |
     rating: p.rating,
     reviewCount: p.reviewCount,
     productType: p.productType,
-    inventory: vs.length ? Math.max(...vs.map((v) => v.inventory)) : 0,
+    available: vs.some((v) => isAvailable(v.status)),
+    statusLabel: cardStatusLabel(vs.map((v) => v.status)),
   };
 }
 
@@ -146,7 +152,7 @@ export async function listProducts(params: ProductListParams): Promise<ProductLi
           ...(minPrice != null ? { gte: minPrice } : {}),
           ...(maxPrice != null ? { lte: maxPrice } : {}),
         },
-        ...(params.inStockOnly ? { inventory: { gt: 0 } } : {}),
+        ...(params.inStockOnly ? { status: { not: 'SOLD_OUT' } } : {}),
       },
     };
   }
@@ -209,31 +215,22 @@ export async function listProducts(params: ProductListParams): Promise<ProductLi
   };
 }
 
+/** Product page data: options with their values (and swatches), photos with their "Shows" tag, variants. */
 export async function getProductByHandle(handle: string) {
   return prisma.product.findUnique({
     where: { handle },
     include: {
-      images: { orderBy: { position: 'asc' } },
-      variants: { orderBy: { position: 'asc' } },
+      images: {
+        orderBy: [{ position: 'asc' }, { id: 'asc' }],
+        include: { optionValue: { select: { id: true, value: true, optionId: true } } },
+      },
+      variants: { orderBy: [{ position: 'asc' }, { id: 'asc' }] },
+      productOptions: {
+        orderBy: [{ position: 'asc' }, { id: 'asc' }],
+        include: { values: { orderBy: [{ position: 'asc' }, { id: 'asc' }] } },
+      },
       collections: { select: { handle: true, title: true } },
     },
-  });
-}
-
-export async function getRelatedProducts(productId: number, collectionHandles: string[], limit = 8) {
-  const where: Prisma.ProductWhereInput = {
-    id: { not: productId },
-    status: 'ACTIVE',
-    ...(collectionHandles.length ? { collections: { some: { handle: { in: collectionHandles } } } } : { hot: true }),
-  };
-  const rows = await prisma.product.findMany({ where, take: limit, orderBy: { hot: 'desc' }, select: cardSelect });
-  return rows.map(toCard);
-}
-
-export async function getCollectionByHandle(handle: string) {
-  return prisma.collection.findUnique({
-    where: { handle },
-    include: { children: { orderBy: { position: 'asc' } } },
   });
 }
 
@@ -241,28 +238,6 @@ export async function getPageByHandle(handle: string) {
   return prisma.page.findUnique({ where: { handle } });
 }
 
-export async function listBlogPosts(limit = 12) {
-  return prisma.page.findMany({ where: { isBlogPost: true, published: true }, orderBy: { createdAt: 'desc' }, take: limit });
-}
-
 export async function getReviewsForProduct(productId: number) {
   return prisma.review.findMany({ where: { productId, approved: true }, orderBy: { createdAt: 'desc' }, take: 20 });
-}
-
-export async function getRecentReviews(limit = 12) {
-  return prisma.review.findMany({
-    where: { approved: true },
-    orderBy: { createdAt: 'desc' },
-    take: limit,
-    include: { product: { select: { handle: true, title: true } } },
-  });
-}
-
-export async function getFeaturedCollections(limit = 10) {
-  return prisma.collection.findMany({
-    where: { featured: true, image: { not: null } },
-    orderBy: { position: 'asc' },
-    take: limit,
-    select: { handle: true, title: true, image: true },
-  });
 }

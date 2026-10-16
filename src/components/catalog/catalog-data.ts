@@ -1,7 +1,9 @@
 /**
  * Server-side data for the catalog listing pages (/collections/[handle], /search): the live
- * Shopify-style facets (availability + price), sort orders, discount-tag filter, page slicing and
+ * Shopify-style facets (availability + price), sort orders, discount filter, page slicing and
  * the extra card data the live product card shows (hover image, badges, NEW, stars, swatches).
+ * Everything comes from the database (variant status, swatches, photo tags, card photo ratio); only
+ * the live search ranking snapshot stays in code.
  *
  * The catalog is small (< 1k products), so the match set is loaded once with light fields and
  * filtered / sorted in JS; only the visible page is loaded with full card data.
@@ -9,12 +11,10 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { displayPrice, type ProductCardData } from '@/lib/queries';
+import { cardStatusLabel, isAvailable } from '@/lib/variant-status';
+import { CARD_SWATCH_SELECT, buildCardSwatches } from '@/lib/card-swatches';
 import type { CardSwatch, ProductCardExtras } from './ProductCard';
-import liveCardData from './live-card-data.json';
-import swatchColors from './swatch-colors.json';
-import swatchVariants from './swatch-variants.json';
 import liveSearchOrder from './live-search-order.json';
-import liveSoldOut from './live-sold-out.json';
 import type { CatalogFilters } from './filters';
 
 export type CatalogCard = ProductCardData &
@@ -33,16 +33,6 @@ export type CatalogResult = {
   maxPrice: number;
 };
 
-const LIVE_RATINGS = liveCardData.ratings as Record<string, number>;
-const LIVE_IMAGE_RATIOS = liveCardData.imageRatios as Record<string, number>;
-/** Live status bar text per product (driven by a Shopify metafield there; null = no bar). */
-const LIVE_STATUSES = liveCardData.statuses as Record<string, string | null>;
-/** Products whose every live variant is unavailable: live shows a "Sold Out" bar (scripts/fidelity/catalog.ts). */
-const LIVE_SOLD_OUT = new Set(liveSoldOut as string[]);
-const SWATCH_COLORS = swatchColors as Record<string, string>;
-const COLOR_OPTION = /^colou?rs?$/i;
-/** Per product: colour value → image position of its swatch variant + the `.active` colour (scripts/fidelity/catalog.ts). */
-const SWATCH_VARIANTS = swatchVariants as Record<string, { active: string | null; images: Record<string, number> }>;
 /** Live card titles that differ from the product title (the live listing shows a shorter name). */
 const CARD_TITLES: Record<string, string> = { 'moda-sofa-set': 'Moda Modular Sofa' };
 
@@ -69,8 +59,12 @@ type LightRow = {
   tags: string;
   hot: boolean;
   createdAt: Date;
-  variants: { price: number; inventory: number }[];
+  discountGroup: number | null;
+  variants: { price: number; status: string }[];
 };
+
+/** Every variant is SOLD_OUT (or there are none). */
+const soldOut = (r: LightRow) => !r.variants.some((v) => isAvailable(v.status));
 
 function tagList(tags: string): string[] {
   return tags
@@ -129,7 +123,7 @@ function sortRows(rows: LightRow[], sort: string, opts: { order?: string[]; term
           (a, b) =>
             livePos(a) - livePos(b) ||
             // Shopify search lists unavailable products last ("Sold Out" cards end the live results).
-            Number(LIVE_SOLD_OUT.has(a.handle)) - Number(LIVE_SOLD_OUT.has(b.handle)) ||
+            Number(soldOut(a)) - Number(soldOut(b)) ||
             (score.get(b.id) ?? 0) - (score.get(a.id) ?? 0) ||
             popularity(a.handle) - popularity(b.handle) ||
             Number(b.hot) - Number(a.hot) ||
@@ -142,7 +136,8 @@ function sortRows(rows: LightRow[], sort: string, opts: { order?: string[]; term
   }
 }
 
-const fullSelect = {
+/** Everything a catalog card needs (also used by the product page's "You may also like" rows). */
+export const CATALOG_CARD_SELECT = {
   id: true,
   handle: true,
   title: true,
@@ -150,48 +145,23 @@ const fullSelect = {
   rating: true,
   reviewCount: true,
   productType: true,
-  tags: true,
-  options: true,
-  images: { orderBy: { position: 'asc' as const }, select: { src: true, position: true } },
+  isNew: true,
+  limitedEdition: true,
+  cardImageRatio: true,
+  ...CARD_SWATCH_SELECT,
   variants: {
-    orderBy: { position: 'asc' as const },
-    select: { price: true, compareAtPrice: true, inventory: true },
+    orderBy: [{ position: 'asc' as const }, { id: 'asc' as const }],
+    select: { price: true, compareAtPrice: true, status: true },
   },
 } satisfies Prisma.ProductSelect;
 
-type FullRow = Prisma.ProductGetPayload<{ select: typeof fullSelect }>;
-/** Card input: image positions are optional (other callers select only `src`; swatch images then fall back to null). */
-type CardRow = Omit<FullRow, 'images'> & { images: { src: string; position?: number }[] };
+type CardRow = Prisma.ProductGetPayload<{ select: typeof CATALOG_CARD_SELECT }>;
 
 /**
- * Card swatch = one per value of the colour option. `image` is the photo live swaps the card to when
- * the swatch is clicked (`data-srcset`); `active` mirrors live `.product-card-swatch.active`, which is
- * set only on the swatch whose image is the product's featured image (Cooper, Prodotti, Apex… ring one;
- * Majestic, Erin, Como… ring none).
+ * Card swatch = one per value of the colour option. `image` is the photo tagged with that value (the one
+ * live swaps the card to); `active` rings the swatch whose value the product's first photo shows.
  */
 export type CatalogSwatch = CardSwatch & { active: boolean; image: string | null };
-
-function swatchesFor(handle: string, optionsJson: string, images: CardRow['images']): CatalogSwatch[] {
-  try {
-    const opts = JSON.parse(optionsJson) as { name?: string; values?: string[] }[];
-    if (!Array.isArray(opts)) return [];
-    const idx = opts.findIndex((o) => o?.name && COLOR_OPTION.test(o.name.trim()));
-    if (idx < 0) return [];
-    const live = SWATCH_VARIANTS[handle];
-    return (opts[idx].values ?? []).map((name) => {
-      const pos = live?.images[name];
-      return {
-        name,
-        color: SWATCH_COLORS[name] ?? (CSS_NAME.test(name) ? name.toLowerCase() : '#ccc'),
-        active: live?.active === name,
-        image: (pos != null ? images.find((im) => im.position === pos)?.src : undefined) ?? null,
-      };
-    });
-  } catch {
-    return [];
-  }
-}
-const CSS_NAME = /^[a-z]+$/i;
 
 export function toCatalogCard(p: CardRow): CatalogCard {
   const vs = p.variants;
@@ -206,10 +176,7 @@ export function toCatalogCard(p: CardRow): CatalogCard {
   const pcts = vs
     .filter((v) => v.compareAtPrice != null && v.compareAtPrice > v.price && v.price > 0)
     .map((v) => Math.round((((v.compareAtPrice as number) - v.price) / (v.compareAtPrice as number)) * 100));
-  const inventory = vs.length ? Math.max(...vs.map((v) => v.inventory)) : 0;
-  const tags = tagList(p.tags);
-  const liveRating = LIVE_RATINGS[p.handle];
-  const liveRatio = LIVE_IMAGE_RATIOS[p.handle];
+  const statuses = vs.map((v) => v.status);
   return {
     id: p.id,
     handle: p.handle,
@@ -220,27 +187,18 @@ export function toCatalogCard(p: CardRow): CatalogCard {
     image: p.images[0]?.src ?? null,
     hoverImage: p.images[1]?.src ?? null,
     hot: p.hot,
-    rating: liveRating ?? p.rating,
-    // Live shows Judge.me stars for every product with a live rating; some of those have no local
-    // review rows yet, so count at least one so the card's `reviewCount > 0` guard lets them through.
-    reviewCount: liveRating != null ? Math.max(1, p.reviewCount) : p.reviewCount,
+    rating: p.rating,
+    reviewCount: p.reviewCount,
     productType: p.productType,
-    inventory,
+    available: statuses.some(isAvailable),
     salePercent: pcts.length ? Math.max(...pcts) : null,
-    statusLabel:
-      p.handle in LIVE_STATUSES
-        ? LIVE_STATUSES[p.handle]
-        : LIVE_SOLD_OUT.has(p.handle)
-          ? 'Sold Out'
-          : inventory > 0
-            ? 'Ready to ship'
-            : 'Pre-Order',
-    isNew: tags.includes('New Arrivals'),
-    limitedEdition: tags.includes('limited-edition'),
-    // Live only shows Judge.me stars for products that actually have reviews there (= have a live rating).
-    showRating: liveRating != null,
-    swatches: swatchesFor(p.handle, p.options, p.images),
-    imageRatio: liveRatio ? liveRatio / 100 : undefined,
+    statusLabel: cardStatusLabel(statuses),
+    isNew: p.isNew,
+    limitedEdition: p.limitedEdition,
+    // Judge.me stars show only for products that have reviews.
+    showRating: p.reviewCount > 0,
+    swatches: buildCardSwatches(p),
+    imageRatio: p.cardImageRatio ?? undefined,
   };
 }
 
@@ -280,7 +238,8 @@ export async function getCatalog(params: {
     tags: true,
     hot: true,
     createdAt: true,
-    variants: { select: { price: true, inventory: true } },
+    discountGroup: true,
+    variants: { select: { price: true, status: true } },
   } satisfies Prisma.ProductSelect;
   let rows: LightRow[] = await prisma.product.findMany({ where, select: lightSelect });
   let productOrder = params.productOrder;
@@ -299,16 +258,15 @@ export async function getCatalog(params: {
   // Discount (mobile drawer) + price facets first; availability counts are computed on that set.
   let set = rows;
   if (filters.discount) {
-    const tag = `discount=${filters.discount}`;
-    set = set.filter((r) => tagList(r.tags).includes(tag));
+    set = set.filter((r) => r.discountGroup === Number(filters.discount));
   }
   if (filters.min != null || filters.max != null) {
     const lo = filters.min ?? 0;
     const hi = filters.max ?? Number.MAX_SAFE_INTEGER;
     set = set.filter((r) => r.variants.some((v) => v.price >= lo && v.price <= hi));
   }
-  const inStock = (r: LightRow) => r.variants.some((v) => v.inventory > 0);
-  const outOfStock = (r: LightRow) => r.variants.length === 0 || r.variants.some((v) => v.inventory <= 0);
+  const inStock = (r: LightRow) => r.variants.some((v) => isAvailable(v.status));
+  const outOfStock = (r: LightRow) => r.variants.length === 0 || r.variants.some((v) => !isAvailable(v.status));
   const inStockCount = set.filter(inStock).length;
   const outOfStockCount = set.filter(outOfStock).length;
   if (filters.availability.length) {
@@ -324,9 +282,9 @@ export async function getCatalog(params: {
   const from = params.cumulative ? 0 : (page - 1) * perPage;
   const ids = sorted.slice(from, page * perPage).map((r) => r.id);
 
-  const full = ids.length ? await prisma.product.findMany({ where: { id: { in: ids } }, select: fullSelect }) : [];
+  const full = ids.length ? await prisma.product.findMany({ where: { id: { in: ids } }, select: CATALOG_CARD_SELECT }) : [];
   const byId = new Map(full.map((p) => [p.id, p]));
-  const items = ids.map((id) => byId.get(id)).filter((p): p is FullRow => p != null).map(toCatalogCard);
+  const items = ids.map((id) => byId.get(id)).filter((p): p is CardRow => p != null).map(toCatalogCard);
 
   return { items, total, page, perPage, pages, inStockCount, outOfStockCount, maxPrice };
 }

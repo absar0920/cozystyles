@@ -304,7 +304,14 @@ export async function createMenuTree(prisma: PrismaClient, items: MenuSpec[], lo
   let position = 0;
   for (const it of items) {
     const created = await prisma.menuItem.create({
-      data: { label: it.label, href: it.href, location, parentId, position: position++, badge: it.badge ?? null },
+      data: {
+        label: it.label,
+        href: it.href,
+        location,
+        parentId,
+        position: position++,
+        newColumn: it.badge !== 'STACK',
+      },
     });
     if (it.children?.length) await createMenuTree(prisma, it.children, location, created.id);
   }

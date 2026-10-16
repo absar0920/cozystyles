@@ -5,8 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Logo } from '@/components/brand/Logo';
 import type { MenuNode } from '@/lib/queries';
-import { useCart } from '@/lib/cart';
-import { AngleDownIcon, ThemeAccountIcon, ThemeCartIcon, ThemeSearchIcon } from '@/components/icons';
+import { AngleDownIcon, ThemeAccountIcon, ThemeSearchIcon } from '@/components/icons';
 import { SearchPanel } from '@/components/layout/SearchPanel';
 import { MobileMenu } from '@/components/layout/MobileMenu';
 import { megaColumns, isSpacer } from '@/components/layout/menu';
@@ -44,7 +43,6 @@ export function AnnouncementBar({ text, href, ctaLabel, ctaHref }: AnnouncementP
 }
 
 export function Header({ menu, hasAnnouncement = true }: { menu: MenuNode[]; hasAnnouncement?: boolean }) {
-  const { count, openDrawer } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const pathname = usePathname();
@@ -122,26 +120,6 @@ export function Header({ menu, hasAnnouncement = true }: { menu: MenuNode[]; has
                   <ThemeAccountIcon className="h-4 w-4 md:h-[21px] md:w-[19px]" />
                 </Link>
               </li>
-              <li>
-                <a
-                  href="/cart"
-                  aria-label={`Cart (${count})`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setMobileOpen(false);
-                    setSearchOpen(false);
-                    openDrawer();
-                  }}
-                  className="flex px-1 text-accent hover:text-accent2 md:px-[5px]"
-                >
-                  <span className="relative block">
-                    <ThemeCartIcon className="h-4 w-4 md:h-[22px] md:w-[23px]" />
-                    <span className="absolute -right-3 -top-[7px] flex h-[19px] w-[19px] items-center justify-center rounded-full bg-accent2 text-[10px] font-semibold leading-[10px] text-white">
-                      {count}
-                    </span>
-                  </span>
-                </a>
-              </li>
             </ul>
           </div>
         </div>
@@ -164,7 +142,7 @@ function DesktopNav({ menu }: { menu: MenuNode[] }) {
         const hasDrop = item.children.length > 0;
         return (
           <li key={item.id} className="group/nav static">
-            <Link
+            <MaybeLink
               href={item.href}
               onClick={() => setSuppressed(item.id)}
               className={`flex h-[50px] items-center whitespace-nowrap px-1.5 py-[15px] text-[16px] font-medium leading-5 xl:px-5 ${
@@ -179,7 +157,7 @@ function DesktopNav({ menu }: { menu: MenuNode[] }) {
                   <AngleDownIcon className="h-[6px] w-[9px]" />
                 </span>
               )}
-            </Link>
+            </MaybeLink>
             {hasDrop && (
               <div
                 className={`invisible absolute left-0 top-[42px] z-[1000] w-full border border-megaline bg-white opacity-0 transition-[opacity,visibility] duration-[250ms] ease-theme ${
@@ -206,13 +184,13 @@ function MegaPanel({ item, onNavigate }: { item: MenuNode; onNavigate: () => voi
             {groups.map((group, gi) =>
               group.heading ? (
                 <li key={group.heading.id} className={gi > 0 ? 'pt-[15px]' : undefined}>
-                  <Link
+                  <MaybeLink
                     href={group.heading.href}
                     onClick={onNavigate}
                     className="mb-[7px] block border-b border-cream-border pb-3 text-[14px] font-semibold leading-[23.8px] text-menuRed hover:text-menuRed"
                   >
                     {group.heading.label}
-                  </Link>
+                  </MaybeLink>
                   <ul>
                     {group.links.map((link) => (
                       <MegaLink key={link.id} link={link} onNavigate={onNavigate} />
@@ -234,13 +212,33 @@ function MegaLink({ link, onNavigate }: { link: MenuNode; onNavigate: () => void
   if (isSpacer(link)) return <li aria-hidden className="h-[30px]" />;
   return (
     <li>
-      <Link
+      <MaybeLink
         href={link.href}
         onClick={onNavigate}
         className="flex py-[5px] text-[13px] font-normal leading-5 text-ink-dark hover:text-black"
       >
         {link.label}
-      </Link>
+      </MaybeLink>
     </li>
+  );
+}
+
+/** A menu entry with no link (empty href, e.g. a column title) renders as a <span> with the same look. */
+function MaybeLink({
+  href,
+  onClick,
+  className,
+  children,
+}: {
+  href: string;
+  onClick?: () => void;
+  className: string;
+  children: React.ReactNode;
+}) {
+  if (!href) return <span className={className}>{children}</span>;
+  return (
+    <Link href={href} onClick={onClick} className={className}>
+      {children}
+    </Link>
   );
 }

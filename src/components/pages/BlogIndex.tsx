@@ -1,36 +1,11 @@
 import Link from 'next/link';
 import { Breadcrumbs } from '@/components/catalog/Breadcrumbs';
-import { listBlogPosts } from '@/lib/queries';
 import { BlogTagSelect } from './BlogTagSelect';
-import {
-  BLOG_TAGS,
-  articleExcerpt,
-  articleHref,
-  decodeEntities,
-  formatIndexDate,
-  formatLongDate,
-  parseArticle,
-} from './content';
+import { distinctTags, loadBlogPosts } from './blog-data';
+import { formatIndexDate, formatLongDate } from './content';
 import './content.css';
 
 const PER_PAGE = 9;
-
-/** Published posts, newest first, with their parsed meta (tags/image/excerpt live in bodyHtml). */
-export async function loadBlogPosts() {
-  const posts = await listBlogPosts(500);
-  return posts.map((post) => {
-    const article = parseArticle(post.bodyHtml);
-    return {
-      handle: post.handle,
-      href: articleHref(post.handle),
-      title: decodeEntities(post.title),
-      date: article.publishedAt ?? post.createdAt,
-      image: article.image,
-      tags: article.tags,
-      excerpt: articleExcerpt(article.contentHtml),
-    };
-  });
-}
 
 /**
  * Live `/blogs/news` (template-blog): breadcrumb, centred header + tag select, 3-up cards, numbered pagination.
@@ -40,11 +15,12 @@ export async function BlogIndex({ page, tag, blog = 'news' }: { page: number; ta
   const isNews = blog === 'news';
   const all = isNews ? await loadBlogPosts() : [];
   const basePath = tag ? `/blogs/news/tagged/${tag}` : `/blogs/${blog}`;
+  const tags = distinctTags(all);
   const posts = tag ? all.filter((p) => p.tags.some((t) => t.href === basePath)) : all;
   const pageCount = Math.max(1, Math.ceil(posts.length / PER_PAGE));
   const current = Math.min(Math.max(1, page), pageCount);
   const visible = posts.slice((current - 1) * PER_PAGE, current * PER_PAGE);
-  const tagLabel = tag ? BLOG_TAGS.find((t) => t.href === basePath)?.label : undefined;
+  const tagLabel = tag ? tags.find((t) => t.href === basePath)?.label : undefined;
   const pageHref = (n: number) => (n === 1 ? basePath : `${basePath}?page=${n}`);
 
   return (
@@ -63,14 +39,14 @@ export async function BlogIndex({ page, tag, blog = 'news' }: { page: number; ta
           <span className="h4 mt-[10px] block !font-normal opacity-60">{formatLongDate(new Date())}</span>
         </div>
         <div className="mb-5 text-[24px] md:mb-10">
-          <BlogTagSelect tags={isNews ? BLOG_TAGS : []} current={basePath} allHref={`/blogs/${blog}`} />
+          <BlogTagSelect tags={isNews ? tags : []} current={basePath} allHref={`/blogs/${blog}`} />
         </div>
       </div>
 
       <div className="mb-[50px] md:mb-[100px]">
         <div className="mx-auto flex max-w-[1360px] flex-wrap px-[5px] md:px-[25px]">
           {visible.map((post) => (
-            <div key={post.handle} className="w-full px-[7.5px] md:w-1/3 md:px-[15px] lg:px-5">
+            <div key={post.id} className="w-full px-[7.5px] md:w-1/3 md:px-[15px] lg:px-5">
               <div className="blog-post mb-[60px] text-center">
                 <figure
                   className="featured-image relative isolate mb-[35px] h-0 overflow-hidden"

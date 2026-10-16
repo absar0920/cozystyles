@@ -3,9 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Logo } from '@/components/brand/Logo';
-import { HideStoreChrome, SYSTEM_FONT } from '@/components/checkout/CheckoutShell';
-import { Checkbox, FloatingInput } from '@/components/checkout/fields';
-import { blueLink } from '@/components/checkout/format';
+import { Checkbox, FloatingInput, HideStoreChrome, SYSTEM_FONT, blueLink } from '@/components/account/ui';
 
 function GoogleLogo() {
   return (

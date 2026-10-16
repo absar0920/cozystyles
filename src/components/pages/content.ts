@@ -1,13 +1,27 @@
 /**
- * Helpers for DB rich-text content (static pages & blog posts).
- *
- * Blog bodies are normalised by scripts/fidelity/content.ts into:
- *   div.post-meta-wrapper (time[datetime] + aside.post-author) · div.featured-image img ·
- *   div.post-content (the article HTML) · footer.article-tags (a.tag-link…)
- * `parseArticle` reads that back; bodies without the markers (e.g. written in the admin) are
- * treated as plain article HTML with the first <img> as the featured image.
- * Rendered HTML is not sanitised — it comes from our own DB/admin.
+ * Helpers for page and blog content on the storefront (dates, excerpts, entity decoding) and the
+ * legacy-markup cleaner used by custom-design pages. Blog posts keep date/author/image/tags in their own
+ * fields (see blog-data.ts); text and blog bodies are sanitised rich text.
  */
+
+import sanitizeHtml from 'sanitize-html';
+import { sanitizeRichText } from '@/lib/rich-text/sanitize';
+import { isLegacyCdnUrl, localImageFor } from './legacy-images';
+
+/** Re-serialises HTML with every element closed and stray closing tags dropped (nothing else is changed). */
+function balanceHtml(html: string): string {
+  return sanitizeHtml(html, {
+    allowedTags: false,
+    allowedAttributes: false,
+    allowVulnerableTags: true,
+    allowedSchemes: ['http', 'https', 'mailto', 'tel', 'data'],
+    parseStyleAttributes: false,
+    // keep <option>/<textarea> text (the defaults drop it); scripts and styles were removed before
+    nonTextTags: ['script', 'style'],
+    // keep SVG's camelCase (viewBox, linearGradient)
+    parser: { lowerCaseTags: false, lowerCaseAttributeNames: false },
+  });
+}
 
 const ENTITY_MAP: Array<[RegExp, string]> = [
   [/&nbsp;/g, ' '],
@@ -52,21 +66,66 @@ export function truncateWords(text: string, count: number): string {
   return words.length > count ? `${words.slice(0, count).join(' ')}...` : words.join(' ');
 }
 
-/** Inner HTML of the first element whose opening tag matches `opener` (balanced on its tag name). */
-function innerOf(html: string, opener: RegExp): string | null {
-  const open = opener.exec(html);
-  if (!open) return null;
-  const tag = open[0].match(/^<([a-z0-9]+)/i)?.[1]?.toLowerCase();
-  if (!tag) return null;
-  const re = new RegExp(`<(/?)${tag}\\b[^>]*>`, 'gi');
-  const start = open.index + open[0].length;
-  re.lastIndex = start;
-  let depth = 1;
-  for (let m = re.exec(html); m; m = re.exec(html)) {
-    depth += m[1] ? -1 : 1;
-    if (depth === 0) return html.slice(start, m.index);
+/**
+ * A stored TEXT/BLOG body, sanitised for rendering or editing. (Tag-less plain text carrying entities such as
+ * "&amp;" is decoded by the sanitiser itself, so it is not escaped twice.)
+ */
+export function storedRichText(html: string): string {
+  return sanitizeRichText(html ?? '');
+}
+
+const LINE_BREAK_TAG = /^<\/?(p|div|li|ul|ol|h[1-6]|br|blockquote|table|thead|tbody|tr|td|th|figure|figcaption|section|article|header|footer|img|iframe|hr)\b/i;
+
+/**
+ * TEXT pages: the live theme draws every <strong> at 26px because its policy pages use a bold line as a heading.
+ * Marks only those bold lines (a <strong> with nothing but blank space or a list number between it and the
+ * surrounding line breaks or block edges), bold list numbers, and bare bold text between blocks with
+ * `sf-line-strong`, so a word the owner bolds inside a sentence stays body size (content.css).
+ */
+export function markLineStrongs(html: string): string {
+  const tokens = html.match(/<[^>]*>|[^<]+/g) ?? [];
+  const text = (t: string) => (t.startsWith('<') ? '' : t.replace(/&nbsp;|&#160;|\u00a0/g, ' '));
+  const lineEdge = (t: string) => t.startsWith('<') && LINE_BREAK_TAG.test(t);
+  for (let i = 0; i < tokens.length; i++) {
+    if (!/^<strong\s*>$/i.test(tokens[i])) continue;
+    // matching close tag
+    let depth = 0;
+    let close = -1;
+    for (let j = i; j < tokens.length; j++) {
+      if (/^<strong\b/i.test(tokens[j])) depth++;
+      else if (/^<\/strong>/i.test(tokens[j]) && --depth === 0) {
+        close = j;
+        break;
+      }
+    }
+    if (close < 0) continue;
+    // text on the same line, ignoring other bold runs ("<strong>2</strong>. <strong>BUSINESS</strong>")
+    let before = '';
+    let j0 = i - 1;
+    for (let j = i - 1, d = 0; j >= 0 && !lineEdge(tokens[j]); j--, j0 = j) {
+      if (/^<\/strong>/i.test(tokens[j])) d++;
+      else if (/^<strong\b/i.test(tokens[j])) d--;
+      else if (d <= 0) before = text(tokens[j]) + before;
+    }
+    let after = '';
+    let j1 = close + 1;
+    for (let j = close + 1, d = 0; j < tokens.length && !lineEdge(tokens[j]); j++, j1 = j) {
+      if (/^<strong\b/i.test(tokens[j])) d++;
+      else if (/^<\/strong>/i.test(tokens[j])) d--;
+      else if (d <= 0) after += text(tokens[j]);
+    }
+    // allowed around a bold line: a list number before it ("1. "), punctuation after it
+    const alone = /^[\s\d.)]*$/.test(before) && /^[\s.:]*$/.test(after);
+    // the theme's bold list numbers ("<strong>1.</strong> Your contact details…")
+    // (and empty bold runs around line breaks, which only set the line height)
+    const number = /^\s*(\d+[.)]?)?\s*$/.test(tokens.slice(i + 1, close).map(text).join(''));
+    // bare bold text between blocks (not inside a paragraph): bodies stored before the migration's page-blocks step
+    const prevEdge = tokens[j0] ?? '';
+    const nextEdge = tokens[j1] ?? '';
+    const bare = (j0 < 0 || /^<\//.test(prevEdge)) && (j1 >= tokens.length || /^<(?!\/|br)/i.test(nextEdge));
+    if (alone || number || bare) tokens[i] = '<strong class="sf-line-strong">';
   }
-  return html.slice(start);
+  return tokens.join('');
 }
 
 function attr(tag: string, name: string): string | undefined {
@@ -75,54 +134,24 @@ function attr(tag: string, name: string): string | undefined {
 
 export type ArticleImage = { src: string; width: number; height: number; alt: string };
 export type ArticleTag = { label: string; href: string };
-export type ParsedArticle = {
-  publishedAt: Date | null;
-  author: string | null;
-  image: ArticleImage | null;
-  contentHtml: string;
-  tags: ArticleTag[];
-};
-
-export function parseArticle(bodyHtml: string): ParsedArticle {
-  const datetime = bodyHtml.match(/<time[^>]+datetime=["']([^"']+)["']/i)?.[1];
-  const author = bodyHtml.match(/<aside class="post-author">([\s\S]*?)<\/aside>/i)?.[1];
-  const content = innerOf(bodyHtml, /<div class="post-content[^"]*"[^>]*>/i);
-  const figure = innerOf(bodyHtml, /<div class="featured-image[^"]*"[^>]*>/i);
-  const imgTag = (figure ?? (content === null ? bodyHtml : '')).match(/<img[^>]*>/i)?.[0];
-  const src = imgTag ? attr(imgTag, 'src') : undefined;
-  const tagsHtml = innerOf(bodyHtml, /<footer class="article-tags[^"]*"[^>]*>/i) ?? '';
-  const tags = [...tagsHtml.matchAll(/<a[^>]+href="([^"]+)"[^>]*>([^<]+)<\/a>/gi)].map(([, href, label]) => ({
-    href,
-    label: decodeEntities(label.trim()),
-  }));
-  const date = datetime ? new Date(datetime) : null;
-  return {
-    publishedAt: date && !Number.isNaN(date.getTime()) ? date : null,
-    author: author ? decodeEntities(author.trim()) : null,
-    image:
-      imgTag && src && !src.startsWith('data:')
-        ? {
-            src: src.startsWith('//') ? `https:${src}` : src,
-            width: Number(attr(imgTag, 'width')) || 1920,
-            height: Number(attr(imgTag, 'height')) || 800,
-            alt: decodeEntities(attr(imgTag, 'alt') ?? ''),
-          }
-        : null,
-    contentHtml: content ?? bodyHtml,
-    tags,
-  };
-}
 
 /** Index card excerpt: Shopify `article.content | strip_html | truncatewords: 30`. */
 export function articleExcerpt(contentHtml: string, words = 30): string {
-  // strip_html removes tags without adding spaces, and &nbsp; does not split words
-  const text = decodeEntities(contentHtml.replace(/&nbsp;/g, '\u00a0').replace(/<[^>]*>/g, ''));
+  // strip_html removes tags without adding spaces, and &nbsp; does not split words. Block ends and <br>
+  // become a space first: editor-saved HTML has no newline between blocks, so words would run together
+  // (migrated bodies already had whitespace there, so their excerpts are unchanged).
+  const text = decodeEntities(
+    contentHtml
+      .replace(/&nbsp;/g, '\u00a0')
+      .replace(/<\/(p|li|h[1-6]|div|blockquote)>|<br\s*\/?>/gi, '$& ')
+      .replace(/<[^>]*>/g, ''),
+  );
   return truncateWords(text, words);
 }
 
-/** Meta description fallback for articles. */
-export function blogExcerpt(bodyHtml: string, max = 160): string {
-  const text = stripHtml(parseArticle(bodyHtml).contentHtml);
+/** Meta description fallback for articles (body is sanitised rich text). */
+export function blogExcerpt(contentHtml: string, max = 160): string {
+  const text = stripHtml(contentHtml);
   return text.length > max ? `${text.slice(0, max).trim()}…` : text;
 }
 
@@ -143,33 +172,56 @@ export function formatLongDate(date: Date): string {
   return new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'Asia/Karachi' }).format(date);
 }
 
-/** Blog post handle (`news-<slug>`) → storefront URL. */
-export function articleHref(handle: string): string {
-  return `/blogs/news/${handle.replace(/^news-/, '')}`;
+/** URLs named in an img/source tag: src, data-src and every srcset candidate. */
+function tagImageUrls(tag: string): string[] {
+  const urls: string[] = [];
+  for (const name of ['src', 'data-src']) {
+    const v = attr(tag, name);
+    if (v) urls.push(v);
+  }
+  for (const name of ['data-srcset', 'srcset']) {
+    const v = attr(tag, name);
+    if (v) urls.push(...v.split(',').map((c) => c.trim().split(/\s+/)[0]).filter(Boolean).reverse());
+  }
+  return urls;
 }
 
-/** Blog tags (live `/blogs/news/tagged/<handle>`). */
-export const BLOG_TAGS: ArticleTag[] = [
-  { label: 'Design Ideas', href: '/blogs/news/tagged/design-ideas' },
-  { label: 'News', href: '/blogs/news/tagged/news' },
-  { label: 'Promotions', href: '/blogs/news/tagged/promotions' },
-  { label: 'Wedding Season', href: '/blogs/news/tagged/wedding-season' },
-];
+function dropAttrs(tag: string, names: string[]): string {
+  let out = tag;
+  for (const name of names) out = out.replace(new RegExp(`\\s${name}=(?:"[^"]*"|'[^']*')`, 'gi'), '');
+  return out;
+}
 
 /**
- * Clean a stored page body for rendering: drop stylesheet links/scripts/noscript duplicates
- * and turn the theme's lazy placeholders (`_20x_crop_center` + data-srcset) into a real image.
+ * Clean a stored page body for rendering: drop stylesheet links/scripts/noscript duplicates, point the old
+ * store's CDN pictures (lazy `_20x_crop_center` placeholders + data-srcset) at their downloaded local copies —
+ * pictures that were never downloaded are left out rather than shown broken — and re-balance the markup, so
+ * the browser builds the same DOM as React expects (stray closing tags otherwise fail hydration).
  */
 export function cleanBodyHtml(html: string): string {
-  return html
+  const body = html
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '')
     .replace(/<noscript>[\s\S]*?<\/noscript>/gi, '')
     .replace(/<link[^>]*>/gi, '')
-    .replace(/<img[^>]*>/gi, (tag) => {
-      const srcset = attr(tag, 'data-srcset');
-      if (!srcset) return tag;
-      const best = srcset.split(',').map((s) => s.trim().split(/\s+/)[0]).pop() ?? '';
-      return tag.replace(/\ssrc="[^"]*"/i, ` src="${best}" loading="lazy"`).replace(/\sdata-srcset="[^"]*"/i, '');
+    .replace(/<img\b[^>]*>/gi, (tag) => {
+      const urls = tagImageUrls(tag);
+      if (!urls.some(isLegacyCdnUrl)) return tag;
+      const local = urls.map(localImageFor).find(Boolean);
+      if (!local) return '';
+      const rest = dropAttrs(tag, ['src', 'data-src', 'srcset', 'data-srcset', 'sizes', 'loading']);
+      return rest.replace(/^<img\b/i, `<img src="${local}" loading="lazy"`);
+    })
+    .replace(/<source\b[^>]*>/gi, (tag) => (tagImageUrls(tag).some(isLegacyCdnUrl) ? '' : tag))
+    .replace(/\sposter=(["'])([^"']*)\1/gi, (m, _q: string, url: string) => {
+      if (!isLegacyCdnUrl(url)) return m;
+      const local = localImageFor(url);
+      return local ? ` poster="${local}"` : '';
+    })
+    .replace(/url\((["']?)([^)"']*)\1\)/gi, (m, _q: string, url: string) => {
+      if (!isLegacyCdnUrl(url)) return m;
+      const local = localImageFor(url);
+      return local ? `url(${local})` : 'none';
     });
+  return balanceHtml(body);
 }

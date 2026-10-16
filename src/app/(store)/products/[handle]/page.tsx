@@ -9,17 +9,12 @@ import { ProductMain } from '@/components/product/ProductMain';
 import { JudgeReviews } from '@/components/product/JudgeReviews';
 import { CardRow, StaticSection } from '@/components/product/TemplateSections';
 import { ShareFacebookIcon, SharePinterestIcon, ShareTwitterIcon } from '@/components/product/icons';
-import {
-  getFeaturedCards,
-  getRecommendations,
-  preOrderSkus,
-  swatchColor,
-  tagList,
-  templateFor,
-  variantImageIndex,
-  type FeaturedCollectionSection,
-} from '@/components/product/pdp-data';
-import type { ProductOption, VariantInfo } from '@/components/product/types';
+import { getFeaturedCards, getRecommendations, templateFor, type FeaturedCollectionSection } from '@/components/product/pdp-data';
+import type { ProductImageInfo, ProductOption, SwatchMap, VariantInfo } from '@/components/product/types';
+import { richTextToPlainText, sanitizeRichText } from '@/lib/rich-text/sanitize';
+import { NEUTRAL_SWATCH, isSwatchOptionName } from '@/lib/product-options';
+import { schemaAvailability } from '@/lib/variant-status';
+import { getWhatsAppConfig } from '@/lib/whatsapp-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,37 +23,12 @@ type Params = {
   searchParams: Promise<{ variant?: string }>;
 };
 
-function stripHtml(html: string): string {
-  return html
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#0?39;/gi, "'")
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function parseOptions(json: string): ProductOption[] {
-  try {
-    const parsed = JSON.parse(json);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter((o): o is { name: string; values: string[] } => !!o && typeof o.name === 'string' && Array.isArray(o.values))
-      .map((o) => ({ name: o.name, values: o.values.filter((v): v is string => typeof v === 'string') }));
-  } catch {
-    return [];
-  }
-}
-
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { handle } = await params;
   const product = await getProductByHandle(handle);
   if (!product || product.status !== 'ACTIVE') return { title: 'Product Not Found' };
   const description =
-    stripHtml(product.bodyHtml).slice(0, 160) || `${product.title} — buy online at ${SITE.name}, ${SITE.tagline}.`;
+    richTextToPlainText(product.bodyHtml).slice(0, 160) || `${product.title} — buy online at ${SITE.name}, ${SITE.tagline}.`;
   return {
     title: product.title,
     description,
@@ -71,9 +41,9 @@ export default async function ProductPage({ params, searchParams }: Params) {
   const product = await getProductByHandle(handle);
   if (!product || product.status !== 'ACTIVE') notFound();
 
-  const sections = templateFor(product.handle);
+  const sections = templateFor(product.layout);
   const collectionHandles = product.collections.map((c) => c.handle);
-  const [reviews, recommendations, featured] = await Promise.all([
+  const [reviews, recommendations, featured, whatsapp] = await Promise.all([
     getReviewsForProduct(product.id),
     sections.some((s) => s.kind === 'recommendations') ? getRecommendations(product.id, collectionHandles, 4) : [],
     Promise.all(
@@ -81,23 +51,38 @@ export default async function ProductPage({ params, searchParams }: Params) {
         .filter((s): s is FeaturedCollectionSection => s.kind === 'featuredCollection')
         .map(async (s) => ({ s, cards: (await getFeaturedCards(s)).filter((c) => c.id !== product.id) })),
     ),
+    getWhatsAppConfig(),
   ]);
 
-  const tags = tagList(product.tags);
-  const options = parseOptions(product.options);
+  const options: ProductOption[] = product.productOptions.map((o) => ({ name: o.name, values: o.values.map((v) => v.value) }));
+  const optionIndexById = new Map(product.productOptions.map((o, i) => [o.id, i]));
+  const swatches: SwatchMap = Object.fromEntries(
+    product.productOptions
+      .map((o, i) => [o, i] as const)
+      .filter(([o]) => isSwatchOptionName(o.name))
+      .map(([o, i]) => [i, Object.fromEntries(o.values.map((v) => [v.value, { color: v.swatchColor ?? NEUTRAL_SWATCH, image: v.swatchImage }]))]),
+  );
   const variants: VariantInfo[] = product.variants.map((v) => ({
     id: v.id,
     title: v.title,
     sku: v.sku,
     price: v.price,
     compareAtPrice: v.compareAtPrice,
-    inventory: v.inventory,
+    status: v.status,
     option1: v.option1,
     option2: v.option2,
     option3: v.option3,
   }));
-  const images = product.images.map((img) => ({ src: img.src, alt: img.alt || product.title }));
-  const swatches = Object.fromEntries(options.flatMap((o) => o.values).map((v) => [v, swatchColor(v)]));
+  const images: ProductImageInfo[] = product.images.map((img) => {
+    const optionIndex = img.optionValue ? optionIndexById.get(img.optionValue.optionId) : undefined;
+    return {
+      src: img.src,
+      alt: img.alt || product.title,
+      tag: img.optionValue && optionIndex != null ? { optionIndex, value: img.optionValue.value } : null,
+    };
+  });
+  const bodyHtml = sanitizeRichText(product.bodyHtml);
+  const plainBody = richTextToPlainText(bodyHtml);
   const requestedVariant = Number(variantParam);
   const initialVariantId = variants.some((v) => v.id === requestedVariant) ? requestedVariant : null;
   const lowestPrice = variants.length ? Math.min(...variants.map((v) => v.price)) : 0;
@@ -128,7 +113,7 @@ export default async function ProductPage({ params, searchParams }: Params) {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.title,
-    description: stripHtml(product.bodyHtml).slice(0, 320) || undefined,
+    description: plainBody.slice(0, 320) || undefined,
     image: images.slice(0, 4).map((i) => i.src),
     sku: variants[0]?.sku ?? undefined,
     brand: { '@type': 'Brand', name: product.vendor || SITE.name },
@@ -136,7 +121,7 @@ export default async function ProductPage({ params, searchParams }: Params) {
       '@type': 'Offer',
       priceCurrency: 'PKR',
       price: lowestPrice,
-      availability: variants.some((v) => v.inventory > 0) ? 'https://schema.org/InStock' : 'https://schema.org/PreOrder',
+      availability: schemaAvailability(variants.map((v) => v.status)),
       url: `/products/${product.handle}`,
     },
     ...(product.reviewCount > 0
@@ -168,17 +153,16 @@ export default async function ProductPage({ params, searchParams }: Params) {
           options,
           variants,
           swatches,
-          variantImages: variantImageIndex(product.handle),
           initialVariantId,
-          isNew: tags.includes('New Arrivals'),
-          deliveryLine: tags.find((t) => /^delivered in/i.test(t)) ?? null,
-          preOrderSkus: preOrderSkus(product.handle),
+          isNew: product.isNew,
+          deliveryLine: product.deliveryTime || null,
         }}
+        whatsapp={whatsapp}
       >
-        {product.bodyHtml.trim() && (
+        {bodyHtml.trim() && (
           <div
             className="mb-[25px] text-[15px] leading-[26.25px] text-accent [&_h2]:mb-5 [&_h2]:inline-block [&_h2]:text-[18px] [&_h2]:font-bold [&_h2]:leading-[23.4px] [&_h3]:mb-[10px] [&_h3]:text-[16px] [&_h3]:font-bold [&_h3]:leading-[23.4px] [&_li]:leading-[25.5px] [&_ol]:mb-[10px] [&_ol]:ml-5 [&_ol]:list-decimal [&_p]:mb-[10px] [&_p]:leading-[25.5px] [&_strong]:font-medium [&_ul]:mb-[10px] [&_ul]:ml-5 [&_ul]:list-disc [&_a]:underline [&_img]:h-auto [&_img]:max-w-full [&_table]:w-full"
-            dangerouslySetInnerHTML={{ __html: product.bodyHtml }}
+            dangerouslySetInnerHTML={{ __html: bodyHtml }}
           />
         )}
         {/* inline-flex links separated by whitespace, like live (adds ~3.4px between items) */}
@@ -213,7 +197,8 @@ export default async function ProductPage({ params, searchParams }: Params) {
                 rating: r.rating,
                 title: r.title,
                 body: r.body,
-                createdAt: r.createdAt.toISOString(),
+                // imported reviews whose date the old widget didn't give are stored at 1970-01-01: shown without a date
+                createdAt: r.createdAt.getTime() > 0 ? r.createdAt.toISOString() : '',
               }))}
             />
           );

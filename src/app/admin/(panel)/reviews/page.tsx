@@ -2,9 +2,9 @@ import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import type { Prisma } from '@prisma/client';
 import { AdminPageHeader, AdminTable, EmptyRow } from '@/components/admin/ui';
-import { StarIcon, TrashIcon } from '@/components/icons';
-import { deleteReviewAction, toggleReviewApprovedAction } from '@/app/admin/actions/catalog';
-import { ConfirmSubmit } from '../_catalog/ConfirmSubmit';
+import { StarIcon } from '@/components/icons';
+import { ConfirmDelete } from '@/components/admin/ConfirmDelete';
+import { deleteReviewAction, toggleReviewApprovedAction } from '@/app/admin/actions/reviews';
 import { Pager } from '../_catalog/Pager';
 
 export const dynamic = 'force-dynamic';
@@ -109,6 +109,48 @@ export default async function AdminReviewsPage({
         </div>
       </div>
 
+      {/* phones: cards */}
+      <ul className="space-y-2 sm:hidden">
+        {reviews.length === 0 && (
+          <li className="rounded-xl border border-gray-200 bg-white px-4 py-10 text-center text-sm text-gray-400">
+            {q ? 'No reviews match your search.' : 'No reviews yet.'}
+          </li>
+        )}
+        {reviews.map((r) => (
+          <li key={r.id} className="rounded-xl border border-gray-200 bg-white p-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-ink-dark">{r.author}</p>
+                <p className="truncate text-xs text-gray-500">{r.product?.title ?? '—'}</p>
+              </div>
+              <Stars rating={r.rating} />
+            </div>
+            <p className="mt-2 line-clamp-3 text-sm text-gray-600">
+              {r.title && <span className="font-semibold text-ink-dark">{r.title} — </span>}
+              {r.body}
+            </p>
+            <div className="mt-2 flex items-center justify-between border-t border-gray-100 pt-2">
+              <form action={toggleReviewApprovedAction}>
+                <input type="hidden" name="id" value={r.id} />
+                <button
+                  type="submit"
+                  className={`inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 text-xs font-semibold ${
+                    r.approved ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                  }`}
+                >
+                  {r.approved ? 'Approved — tap to hide' : 'Pending — tap to approve'}
+                </button>
+              </form>
+              <span className="flex items-center gap-1 text-xs text-gray-500">
+                {r.createdAt.getTime() > 0 ? r.createdAt.toISOString().slice(0, 10) : 'Date unknown'}
+                <DeleteReview id={r.id} author={r.author} rating={r.rating} />
+              </span>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <div className="hidden sm:block">
       <AdminTable head={['Product', 'Author', 'Rating', 'Review', 'Status', 'Date', 'Actions']}>
         {reviews.length === 0 && <EmptyRow colSpan={7} message={q ? 'No reviews match your search.' : 'No reviews yet.'} />}
         {reviews.map((r) => (
@@ -155,25 +197,29 @@ export default async function AdminReviewsPage({
                 </button>
               </form>
             </td>
-            <td className="whitespace-nowrap px-4 py-3 text-gray-500">{r.createdAt.toISOString().slice(0, 10)}</td>
+            <td className="whitespace-nowrap px-4 py-3 text-gray-500">{r.createdAt.getTime() > 0 ? r.createdAt.toISOString().slice(0, 10) : 'Date unknown'}</td>
             <td className="px-4 py-3">
-              <form action={deleteReviewAction}>
-                <input type="hidden" name="id" value={r.id} />
-                <ConfirmSubmit
-                  message={`Delete the review by ${r.author}? This cannot be undone.`}
-                  title="Delete review"
-                  className="text-gray-400 transition hover:text-red-600"
-                >
-                  <span className="sr-only">Delete</span>
-                  <TrashIcon className="h-4 w-4" />
-                </ConfirmSubmit>
-              </form>
+              <DeleteReview id={r.id} author={r.author} rating={r.rating} />
             </td>
           </tr>
         ))}
       </AdminTable>
+      </div>
 
       <Pager page={page} pages={pages} basePath="/admin/reviews" query={query} />
     </div>
+  );
+}
+
+function DeleteReview({ id, author, rating }: { id: number; author: string; rating: number }) {
+  return (
+    <ConfirmDelete
+      action={deleteReviewAction}
+      fields={{ id: String(id) }}
+      trigger="icon"
+      triggerLabel={`Delete the review by ${author}`}
+      title="Delete this review?"
+      consequences={[`The review by ${author} and its ${rating}-star rating`, "The product's rating and review count are recalculated"]}
+    />
   );
 }

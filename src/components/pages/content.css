@@ -161,6 +161,16 @@ main:has(.sf-page) {
   display: inline;
   vertical-align: baseline;
 }
+/* videos added with the admin editor: full width at 16:9, like the editor preview */
+.sf-page .rte div[data-youtube-video] {
+  margin: 16px 0;
+}
+.sf-page .rte div[data-youtube-video] iframe {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
 
 /* heading line-heights follow the theme scale; sizes are flattened to 30px (custom.css) */
 .sf-page .page-content-width :is(h1, h2, h3, h4, h5, h6) {
@@ -185,6 +195,18 @@ main:has(.sf-page) {
   .sf-page .page-content-width h2 { line-height: 62px; }
   .sf-page .page-content-width h3 { line-height: 48px; }
 }
+/* owner-edited text pages and blog posts: the editor's "Subheading" (h3) is a step below "Heading" (h2, 30px
+   as on live), so the two heading sizes the admin toolbar offers stay distinct for customers (decision 14) */
+.sf-page .page-content-width:is(.sf-text-body, .post-content) h3 {
+  font-size: 22px;
+  line-height: 30px;
+}
+@media (min-width: 768px) {
+  .sf-page .page-content-width:is(.sf-text-body, .post-content) h3 {
+    font-size: 24px;
+    line-height: 34px;
+  }
+}
 
 /* ---------- `template-page`: policies, payment, rewards, shipping … ---------- */
 .sf-tpl-page .page-content-width {
@@ -204,6 +226,12 @@ main:has(.sf-page) {
 .sf-tpl-page .page-content-width strong {
   font-weight: 500;
   font-size: 26px;
+}
+/* owner-edited TEXT pages: only a bold line on its own (the theme's pseudo-heading, marked by markLineStrongs)
+   is 26px; a word bolded inside a sentence stays at body size, as in the editor */
+.sf-tpl-page .page-content-width.sf-text-body strong:not(.sf-line-strong) {
+  font-weight: 600;
+  font-size: inherit;
 }
 @media (min-width: 768px) {
   .sf-tpl-page .page-content-width p,
@@ -473,3 +501,49 @@ main:has(.sf-page) {
 .theme-store:has(.sf-wedding) button[aria-label='Back to top'] {
   display: none;
 }
+
+/*
+ * Old-theme product rows inside imported designed pages (city pages, Coalesce…): the theme's own grid CSS is
+ * not loaded, so lay the cards out as a simple grid with one photo each (no hover swap).
+ */
+.sf-page .page-content-width ul.products {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px 16px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 990px) {
+  .sf-page .page-content-width ul.products { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.sf-page .page-content-width ul.products > li { margin: 0; padding: 0; list-style: none; }
+.sf-page .page-content-width ul.products li::marker { content: none; }
+.sf-page .page-content-width .product-featured-image { position: relative; margin: 0; }
+.sf-page .page-content-width .product-featured-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 920 / 700;
+  object-fit: cover;
+  margin: 0;
+}
+.sf-page .page-content-width .product-featured-image .product-secondary-image { display: none; }
+.sf-page .page-content-width .product-featured-image .badge {
+  position: absolute;
+  z-index: 1;
+  top: 8px;
+  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 16px;
+  color: #fff;
+  background: #6b1d1d;
+}
+.sf-page .page-content-width .product-featured-image .badge.right { right: 8px; text-align: center; }
+.sf-page .page-content-width .product-featured-image .badge.left { left: 8px; background: #1e4a43; }
+.sf-page .page-content-width .product-card-info { margin-top: 10px; font-size: 14px; line-height: 20px; }
+.sf-page .page-content-width .product-card-title { display: block; color: inherit; text-decoration: none; font-weight: 500; }
+.sf-page .page-content-width .product-card-info .price { display: flex; gap: 8px; margin-top: 4px; }
+.sf-page .page-content-width .product-card-info .price ins { text-decoration: none; font-weight: 600; }
+.sf-page .page-content-width .product-card-info .price del { color: #7b7b7b; }
+.sf-page .page-content-width .hidden { display: none; }

@@ -1,23 +1,15 @@
 /**
  * Server-side data for the product detail page (live Habitat `product` templates).
  *
- * - `templateFor(handle)`: the below-the-fold sections of the live product template the product
- *   uses (overlay, image-with-text, icons, testimonials, recommendations, reviews…), extracted
- *   from interwood.pk into `data/templates.json`; `data/product-templates.json` maps handle →
- *   template suffix (absent = default template).
- * - `variantImageIndex(handle)`: SKU → gallery index of the variant's featured image, so the
- *   gallery opens on / jumps to the selected variant's photo like live.
- * - `preOrderSkus(handle)`: variants live sells as pre-order.
+ * - `templateFor(layout)`: the below-the-fold sections of the product's page layout (overlay,
+ *   image-with-text, icons, testimonials, recommendations, reviews…), extracted from interwood.pk into
+ *   `data/templates.json`. Which layout a product uses is `Product.layout` (admin "Page layout").
  * - card queries for "You may also like" and the cushion featured collections.
  */
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { toCatalogCard, type CatalogCard } from '@/components/catalog/catalog-data';
-import swatchColors from '@/components/catalog/swatch-colors.json';
+import { CATALOG_CARD_SELECT, toCatalogCard, type CatalogCard } from '@/components/catalog/catalog-data';
 import templatesJson from './data/templates.json';
-import productTemplates from './data/product-templates.json';
-import variantImages from './data/variant-images.json';
-import preorderVariants from './data/preorder-variants.json';
 
 export type OverlaySection = {
   kind: 'overlay';
@@ -76,56 +68,13 @@ export type PdpSection =
   | { kind: 'reviews' };
 
 const TEMPLATES = templatesJson as unknown as Record<string, PdpSection[]>;
-const HANDLE_TEMPLATES = productTemplates as Record<string, string>;
-const VARIANT_IMAGES = variantImages as Record<string, Record<string, number>>;
-const PREORDER_VARIANTS = preorderVariants as Record<string, string[]>;
-export const SWATCH_COLORS = swatchColors as Record<string, string>;
 
-export function templateFor(handle: string): PdpSection[] {
-  const suffix = HANDLE_TEMPLATES[handle];
-  return TEMPLATES[suffix && TEMPLATES[suffix] ? suffix : 'default'] ?? TEMPLATES.default;
+/** Sections of a page layout (src/lib/product-layouts.ts keys); unknown → the standard layout. */
+export function templateFor(layout: string): PdpSection[] {
+  return TEMPLATES[layout] ?? TEMPLATES.default;
 }
 
-export function variantImageIndex(handle: string): Record<string, number> {
-  return VARIANT_IMAGES[handle] ?? {};
-}
-
-/**
- * SKUs sold through the live ReStock "preorder" selling plan (`selling_plan_allocations` in
- * /products/<handle>.js): the buy box shows PRE-ORDER + "What is Pre-Order?" for them.
- */
-export function preOrderSkus(handle: string): string[] {
-  return PREORDER_VARIANTS[handle] ?? [];
-}
-
-/** Live swatch colour for a colour option value (fallback: CSS colour keyword, else grey). */
-export function swatchColor(name: string): string {
-  return SWATCH_COLORS[name] ?? (/^[a-z]+$/i.test(name) ? name.toLowerCase() : '#ccc');
-}
-
-export function tagList(tags: string): string[] {
-  return tags
-    .split(',')
-    .map((t) => t.trim())
-    .filter(Boolean);
-}
-
-const cardSelect = {
-  id: true,
-  handle: true,
-  title: true,
-  hot: true,
-  rating: true,
-  reviewCount: true,
-  productType: true,
-  tags: true,
-  options: true,
-  images: { orderBy: { position: 'asc' as const }, take: 2, select: { src: true } },
-  variants: {
-    orderBy: { position: 'asc' as const },
-    select: { price: true, compareAtPrice: true, inventory: true },
-  },
-} satisfies Prisma.ProductSelect;
+const cardSelect = CATALOG_CARD_SELECT;
 
 /**
  * "You may also like" (live: Shopify recommendations, 4 cards). Products sharing the most
