@@ -42,7 +42,7 @@ model Product {
   reviews        Review[]
   isNew          Boolean           @default(false) // "New arrival" (red NEW label)
   limitedEdition Boolean           @default(false) // "Limited edition" (yellow bar on cards)
-  layout         String            @default("default") // key from src/lib/product-layouts.ts
+  layout         String            @default("default") // a `ProductLayout.key`
   deliveryTime   String            @default("") // e.g. "Delivered in 20 to 30 working days"; non-empty → FREE DELIVERY tag + PDP line
   discountGroup  Int? // 10|20|30|40|50: the mobile "Discount %" filter bucket
   cardImageRatio Float? // product card photo box height/width (live fidelity); null → 700/920
@@ -52,6 +52,7 @@ model Product {
 
   @@index([status, hot])
   @@index([title])
+  @@index([layout])
 }
 
 model Variant {
@@ -116,17 +117,18 @@ model ProductOptionValue {
 }
 
 model Collection {
-  id          Int                  @id @default(autoincrement())
-  handle      String               @unique
-  title       String
-  description String               @default("")
-  image       String?
-  parentId    Int?
-  parent      Collection?          @relation("CollectionTree", fields: [parentId], references: [id])
-  children    Collection[]         @relation("CollectionTree")
-  products    Product[]            @relation("ProductCollections")
-  metafield   String               @default("{}") // JSON free-form (e.g. footer column)
-  indexCard   CollectionIndexCard?
+  id             Int                    @id @default(autoincrement())
+  handle         String                 @unique
+  title          String
+  description    String                 @default("")
+  image          String?
+  parentId       Int?
+  parent         Collection?            @relation("CollectionTree", fields: [parentId], references: [id])
+  children       Collection[]           @relation("CollectionTree")
+  products       Product[]              @relation("ProductCollections")
+  metafield      String                 @default("{}") // JSON free-form (e.g. footer column)
+  indexCard      CollectionIndexCard?
+  layoutSections ProductLayoutSection[]
 
   @@index([parentId])
 }
@@ -231,7 +233,7 @@ model Upload {
   width        Int
   height       Int
   bytes        Int
-  purpose      String   @default("") // product | swatch | banner | collection | blog | editor
+  purpose      String   @default("") // product | swatch | banner | collection | blog | editor | layout
   createdAt    DateTime @default(now())
 
   @@index([createdAt])
@@ -260,4 +262,52 @@ model MigrationStep {
   id        String   @id // e.g. "easy-mode:variant-status"
   appliedAt DateTime @default(now())
   summary   String   @default("")
+}
+
+/// A shared "page layout": the sections shown below the description on every product that uses it.
+/// `key` is what Product.layout stores. It never changes after creation (renaming changes `name` only).
+model ProductLayout {
+  id              Int                    @id @default(autoincrement())
+  key             String                 @unique // "default", "office-products", "sofas-copy-2" … (≤ 60 chars)
+  name            String // owner-facing, 1–60 chars
+  nameKey         String                 @unique // name.trim().toLowerCase(): DB-enforced case-insensitive uniqueness
+  description     String                 @default("") // optional "What it's for" line (purpose only, never contents)
+  position        Int                    @default(0) // list + dropdown order; new layouts go last; never shown
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt // optimistic concurrency; explicitly bumped on EVERY save
+  previousVersion String? // JSON snapshot of the layout before its last save ("Undo last save")
+  originalVersion String? // JSON snapshot of the migrated design ("Restore the original design"); null when made from scratch
+  sections        ProductLayoutSection[]
+  previews        ProductLayoutPreview[]
+}
+
+/// Short-lived, admin-only preview of UNSAVED editor state. Rows expire after 2 hours and are swept on every
+/// preview create. Never read without a valid admin session.
+model ProductLayoutPreview {
+  id        Int           @id @default(autoincrement())
+  token     String        @unique // 32 random hex chars
+  layoutId  Int
+  layout    ProductLayout @relation(fields: [layoutId], references: [id], onDelete: Cascade)
+  sections  String // JSON: the merged, validated section rows (same shape as a snapshot)
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}
+
+/// One section of a layout, in `position` order. Shapes of `data` per kind: src/lib/product-layout-sections.ts.
+model ProductLayoutSection {
+  id           Int           @id @default(autoincrement())
+  layoutId     Int
+  layout       ProductLayout @relation(fields: [layoutId], references: [id], onDelete: Cascade)
+  position     Int           @default(0)
+  kind         String // overlay | imageText | icons | testimonials | slideshow | featuredCollection | recommendations | reviews
+  hidden       Boolean       @default(false) // true = "Show on the store" switch off
+  bodyHtml     String        @default("") // sanitised rich text (overlay, imageText)
+  data         String        @default("{}") // JSON, shape per kind; never shown to the owner
+  refs         String        @default("") // derived: "\n" + lines.join("\n") + "\n" of image URLs and link pathnames; "" when none
+  collectionId Int? // featuredCollection only
+  collection   Collection?   @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+
+  @@index([layoutId, position])
+  @@index([collectionId])
 }

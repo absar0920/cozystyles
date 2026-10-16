@@ -1,7 +1,10 @@
 import { Barlow_Condensed } from 'next/font/google';
 import { ProductCard } from '@/components/catalog/ProductCard';
 import type { CatalogCard } from '@/components/catalog/catalog-data';
-import { AfterSaleSupportIcon, AssemblyAssistanceIcon, DoorstepDeliveryIcon, InternationalStandardIcon } from './icons';
+import { isExternalHref, normalizeHref, validateHref } from '@/lib/links';
+import { Lines } from './Lines';
+import { PdpSlideshow } from './PdpSlideshow';
+import { pdpIcon } from './pdp-icons';
 import { TestimonialsCarousel } from './TestimonialsCarousel';
 import type { IconsSection, ImageTextSection, OverlaySection, PdpSection, SlideshowSection } from './pdp-data';
 
@@ -18,25 +21,10 @@ export const HEADING: Record<string, string> = {
   h4: 'font-semibold text-[28px] leading-[36px] md:text-[30px] md:leading-[38px]',
 };
 
-/** Splits "a\nb" into lines joined with <br> (live `<br>` inside headings / icon texts). */
-function Lines({ text }: { text: string }) {
-  const parts = text.split('\n');
-  return (
-    <>
-      {parts.map((p, i) => (
-        <span key={i}>
-          {i > 0 && <br />}
-          {p}
-        </span>
-      ))}
-    </>
-  );
-}
-
 /** Live `image-with-text-overlay`: full-bleed 500/650px band, cover image, centred white copy (max 600). */
 export function ImageWithTextOverlay({ s }: { s: OverlaySection }) {
   return (
-    <div className="relative mt-[30px] flex h-[500px] w-full overflow-hidden bg-accent py-10 text-center text-white md:h-[650px] md:py-20">
+    <div className="relative mt-[30px] flex min-h-[500px] w-full overflow-hidden bg-accent py-10 text-center text-white md:min-h-[650px] md:py-20">
       <div className="pointer-events-none absolute inset-0 z-0 after:absolute after:inset-0 after:z-[11] after:bg-black/[0.05] after:content-['']">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={s.image} alt="" loading="lazy" className="h-full w-full object-cover" />
@@ -46,10 +34,10 @@ export function ImageWithTextOverlay({ s }: { s: OverlaySection }) {
           {s.subheading && (
             <p className="mb-5 text-[14px] font-medium uppercase leading-[1.7] tracking-[0.1em] opacity-60">{s.subheading}</p>
           )}
-          <h3 className={`${HEADING[s.headingClass] ?? HEADING.h3} mb-5 text-white`}>
+          <h3 className={`${HEADING[s.headingClass] ?? HEADING.h3} mb-5 text-white [overflow-wrap:anywhere]`}>
             <Lines text={s.heading} />
           </h3>
-          <div className="[&_a]:underline [&_a]:underline-offset-[3px] [&_p+p]:mt-[17px] text-[17px] leading-[1.7] text-white" dangerouslySetInnerHTML={{ __html: s.html }} />
+          <div className="[&_a]:underline [&_a]:underline-offset-[3px] [&_p+p]:mt-[17px] text-[17px] leading-[1.7] text-white [overflow-wrap:anywhere]" dangerouslySetInnerHTML={{ __html: s.html }} />
         </div>
       </div>
     </div>
@@ -63,6 +51,11 @@ export function ImageWithTextOverlay({ s }: { s: OverlaySection }) {
  */
 export function ImageWithText({ s }: { s: ImageTextSection }) {
   const imageWidth = s.size === 'large' ? 'md:w-[56%]' : 'md:w-[46%]';
+  const hasHeading = !!(s.headingThin ? s.headingThin.join('') : s.heading);
+  // Checked again at render: an invalid link becomes "#"; "" (no link) renders as "#" too.
+  const rawHref = s.button ? normalizeHref(s.button.href) : '';
+  const href = rawHref && !validateHref(rawHref) ? rawHref : '#';
+  const external = isExternalHref(href);
   return (
     <div className="mx-auto flow-root max-w-[1360px] px-[12.5px] md:px-10">
       <div
@@ -75,20 +68,26 @@ export function ImageWithText({ s }: { s: ImageTextSection }) {
           </div>
         </div>
         <div className={`w-full grow p-[25px] md:p-[45px] lg:p-[70px] ${imageWidth}`}>
-          <h3 className={`${HEADING[s.headingClass] ?? HEADING.h3} mb-5 text-accent ${s.condensed ? barlow.className : ''}`}>
-            {s.headingThin ? (
-              <>
-                <span className="font-thin">{s.headingThin[0]}</span>
-                {s.headingThin[1]}
-              </>
-            ) : (
-              <Lines text={s.heading ?? ''} />
-            )}
-          </h3>
-          <div className="[&_a]:underline [&_a]:underline-offset-[3px] [&_p+p]:mt-[17px] text-[17px] leading-[1.7] text-accent" dangerouslySetInnerHTML={{ __html: s.html }} />
+          {hasHeading && (
+            <h3 className={`${HEADING[s.headingClass] ?? HEADING.h3} mb-5 text-accent [overflow-wrap:anywhere] ${s.condensed ? barlow.className : ''}`}>
+              {s.headingThin ? (
+                <>
+                  <span className="font-thin">{s.headingThin[0]}</span>
+                  {s.headingThin[1]}
+                </>
+              ) : (
+                <Lines text={s.heading ?? ''} />
+              )}
+            </h3>
+          )}
+          <div className="[&_a]:underline [&_a]:underline-offset-[3px] [&_p+p]:mt-[17px] text-[17px] leading-[1.7] text-accent [overflow-wrap:anywhere]" dangerouslySetInnerHTML={{ __html: s.html }} />
           {s.button && (
             // live: an inline link on its own 17px/29.75px line right after the text
-            <a href={s.button.href} className="text-button mr-[15px] inline leading-[26.25px]">
+            <a
+              href={href}
+              {...(external ? { target: '_blank', rel: 'noopener' } : {})}
+              className="text-button mr-[15px] inline leading-[26.25px]"
+            >
               {s.button.label}
             </a>
           )}
@@ -98,23 +97,21 @@ export function ImageWithText({ s }: { s: ImageTextSection }) {
   );
 }
 
-const TRUST_ICONS = [DoorstepDeliveryIcon, AfterSaleSupportIcon, InternationalStandardIcon, AssemblyAssistanceIcon];
-
 /** Live `text-with-icons` trust strip: cream band, 4 × (64px icon, 20px h6, 15px text); swipe row on mobile. */
 export function TextWithIcons({ s }: { s: IconsSection }) {
   return (
     <div className="bg-cream py-[30px] text-center">
       <div className="no-scrollbar mx-auto grid max-w-[1360px] snap-x snap-mandatory auto-cols-[300px] grid-flow-col justify-start gap-x-5 gap-y-10 overflow-x-auto px-[12.5px] md:grid-flow-row md:grid-cols-[repeat(2,minmax(200px,300px))] md:justify-center md:overflow-visible md:px-10 lg:grid-cols-[repeat(4,minmax(200px,300px))]">
         {s.blocks.map((b, i) => {
-          const Icon = TRUST_ICONS[i] ?? DoorstepDeliveryIcon;
+          const Icon = pdpIcon(b.icon);
           return (
-            <div key={b.title} className="flex snap-center flex-col items-center">
+            <div key={i} className="flex snap-center flex-col items-center">
               <div className="mb-[30px] h-16 w-16 shrink-0 text-accent">
                 <Icon className="h-auto w-full" />
               </div>
               <div className="text-[15px]">
-                <h6 className="mb-[14px] text-[20px] font-semibold leading-none text-accent">{b.title}</h6>
-                <p className="mb-0 text-[15px] leading-[1.7]">
+                <h6 className="mb-[14px] text-[20px] font-semibold leading-none text-accent [overflow-wrap:anywhere]">{b.title}</h6>
+                <p className="mb-0 text-[15px] leading-[1.7] [overflow-wrap:anywhere]">
                   <Lines text={b.text} />
                 </p>
               </div>
@@ -126,14 +123,26 @@ export function TextWithIcons({ s }: { s: IconsSection }) {
   );
 }
 
-/** Live single-slide `slideshow` (Coalesce templates): banner adapts to the image, separate mobile art. */
+/**
+ * Live single-slide `slideshow` (Coalesce templates): banner adapts to the image, separate mobile art (without one,
+ * phones show the computer photo). Two or more slides → the `PdpSlideshow` carousel.
+ */
 export function Slideshow({ s }: { s: SlideshowSection }) {
+  if (s.slides.length > 1) return <PdpSlideshow slides={s.slides} />;
+  const slide = s.slides[0];
+  if (!slide) return null;
   return (
     <div className="mb-[25px] mt-[30px] md:mb-10">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={s.desktop} alt="" loading="lazy" className="hidden h-auto w-full md:block" style={{ aspectRatio: `${1 / s.desktopRatio}` }} />
+      <img src={slide.desktop} alt="" loading="lazy" className="hidden h-auto w-full md:block" style={{ aspectRatio: `${1 / slide.desktopRatio}` }} />
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={s.mobile} alt="" loading="lazy" className="block h-auto w-full md:hidden" style={{ aspectRatio: `${1 / s.mobileRatio}` }} />
+      <img
+        src={slide.mobile ?? slide.desktop}
+        alt=""
+        loading="lazy"
+        className="block h-auto w-full md:hidden"
+        style={{ aspectRatio: `${1 / (slide.mobileRatio ?? slide.desktopRatio)}` }}
+      />
     </div>
   );
 }
@@ -157,9 +166,9 @@ export function CardRow({
     <div className={recs ? 'border-t border-line py-[50px] md:py-[100px]' : 'mb-[25px] mt-[30px] md:mb-10'}>
       <div className="mx-auto max-w-[1360px] px-[12.5px] md:px-10">
         {recs ? (
-          <h4 className={`${HEADING.h4} mb-5 text-accent md:mb-[45px]`}>{heading}</h4>
+          <h4 className={`${HEADING.h4} mb-5 text-accent [overflow-wrap:anywhere] md:mb-[45px]`}>{heading}</h4>
         ) : (
-          <h2 className={`${HEADING.h3} mb-5 text-accent md:mb-[45px]`}>{heading}</h2>
+          <h2 className={`${HEADING.h3} mb-5 text-accent [overflow-wrap:anywhere] md:mb-[45px]`}>{heading}</h2>
         )}
         <div className="no-scrollbar -mx-[12.5px] mb-5 flex snap-x snap-mandatory scroll-px-[12.5px] gap-[15px] overflow-x-auto px-[12.5px] md:mx-0 md:grid md:grid-cols-4 md:gap-[30px] md:overflow-visible md:px-0">
           {cards.map((card) => (

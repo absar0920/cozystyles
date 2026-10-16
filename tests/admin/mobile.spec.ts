@@ -80,7 +80,8 @@ test('the link picker opens as a bottom sheet', async ({ page }) => {
   expect(inViewport(box, vp), 'sheet fits the screen').toBe(true);
   expect(box!.width).toBeGreaterThanOrEqual(vp.width - 2);
   await sheet.getByRole('searchbox').fill('Sofas');
-  await expect(sheet.getByTestId('link-result').first()).toBeVisible();
+  // the first search waits for the session check (SessionGuard), which the dev server may still have to compile
+  await expect(sheet.getByTestId('link-result').first()).toBeVisible({ timeout: 30_000 });
   const { scrollWidth, innerWidth } = await overflow(page);
   expect(scrollWidth).toBeLessThanOrEqual(innerWidth + 1);
 });

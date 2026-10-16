@@ -52,6 +52,8 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   const missingPhotos = one('photos') === 'missing';
   const soldOut = one('availability') === 'soldout';
   const collectionId = /^\d+$/.test(one('collection')) ? Number(one('collection')) : null;
+  const layouts = await prisma.productLayout.findMany({ orderBy: [{ position: 'asc' }, { id: 'asc' }], select: { key: true, name: true } });
+  const layoutKey = layouts.some((l) => l.key === one('layout')) ? one('layout') : '';
   const page = Math.max(1, Number.parseInt(one('page') || '1', 10) || 1);
   const deleted = one('deleted') === '1';
 
@@ -61,6 +63,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
     ...(missingPhotos ? { images: { none: {} } } : {}),
     ...(soldOut ? { variants: { some: {}, every: { status: 'SOLD_OUT' } } } : {}),
     ...(collectionId ? { collections: { some: { id: collectionId } } } : {}),
+    ...(layoutKey ? { layout: layoutKey } : {}),
   };
 
   const [total, products, collections] = await Promise.all([
@@ -91,6 +94,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
   if (missingPhotos) query.photos = 'missing';
   if (soldOut) query.availability = 'soldout';
   if (collectionId) query.collection = String(collectionId);
+  if (layoutKey) query.layout = layoutKey;
   const filtered = Object.keys(query).length > 0;
 
   const rows = products.map((p) => ({
@@ -164,7 +168,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
         </div>
       )}
 
-      <form action="/admin/products" method="get" className="mb-4 grid gap-2 rounded-xl border border-gray-200 bg-white p-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto]">
+      <form action="/admin/products" method="get" className="mb-4 grid gap-2 rounded-xl border border-gray-200 bg-white p-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,1.4fr)_auto]">
         <input type="search" name="q" defaultValue={q} placeholder="Search by title…" aria-label="Search products" className={`${inputCls} w-full`} />
         <select name="status" defaultValue={status} aria-label="Status" className={`${inputCls} w-full`}>
           <option value="">All statuses</option>
@@ -180,6 +184,14 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
             </option>
           ))}
         </select>
+        <select name="layout" defaultValue={layoutKey} aria-label="Page layout" className={`${inputCls} w-full lg:col-span-1`}>
+          <option value="">All page layouts</option>
+          {layouts.map((l) => (
+            <option key={l.key} value={l.key}>
+              {l.name}
+            </option>
+          ))}
+        </select>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:col-span-2 lg:col-span-1">
           <label className="flex min-h-10 items-center gap-2 text-sm text-gray-700">
             <input type="checkbox" name="photos" value="missing" defaultChecked={missingPhotos} className="h-5 w-5 rounded border-gray-300" />
@@ -190,7 +202,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
             Sold out
           </label>
         </div>
-        <div className="flex items-center gap-2 sm:col-span-2 lg:col-span-4">
+        <div className="flex items-center gap-2 sm:col-span-2 lg:col-span-5">
           <button type="submit" className="inline-flex min-h-10 items-center rounded-lg bg-brand-900 px-4 text-sm font-semibold text-white transition hover:bg-brand">
             Show products
           </button>

@@ -8,6 +8,7 @@ import { requireAdmin } from '@/lib/admin-guard';
 import { slugify } from '@/lib/slug';
 import { isRichTextEmpty, sanitizeRichText } from '@/lib/rich-text/sanitize';
 import { extractUploadUrls, releaseUploads } from '@/lib/uploads';
+import { parseSectionData, serializeSectionData } from '@/lib/product-layout-sections';
 
 /** Admin collection actions (SPEC §5.2). */
 
@@ -157,14 +158,24 @@ export async function deleteCollectionAction(formData: FormData) {
   const collection = await prisma.collection.findUnique({ where: { id }, select: { handle: true, image: true, description: true } });
   if (!collection) redirect('/admin/collections');
 
+  let layoutSections = 0;
   await prisma.$transaction(async (tx) => {
     // sub-collections move to the top level so the parent link doesn't block the delete
     await tx.collection.updateMany({ where: { parentId: id }, data: { parentId: null } });
+    // "Products from a collection" sections: their pinned order belongs to this collection; the delete sets
+    // collectionId to null (the storefront then skips them and the layout editor asks for another collection)
+    const sections = await tx.productLayoutSection.findMany({ where: { collectionId: id, kind: 'featuredCollection' }, select: { id: true, data: true } });
+    for (const s of sections) {
+      const { data } = parseSectionData('featuredCollection', s.data);
+      if (data.handles.length) await tx.productLayoutSection.update({ where: { id: s.id }, data: { data: serializeSectionData('featuredCollection', { ...data, handles: [] }) } });
+    }
+    layoutSections = sections.length;
     await tx.collection.delete({ where: { id } }); // its Collections-page card cascades
   });
   await releaseUploads([collection.image, ...extractUploadUrls(collection.description)].filter((u): u is string => !!u));
 
   revalidateCollection(collection.handle);
+  if (layoutSections) revalidatePath('/admin/product-layouts', 'layout');
   redirect('/admin/collections?deleted=1');
 }
 
@@ -234,4 +245,27 @@ export async function saveCollectionIndexAction(input: IndexInput): Promise<{ ok
   revalidatePath('/collections');
   revalidatePath('/admin/collections', 'layout');
   return { ok: true };
+}
+
+/* ------------------------------ Collection picker ------------------------------ */
+
+export type CollectionChoice = { id: number; title: string; products: number };
+
+/** Search collections by name for the CollectionPicker (20 results, with product counts). */
+export async function searchCollectionsAction(q: string): Promise<CollectionChoice[]> {
+  await requireAdmin();
+  const query = (typeof q === 'string' ? q : '').trim().slice(0, 100);
+  const rows = await prisma.collection.findMany({
+    where: query ? { OR: [{ title: { contains: query } }, { handle: { contains: query } }] } : {},
+    select: { id: true, title: true, _count: { select: { products: true } } },
+    orderBy: { title: 'asc' },
+    take: 60,
+  });
+  const lq = query.toLowerCase();
+  const score = (t: string) => (!lq ? 0 : t.toLowerCase() === lq ? 0 : t.toLowerCase().startsWith(lq) ? 1 : 2);
+  return rows
+    .map((r, i) => ({ r, i }))
+    .sort((a, b) => score(a.r.title) - score(b.r.title) || a.i - b.i)
+    .slice(0, 20)
+    .map(({ r }) => ({ id: r.id, title: r.title.replace(/&amp;/g, '&'), products: r._count.products }));
 }

@@ -12,7 +12,10 @@ import { pendingUploadCount, WAITING_FOR_UPLOAD } from '@/components/admin/uploa
 import { ViewOnStoreLink } from '@/components/admin/ViewOnStoreLink';
 import { ConfirmDelete } from '@/components/admin/ConfirmDelete';
 import { CopyIcon } from '@/components/admin/icons';
-import { PRODUCT_LAYOUTS } from '@/lib/product-layouts';
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
+import { LayoutSummary } from '@/components/admin/LayoutSummary';
+import { makeLayoutForProductAction } from '@/app/admin/actions/product-layouts';
+import type { LayoutOption } from '../_lib/load';
 import { slugify } from '@/lib/slug';
 import { deleteProductAction, duplicateProductAction, saveProductAction } from '@/app/admin/actions/products';
 import type { CollectionRow, ProductEditorState, SaveProductInput, VariantState } from '../_lib/types';
@@ -87,12 +90,15 @@ export function ProductEditor({
   initial,
   collections,
   productTypes,
+  layouts,
   deleteInfo,
   notice,
 }: {
   initial: ProductEditorState;
   collections: CollectionRow[];
   productTypes: string[];
+  /** page layouts from the database (list order) */
+  layouts: LayoutOption[];
   /** reviews + link warnings for the delete confirmation (null for a new product) */
   deleteInfo: { reviews: number; links: string[] } | null;
   notice?: 'saved' | 'duplicated' | null;
@@ -106,6 +112,8 @@ export function ProductEditor({
     setStateRaw(value);
   }, []);
   const [baseline, setBaseline] = useState(() => snapshot(initial));
+  // the layout the product has in the database ("Give this product its own layout" copies that one)
+  const initialLayout = useRef(initial.layout);
   const [saved, setSaved] = useState(initial.handle);
   const [problem, setProblem] = useState<Problem>(null);
   const [stale, setStale] = useState<string | null>(null);
@@ -249,6 +257,7 @@ export function ProductEditor({
       );
       setState(res.state);
       setBaseline(snapshot(res.state));
+      initialLayout.current = res.state.layout;
       setSaved(res.state.handle);
       setFlash('saved');
       const savedId = res.state.id;
@@ -530,15 +539,28 @@ export function ProductEditor({
               />
               <div className="pt-3">
                 <Field label="Page layout" htmlFor="product-layout" hint="Sections shown below the product.">
-                  <Select id="product-layout" value={state.layout} onChange={(e) => patch({ layout: e.target.value })}>
-                    {PRODUCT_LAYOUTS.map((l) => (
+                  <Select
+                    id="product-layout"
+                    data-field="layout"
+                    value={state.layout}
+                    onChange={(e) => patch({ layout: e.target.value })}
+                    className={fieldError('layout') ? 'border-red-400' : ''}
+                  >
+                    {layouts.map((l) => (
                       <option key={l.key} value={l.key}>
-                        {l.label}
+                        {l.name}
                       </option>
                     ))}
                   </Select>
                 </Field>
-                <p className="mt-1 text-xs text-gray-600">{PRODUCT_LAYOUTS.find((l) => l.key === state.layout)?.help}</p>
+                <FormError message={fieldError('layout')} />
+                <LayoutHelp
+                  layout={layouts.find((l) => l.key === state.layout)}
+                  savedLayout={isNew ? null : initialLayout.current}
+                  productId={state.id}
+                  dirty={dirty}
+                  productTitle={state.title}
+                />
               </div>
             </div>
           </SectionCard>
@@ -560,6 +582,81 @@ export function ProductEditor({
         status={isNew ? 'New product — not saved yet' : pill.text}
         error={problem?.message ?? null}
         actions={actions}
+      />
+    </div>
+  );
+}
+
+/**
+ * Under the "Page layout" dropdown: the layout's live contents, what it's for and how many products use it, a link
+ * to edit it, and "Give this product its own layout" (SPEC product-layouts §11).
+ */
+function LayoutHelp({
+  layout,
+  savedLayout,
+  productId,
+  dirty,
+  productTitle,
+}: {
+  layout: LayoutOption | undefined;
+  /** the layout key the product has in the database (null for a new product) */
+  savedLayout: string | null;
+  productId: number | null;
+  dirty: boolean;
+  productTitle: string;
+}) {
+  const router = useRouter();
+  const [confirm, setConfirm] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (!layout) return null;
+  const used = layout.usedBy === 0 ? 'Not used by any product yet' : `Used by ${layout.usedBy} product${layout.usedBy === 1 ? '' : 's'}`;
+  const canOwn = productId != null && savedLayout === layout.key && layout.usedBy >= 2;
+  const makeOwn = async () => {
+    if (productId == null) return;
+    setBusy(true);
+    setError(null);
+    const res = await makeLayoutForProductAction({ productId });
+    if (!res.ok) {
+      setBusy(false);
+      setConfirm(false);
+      setError(res.error);
+      return;
+    }
+    router.push(`/admin/product-layouts/${res.id}?own=1`);
+  };
+  return (
+    <div className="mt-1.5 space-y-1.5" data-testid="layout-help">
+      <LayoutSummary summary={layout.summary} compact />
+      <p className="text-xs text-gray-600">
+        {layout.description ? `${layout.description} · ` : ''}
+        {used}
+      </p>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <Link href={`/admin/product-layouts/${layout.id}`} className="inline-flex min-h-10 items-center text-sm font-semibold text-brand-700 hover:underline">
+          Edit this layout ↗{layout.usedBy >= 2 ? ` (changes ${layout.usedBy} products)` : ''}
+        </Link>
+        {canOwn && (
+          <button
+            type="button"
+            onClick={() => setConfirm(true)}
+            disabled={dirty || busy}
+            title={dirty ? 'Save the product first' : undefined}
+            className="inline-flex min-h-10 items-center rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Give this product its own layout
+          </button>
+        )}
+        {canOwn && dirty && <span className="text-xs text-gray-500">Save the product first</span>}
+      </div>
+      {error && <FormError message={error} />}
+      <ConfirmDialog
+        open={confirm}
+        title={`Make a copy of “${layout.name}” just for this product?`}
+        consequences={[`“${productTitle || 'This product'}” gets its own copy to change freely`, 'Other products keep the current layout']}
+        confirmLabel={busy ? 'Making the copy…' : 'Make the copy'}
+        onConfirm={makeOwn}
+        onCancel={() => setConfirm(false)}
       />
     </div>
   );

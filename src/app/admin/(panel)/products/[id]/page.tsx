@@ -31,6 +31,7 @@ export default async function EditProductPage({
       initial={state}
       collections={buildCollectionTree(lookups.collections)}
       productTypes={lookups.productTypes}
+      layouts={lookups.layouts}
       deleteInfo={deleteInfo}
       notice={notice}
     />

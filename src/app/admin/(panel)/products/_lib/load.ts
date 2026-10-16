@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db';
 import { countLinkReferences } from '@/lib/link-references';
-import { isProductLayout } from '@/lib/product-layouts';
+import { DEFAULT_LAYOUT_KEY } from '@/lib/product-layouts';
+import { loadLayoutChoices, type LayoutChoice } from '@/app/admin/(panel)/product-layouts/_lib/load';
 import { isVariantStatus } from '@/lib/variant-status';
 import type { OptionState, ProductEditorState, ProductStatus, VariantState } from './types';
 import { fillMissingCombos, toRegularSale } from './variants';
@@ -100,7 +101,7 @@ export async function loadProductEditorState(id: number): Promise<ProductEditorS
     hot: p.hot,
     isNew: p.isNew,
     limitedEdition: p.limitedEdition,
-    layout: isProductLayout(p.layout) ? p.layout : 'default',
+    layout: (await prisma.productLayout.count({ where: { key: p.layout } })) ? p.layout : DEFAULT_LAYOUT_KEY,
     vendor: p.vendor,
     productType: p.productType,
     tags: p.tags
@@ -125,13 +126,22 @@ export async function loadProductEditorState(id: number): Promise<ProductEditorS
   };
 }
 
+/** A page layout as offered by the product editor's "Page layout" dropdown (with its live contents summary). */
+export type LayoutOption = LayoutChoice;
+
+/** Every page layout (list order) with how many products use it. */
+export async function loadLayoutOptions(): Promise<LayoutOption[]> {
+  return loadLayoutChoices();
+}
+
 /** Everything the editor needs besides the product itself. */
 export async function loadEditorLookups() {
-  const [collections, types] = await Promise.all([
+  const [collections, types, layouts] = await Promise.all([
     prisma.collection.findMany({ select: { id: true, title: true, parentId: true } }),
     prisma.product.findMany({ where: { productType: { not: '' } }, distinct: ['productType'], select: { productType: true }, orderBy: { productType: 'asc' } }),
+    loadLayoutOptions(),
   ]);
-  return { collections, productTypes: types.map((t) => t.productType) };
+  return { collections, productTypes: types.map((t) => t.productType), layouts };
 }
 
 /** Delete-confirmation bullets that need the database (SPEC §5.1.8); combinations/photos are counted by the caller. */
@@ -145,6 +155,6 @@ export async function productDeleteConsequences(id: number): Promise<{ reviews: 
       `${refs.menuItems} menu link${refs.menuItems === 1 ? '' : 's'} and ${refs.banners} banner${refs.banners === 1 ? '' : 's'} that point to this product will stop working`,
     );
   }
-  if (refs.richText) links.push(`${refs.richText} page${refs.richText === 1 ? '' : 's'} or descriptions link here; those links will stop working`);
+  if (refs.richText) links.push(`${refs.richText} link${refs.richText === 1 ? '' : 's'} in pages, descriptions or product page layouts ${refs.richText === 1 ? 'points' : 'point'} here; those links will stop working`);
   return { reviews: p._count.reviews, links };
 }

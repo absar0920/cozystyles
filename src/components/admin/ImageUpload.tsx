@@ -17,6 +17,11 @@ export type ImageUploadProps = {
   purpose: UploadPurpose;
   /** CSS aspect-ratio, default '4 / 3' */
   previewAspect?: string;
+  /**
+   * Caps the photo preview's height (px). The preview keeps the photo's shape and narrows instead, centred, so a
+   * tall photo does not fill the screen. Default: no cap (the preview is always full width).
+   */
+  previewMaxHeight?: number;
   /** shows "Required" and blocks the form submit when empty */
   required?: boolean;
   /** default true */
@@ -35,6 +40,7 @@ export function ImageUpload({
   hint,
   purpose,
   previewAspect = '4 / 3',
+  previewMaxHeight,
   required,
   allowRemove = true,
 }: ImageUploadProps) {
@@ -89,8 +95,17 @@ export function ImageUpload({
       </div>
 
       {url && !uploading ? (
-        <div className="overflow-hidden rounded-xl border border-gray-200">
-          <div className="flex items-center justify-center" style={{ aspectRatio: previewAspect, background: CHECKERBOARD }}>
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+          <div
+            className="mx-auto flex items-center justify-center"
+            data-testid="image-upload-preview"
+            style={{
+              aspectRatio: previewAspect,
+              background: CHECKERBOARD,
+              // narrower, not shorter: the box keeps the photo's shape (`a / b` is valid inside calc)
+              ...(previewMaxHeight ? { width: `min(100%, calc(${previewMaxHeight}px * ${previewAspect}))` } : {}),
+            }}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={url} alt="" className="h-full w-full object-contain" />
           </div>
@@ -174,7 +189,8 @@ export function ImageUpload({
           tabIndex={-1}
           aria-hidden
           required
-          value={url ?? ''}
+          // only "is there a photo" matters here; never show the address in a field
+          value={url ? 'photo' : ''}
           onChange={() => {}}
           onInvalid={(e) => {
             e.preventDefault();

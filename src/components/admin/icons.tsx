@@ -207,3 +207,24 @@ export const NewspaperIcon = ({ className }: P) => (
     <path d="M8 8h5M8 12h5M8 16h3" />
   </svg>
 );
+/** Stacked rectangles: product page layouts. */
+export const LayoutIcon = ({ className }: P) => (
+  <svg {...base(className)}>
+    <rect x="4" y="3" width="16" height="6" rx="1.5" />
+    <rect x="4" y="11" width="7" height="10" rx="1.5" />
+    <rect x="13" y="11" width="7" height="4" rx="1.5" />
+    <rect x="13" y="17" width="7" height="4" rx="1.5" />
+  </svg>
+);
+export const DotsIcon = ({ className }: P) => (
+  <svg {...base(className)} stroke="none" fill="currentColor">
+    <circle cx="5" cy="12" r="1.8" />
+    <circle cx="12" cy="12" r="1.8" />
+    <circle cx="19" cy="12" r="1.8" />
+  </svg>
+);
+export const PlusIcon = ({ className }: P) => (
+  <svg {...base(className)}>
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);

@@ -156,3 +156,49 @@ export function isRichTextEmpty(html: string): boolean {
   if (/<(img|iframe)\b/i.test(html)) return false;
   return richTextToPlainText(html).replace(/ /g, '').trim() === '';
 }
+
+/** Markup a rich-text field can switch off (RichTextEditor `features`, SPEC product-layouts §9.5). */
+export type RichTextFeatureFlags = { headings?: boolean; lists?: boolean; align?: boolean; color?: boolean; images?: boolean; youtube?: boolean };
+
+/**
+ * `sanitizeRichText`, then strips the markup of every feature turned off (so pasted content can't bring it back):
+ * headings → paragraphs, list items → paragraphs, `text-align` / `color` styles removed, photos and videos dropped.
+ * All flags default to true (= allowed).
+ */
+export function sanitizeRichTextWith(html: string, features: RichTextFeatureFlags): string {
+  const clean = sanitizeRichText(html);
+  if (!clean) return clean;
+  const f = { headings: true, lists: true, align: true, color: true, images: true, youtube: true, ...features };
+  const tags = ['p', 'br', 'strong', 'em', 'u', 's', 'a', 'sup', 'sub', 'span'];
+  if (f.headings) tags.push(...HEADINGS);
+  if (f.lists) tags.push('ul', 'ol', 'li');
+  if (f.images) tags.push('img');
+  if (f.youtube) tags.push('div', 'iframe');
+  const blockToP = (_tagName: string, attribs: sanitizeHtml.Attributes): sanitizeHtml.Tag => ({ tagName: 'p', attribs: f.align && attribs.style ? { style: attribs.style } : {} });
+  const out = sanitizeHtml(clean, {
+    ...OPTIONS,
+    allowedTags: tags,
+    allowedAttributes: {
+      ...OPTIONS.allowedAttributes,
+      span: f.color ? ['style'] : [],
+      p: f.align ? ['style'] : [],
+      ...Object.fromEntries(HEADINGS.map((h) => [h, f.align ? ['style'] : []])),
+    },
+    allowedStyles: f.align ? { p: { 'text-align': ALIGN_RE }, ...Object.fromEntries(HEADINGS.map((h) => [h, { 'text-align': ALIGN_RE }])) } : {},
+    transformTags: {
+      ...OPTIONS.transformTags,
+      ...(f.headings ? {} : Object.fromEntries(HEADINGS.map((h) => [h, blockToP]))),
+      ...(f.lists ? {} : { li: blockToP }),
+    },
+    exclusiveFilter: (frame) => {
+      if (!f.lists && (frame.tag === 'ul' || frame.tag === 'ol')) return 'excludeTag';
+      if (frame.tag === 'span') return f.color && styleHasAllowedColor(frame.attribs.style) ? false : 'excludeTag';
+      return OPTIONS.exclusiveFilter ? OPTIONS.exclusiveFilter(frame) : false;
+    },
+  });
+  // a list item's own paragraph ends up inside the paragraph made from the item
+  return out
+    .replace(/<p>(\s*<p\b)/g, '$1')
+    .replace(/(<\/p>\s*)<\/p>/g, '$1')
+    .trim();
+}

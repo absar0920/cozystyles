@@ -1,4 +1,7 @@
 import { expect, test } from '@playwright/test';
+import { PrismaClient } from '@prisma/client';
+import { adminCredentials } from '../helpers/env';
+import { LayoutTestData, copyFromList, rowsOf, section } from '../helpers/layouts';
 
 /**
  * Signed out while an editor is open (12-hour session ran out / password changed elsewhere): Save must not
@@ -35,4 +38,39 @@ test('an ended session on a page load returns to that page after signing in', as
   await context.clearCookies();
   await page.goto('/admin/settings');
   await expect(page).toHaveURL(/\/admin\/login\?next=%2Fadmin%2Fsettings$/);
+});
+
+test('layout editor: signed out while editing keeps the draft and saves after signing in again', async ({ page, context }) => {
+  test.setTimeout(120_000);
+  const prisma = new PrismaClient();
+  const data = new LayoutTestData(prisma);
+  try {
+    const id = await copyFromList(page, data, 'Simple');
+    await page.getByRole('button', { name: 'Add section' }).click();
+    await page.getByTestId('add-section-dialog').locator('button[data-kind=testimonials]').click();
+    const t = section(page, 'testimonials');
+    const heading = `E2E session heading ${data.stamp}`;
+    await t.getByLabel('Heading', { exact: true }).fill(heading);
+    await t.getByTestId('quote-item').first().getByLabel('Quote', { exact: true }).fill('Lovely sofa.');
+    await t.getByTestId('quote-item').first().getByLabel('Customer name').fill('E2E');
+
+    await context.clearCookies();
+    await page.getByTestId('save-bar').getByRole('button', { name: 'Save layout' }).click();
+    const dialog = page.getByTestId('session-expired-dialog');
+    await expect(dialog).toBeVisible();
+    await expect(t.getByLabel('Heading', { exact: true })).toHaveValue(heading);
+    expect((await rowsOf(prisma, id)).map((r) => r.kind)).toEqual(['recommendations']);
+
+    const { email, password } = adminCredentials();
+    await dialog.locator('input[type=email]').fill(email);
+    await dialog.locator('input[type=password]').fill(password);
+    await dialog.getByRole('button', { name: 'Sign in and save' }).click();
+    await expect(page.getByText(/^Saved\./).first()).toBeVisible({ timeout: 30_000 });
+    const rows = await rowsOf(prisma, id);
+    expect(rows.map((r) => r.kind)).toEqual(['recommendations', 'testimonials']);
+    expect(JSON.parse(rows[1].data).heading).toBe(heading);
+  } finally {
+    await data.cleanup();
+    await prisma.$disconnect();
+  }
 });

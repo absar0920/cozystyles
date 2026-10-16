@@ -11,7 +11,7 @@ export async function deleteConsequences(page: { id: number; kind: string; handl
     out.push(`${plural(refs.menuItems, 'menu link points', 'menu links point')} here and will stop working`);
   }
   if (refs.banners > 0) out.push(`${plural(refs.banners, 'banner links', 'banners link')} here and will stop working`);
-  if (refs.richText > 0) out.push(`${plural(refs.richText, 'page or description links', 'pages or descriptions link')} here`);
+  if (refs.richText > 0) out.push(`${plural(refs.richText, 'link in pages, descriptions or product page layouts points', 'links in pages, descriptions or product page layouts point')} here`);
   if (refs.settings > 0) out.push('The announcement bar or another store setting links here');
   return out;
 }

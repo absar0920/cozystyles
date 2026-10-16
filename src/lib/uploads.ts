@@ -5,13 +5,15 @@ import { prisma } from '@/lib/db';
 import { slugify } from '@/lib/slug';
 import { UPLOAD_URL_PREFIX, getStorage, keyFromUrl, urlForKey } from '@/lib/storage';
 
+export { extractUploadUrls } from '@/lib/rich-text/urls';
+
 /**
  * Image upload pipeline: sniff → (HEIC decode) → sharp (rotate, resize, WebP, no metadata) → Upload row → storage.
  * Plus reference tracking: a stored upload is deleted once nothing in the database points at it. SPEC §3.
  */
 
-export type UploadPurpose = 'product' | 'swatch' | 'banner' | 'collection' | 'blog' | 'editor';
-export const UPLOAD_PURPOSES: readonly UploadPurpose[] = ['product', 'swatch', 'banner', 'collection', 'blog', 'editor'];
+export type UploadPurpose = 'product' | 'swatch' | 'banner' | 'collection' | 'blog' | 'editor' | 'layout';
+export const UPLOAD_PURPOSES: readonly UploadPurpose[] = ['product', 'swatch', 'banner', 'collection', 'blog', 'editor', 'layout'];
 export type StoredImage = { id: number; url: string; width: number; height: number; bytes: number };
 
 export const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
@@ -125,16 +127,6 @@ export async function storeUploadedImage(file: File, purpose: UploadPurpose): Pr
   return { id: row.id, url, width: row.width, height: row.height, bytes: row.bytes };
 }
 
-/** Every "/uploads/…" URL in src/href attributes of an HTML string. */
-export function extractUploadUrls(html: string): string[] {
-  if (!html) return [];
-  const out = new Set<string>();
-  for (const m of html.matchAll(/\s(?:src|href)\s*=\s*["']((?:https?:\/\/[^/"']+)?\/uploads\/[^"'?#\s]+)/gi)) {
-    out.add(m[1].replace(/^https?:\/\/[^/]+/i, ''));
-  }
-  return [...out];
-}
-
 /** True when any stored record still points at `url`. Any new image column must be added here (SPEC §3.3). */
 export async function isUploadReferenced(url: string): Promise<boolean> {
   const checks = await Promise.all([
@@ -146,6 +138,10 @@ export async function isUploadReferenced(url: string): Promise<boolean> {
     prisma.page.count({ where: { OR: [{ featuredImage: url }, { bodyHtml: { contains: url } }] } }),
     prisma.product.count({ where: { bodyHtml: { contains: url } } }),
     prisma.siteSetting.count({ where: { value: { contains: url } } }),
+    // product page layouts: sections, their undo / original snapshots, and unexpired previews
+    prisma.productLayoutSection.count({ where: { OR: [{ refs: { contains: `\n${url}\n` } }, { bodyHtml: { contains: url } }] } }),
+    prisma.productLayout.count({ where: { OR: [{ previousVersion: { contains: url } }, { originalVersion: { contains: url } }] } }),
+    prisma.productLayoutPreview.count({ where: { expiresAt: { gt: new Date() }, sections: { contains: url } } }),
   ]);
   return checks.some((n) => n > 0);
 }

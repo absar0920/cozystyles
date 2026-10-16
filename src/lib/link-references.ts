@@ -1,6 +1,7 @@
 import 'server-only';
 import { prisma } from '@/lib/db';
 import { hrefPathname } from '@/lib/links';
+import { refsNeedles } from '@/lib/product-layout-sections';
 
 /**
  * How many places link to any of `hrefs` (matched on the pathname; query and hash ignored).
@@ -22,7 +23,7 @@ export async function countLinkReferences(
 
   const needles = paths.flatMap((p) => [`href="${p}"`, `href="${p}?`, `href="${p}#`]);
   const anyNeedle = needles.map((n) => ({ contains: n }));
-  const [products, pages, collections] = await Promise.all([
+  const [products, pages, collections, layoutSections] = await Promise.all([
     prisma.product.count({
       where: { OR: anyNeedle.map((c) => ({ bodyHtml: c })), ...(exclude?.productId ? { id: { not: exclude.productId } } : {}) },
     }),
@@ -32,12 +33,22 @@ export async function countLinkReferences(
     prisma.collection.count({
       where: { OR: anyNeedle.map((c) => ({ description: c })), ...(exclude?.collectionId ? { id: { not: exclude.collectionId } } : {}) },
     }),
+    // product page layout sections: links in their text, or a button link / text link in the delimited `refs` lines
+    prisma.productLayoutSection.count({
+      where: {
+        OR: [
+          ...anyNeedle.map((c) => ({ bodyHtml: c })),
+          ...paths.flatMap(refsNeedles).map((n) => ({ refs: { contains: n } })),
+        ],
+      },
+    }),
   ]);
 
   return {
     menuItems: menuItems.filter((m) => matches(m.href)).length,
     banners: banners.filter((b) => matches(b.href)).length,
     settings: settings.filter((s) => matches(s.value)).length,
-    richText: products + pages + collections,
+    // includes links in product page layouts
+    richText: products + pages + collections + layoutSections,
   };
 }

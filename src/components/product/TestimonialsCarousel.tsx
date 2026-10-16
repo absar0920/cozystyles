@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { Lines } from './Lines';
 
 type Item = { quote: string; author: string };
 
@@ -63,9 +64,9 @@ export function TestimonialsCarousel({
     >
       <div className="mx-auto mb-[25px] max-w-[730px] md:mb-10 px-[15px] md:px-10">
         {subheading && (
-          <p className="mb-5 text-[14px] font-medium uppercase leading-none tracking-[0.1em] opacity-60">{subheading}</p>
+          <p className="mb-5 text-[14px] font-medium uppercase leading-none tracking-[0.1em] opacity-60 [overflow-wrap:anywhere]">{subheading}</p>
         )}
-        <h2 className="text-[34px] font-semibold leading-[42px] text-cream md:text-[36px] md:leading-[44px] lg:text-[40px] lg:leading-[48px]">{heading}</h2>
+        <h2 className="text-[34px] font-semibold leading-[42px] text-cream md:text-[36px] md:leading-[44px] lg:text-[40px] lg:leading-[48px] [overflow-wrap:anywhere]">{heading}</h2>
       </div>
 
       <div
@@ -107,8 +108,8 @@ export function TestimonialsCarousel({
               <div className={`mx-auto flex max-w-[700px] flex-col text-[20px] ${textSize}`}>
                 {/* live empty .star-rating: 0.8em tall */}
                 <div className="mb-5 h-[0.8em] leading-none" />
-                <p className="mb-5 leading-[1.3]">{t.quote}</p>
-                <div className="text-[14px] font-semibold uppercase leading-none tracking-[0.2em]">{t.author}</div>
+                <p className="mb-5 leading-[1.3] [overflow-wrap:anywhere]">{t.quote.includes('\n') ? <Lines text={t.quote} /> : t.quote}</p>
+                <div className="text-[14px] font-semibold uppercase leading-none tracking-[0.2em] [overflow-wrap:anywhere]">{t.author}</div>
               </div>
             </div>
           ))}

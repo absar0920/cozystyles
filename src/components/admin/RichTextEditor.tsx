@@ -17,8 +17,8 @@ export type RichTextEditorProps = {
   placeholder?: string;
   /** px, default 260 */
   minHeight?: number;
-  /** default both true */
-  features?: { images?: boolean; youtube?: boolean };
+  /** all default true; false hides that toolbar button (the save action strips that markup too) */
+  features?: { images?: boolean; youtube?: boolean; headings?: boolean; lists?: boolean; align?: boolean; color?: boolean };
   ariaLabel?: string;
   /** true locks the text (e.g. while the form is saving) */
   readOnly?: boolean;
@@ -128,7 +128,16 @@ export function RichTextEditor({ name, value, onChange, label, hint, placeholder
       <div id={`${id}-area`} className="overflow-clip rounded-lg border border-gray-300 bg-white focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/20">
         {editor ? (
           <>
-            <Toolbar editor={editor} images={images} youtube={youtube} onImageInserted={setAltPos} />
+            <Toolbar
+              editor={editor}
+              images={images}
+              youtube={youtube}
+              headings={features?.headings ?? true}
+              lists={features?.lists ?? true}
+              align={features?.align ?? true}
+              color={features?.color ?? true}
+              onImageInserted={setAltPos}
+            />
             {image && (
               <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 bg-amber-50 px-3 py-2">
                 <label className="flex min-w-0 flex-1 items-center gap-2 text-xs font-semibold text-gray-700">

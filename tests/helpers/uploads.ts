@@ -27,6 +27,9 @@ export async function releaseTestUploads({ since, originalNames }: { since: Date
         prisma.page.count({ where: { OR: [{ featuredImage: url }, { bodyHtml: { contains: url } }] } }),
         prisma.product.count({ where: { bodyHtml: { contains: url } } }),
         prisma.siteSetting.count({ where: { value: { contains: url } } }),
+        prisma.productLayoutSection.count({ where: { OR: [{ refs: { contains: `\n${url}\n` } }, { bodyHtml: { contains: url } }] } }),
+        prisma.productLayout.count({ where: { OR: [{ previousVersion: { contains: url } }, { originalVersion: { contains: url } }] } }),
+        prisma.productLayoutPreview.count({ where: { expiresAt: { gt: new Date() }, sections: { contains: url } } }),
       ]);
       if (refs.some((n) => n > 0)) continue;
       const file = path.resolve(root, u.key);

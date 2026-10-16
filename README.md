@@ -22,7 +22,7 @@ the password goes back to the one in the `.env` file.
 You stay signed in for 12 hours. If that runs out (or your password is changed on another device) while a page is
 open, pressing **Save** asks for your password first and then saves — nothing you typed is lost.
 
-The left-hand menu (the ☰ button on a phone) has: Dashboard, WhatsApp inquiries, Products, Collections, Reviews,
+The left-hand menu (the ☰ button on a phone) has: Dashboard, WhatsApp inquiries, Products, Product page layouts, Collections, Reviews,
 Home banners, Menus, Pages, Blog posts, Messages and Settings. Every edit page has a **See it on the store** link,
 a save bar that stays at the bottom of the screen, and a warning if you try to leave with unsaved changes.
 
@@ -39,7 +39,9 @@ a save bar that stays at the bottom of the screen, and a warning if you try to l
    (leave it empty when it is not on sale) and a Status.
 6. **Collections**: search and tick the collections the product belongs to.
 7. **Visibility**: tick **New arrival** or **Limited edition** to show those labels, and pick a **Page layout**
-   (the ready-made sections shown below the product).
+   (the sections shown below the description, such as big photos, icons and customer quotes). Under the list you
+   see what the layout contains and how many products use it, with a link to edit it. See
+   [Product page layouts](#product-page-layouts) below.
 8. Press **Publish** to put it on the store, or **Save as draft** to keep it hidden while you work on it.
 
 **Advanced** (closed by default) holds the web address, SKU (left empty, one is made for you), weight, brand,
@@ -67,6 +69,67 @@ Deleting a product tells you exactly what will be lost (combinations, photos, li
 
 **Tagging photos**: under each product photo, choose what it **Shows** (for example *Color: Grey*). When a
 customer picks Grey on the store, the gallery jumps to the Grey photos.
+
+### Product page layouts
+
+Under the description, every product page shows a few ready-made **sections**: a big photo with text, photos with
+text beside them, a row of icons, customer quotes, a slideshow, products from a collection, "You may also like"
+and customer reviews. A **page layout** is one set of these sections in a fixed order. Each product uses one
+layout (chosen in the product's **Page layout** list), and **many products share the same layout**.
+
+**Product page layouts** in the left-hand menu lists every layout with what it contains and **Used by N products**
+(tap it to see those products).
+
+**A layout is shared.** Changing it changes every product that uses it. When more than one product uses the layout
+you are editing, a yellow note says so at the top, and pressing **Save layout** first shows **Change all N
+products?** with a list of what you changed. You can then save for all of them, choose **Save as a new layout
+instead**, or keep editing.
+
+**Editing sections.** Open a layout with **Edit**. The sections are listed in the order they appear on the page.
+Tap **Edit** on a section to change it:
+
+- **Photos**: tap **Upload photo** or **Replace**. The section takes the shape of your photo by itself, so a wide
+  photo gives a wide section. You never type the address of a photo.
+- **Text**: headings are plain boxes. The longer text has a small editor for bold, italic, underline and links.
+- **Heading size**: choose Extra large, Large or Medium.
+- **Photo and text**: choose **Photo on the left** or **Photo on the right** (on phones the photo is always on
+  top), Normal or Wide photo, and text left or centred. **Show a button under the text** adds a button: type its
+  text and choose where it goes with **Choose link** (a collection, a product, a page…). A ⚠ **Button goes nowhere**
+  tag means the button has no link yet.
+- **Icons row**: each icon has a title and a short text. Tap the icon to pick another one from the ready-made set.
+  **+ Add icon**, **Remove** and the arrows change the row (up to 8 icons).
+- **Customer quotes**: add, edit, remove and reorder the quotes (with the customer's name).
+- **Wide photo slideshow**: upload a computer photo for each slide and, if you like, a separate taller phone photo.
+  With two or more slides they slide by on their own. Put any text inside the photos.
+- **Products from a collection**: type a heading, pick the collection and how many products to show. If that
+  collection is deleted, the section disappears from the store and the editor shows ⚠ **Collection was deleted**.
+- **"You may also like"** and **Customer reviews** fill themselves in. You can only move, hide or delete them.
+
+**Moving, hiding, adding and deleting sections.** Drag a section by its handle, or use the ↑ ↓ arrows (easiest on a
+phone). The **Show on the store** switch hides a section without losing what is in it. The **⋯** menu of a section
+has **Copy this section** and **Delete section**. **Add section** at the bottom adds any kind of section. A layout
+can have up to 20 sections, one "You may also like" and one reviews section. Nothing changes on the store until
+you press **Save layout**; **Discard changes** goes back to the saved version.
+
+**Giving some products their own version.** Don't edit a shared layout when only some products should change:
+
+- **Make a copy** (on the list or in the layout's **⋯** menu), change the copy, then move products to it with
+  **Bring products here…** or **Move products…**. You can move all of a layout's products, only those in one
+  collection, or products you tick one by one. After moving, **Undo** in the message moves them back.
+- Or open a product and press **Give this product its own layout**: that product gets a private copy to change
+  freely, and the other products keep the old one.
+
+**Rename and delete.** **Rename** (in the layout's header, or the **⋯** menu on the list) changes the name and the
+optional "What it's for" note; products keep their layout. A layout can only be deleted when no product uses it:
+move its products to another layout first (**Move products…**). The standard layout, "General furniture
+(standard)", is used whenever a product has none and can never be deleted.
+
+**Preview changes ↗** opens your changes on a real product page in a new tab before you save. Only you can see
+it, and nothing changes for customers.
+
+**Undo last save** (in the layout's **⋯** menu) brings back the version from before your last save, and **Restore
+the original design** brings back the layout as the shop first had it. Both load into the editor first: look at it,
+preview it if you like, then press **Save layout** to keep it.
 
 ### Collections
 
@@ -155,7 +218,7 @@ Product/collection/banner images are already downloaded under `public/images/` (
 - URL: `http://localhost:3000/admin`
 - Credentials (from `.env`): `ADMIN_EMAIL` / `ADMIN_PASSWORD`
   - defaults: `admin@cozyfurnitures.pk` / `CozyAdmin@2026`
-- Controls **everything** in plain language (no typed JSON, HTML or URLs): products (options & combinations, photos tagged by option value, rich-text description, page layout), collections (+ Arrange Collections page), home banners (desktop + phone photo uploads, link picker), navigation menus, text pages + blog posts (rich-text editor), reviews moderation, WhatsApp inquiries log, contact-message inbox, site settings (WhatsApp number + message lines, announcement, address, social links, store rating), change password.
+- Controls **everything** in plain language (no typed JSON, HTML or URLs): products (options & combinations, photos tagged by option value, rich-text description, page layout), product page layouts (the sections under the description: photos, text, icons, quotes, slideshows, collection rows; shared-change warning, copies, moving products, preview, undo), collections (+ Arrange Collections page), home banners (desktop + phone photo uploads, link picker), navigation menus, text pages + blog posts (rich-text editor), reviews moderation, WhatsApp inquiries log, contact-message inbox, site settings (WhatsApp number + message lines, announcement, address, social links, store rating), change password.
 - Orders are taken on WhatsApp: product pages show **ORDER ON WHATSAPP** (or **ASK ABOUT AVAILABILITY** for pre-order / sold-out combinations); every click is logged and shown under *WhatsApp inquiries*. Uploaded photos are processed with `sharp` (≤2000px WebP, EXIF stripped) into `storage/uploads/` and served from `/uploads/…`.
 
 ### Data pipeline (how the seed was produced)
@@ -186,8 +249,11 @@ after 24 hours. Re-seeding keeps the `Upload` table and the files.
 `scripts/migrate-admin-easy-mode.ts` moved behaviour that used to live in hard-coded JSON files and magic tags into
 the database: option rows, variant statuses (from the pre-order / sold-out lists), New arrival / Limited edition
 flags, page layouts, swatch colours, photo tags, the Collections page order, page kinds + clean rich text, menus,
-banners and settings (WhatsApp number `923092050463`, message lines). Its inputs are frozen copies in
-`prisma/easy-mode-data/`; nothing in `src/` reads them.
+banners and settings (WhatsApp number `923092050463`, message lines), and the content of the 18 product page layouts
+(step `product-layout-content`: `prisma/easy-mode-data/product-layouts.json` → `ProductLayout` +
+`ProductLayoutSection` rows, each layout's migrated design kept as its "Restore the original design" version;
+layouts whose key already exists are skipped). Its inputs are frozen copies in `prisma/easy-mode-data/`; nothing in
+`src/` reads them.
 
 ```bash
 npm run db:migrate-easy-mode                              # backs up the DB to prisma/backups/, then applies pending steps
@@ -211,7 +277,12 @@ BASE_URL=https://staging.example npx playwright test   # against another server
 Playwright (`@playwright/test`, installed Chrome via `channel: 'chrome'`) covers: creating a sofa with Size × Color,
 uploading and tagging photos, writing the description, publishing and editing in place (ids kept); banners with
 uploads and the link picker; menu reordering; Order on WhatsApp (exact message text, click logging, availability
-variant); uploads (resize, EXIF strip, path safety, orphan deletion); the unsaved-changes guard; a sweep that no admin
+variant); uploads (resize, EXIF strip, path safety, orphan deletion); the unsaved-changes guard; product page layouts
+(copy and edit every kind of section, the store reflecting it, the shared-change warning, save as new, undo/restore,
+preview, moving products, delete rules, direct server-action calls for limits/sanitising/signed-out, stale saves;
+`tests/admin/product-layouts.spec.ts`), the layout migration against a scratch database built from scratch
+(`tests/integration/product-layouts-migration.spec.ts`), and lasting storefront parity of the 18 migrated layouts
+(`tests/storefront/product-layouts*.spec.ts`; fixtures in `tests/fixtures/product-layouts-dom/`); a sweep that no admin
 screen asks for a typed URL/HTML/JSON/position; phone layouts at 412 and 360 px; a storefront regression project. Tests create
 uniquely named data and delete it afterwards; the store-wide settings scenarios change and restore Settings, so they
 only run with `E2E_EXCLUSIVE=1`. Login comes from `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD`, else `ADMIN_EMAIL` / `ADMIN_PASSWORD` in `.env` (set the E2E ones if the password was changed in the admin). Typecheck with `npx tsc --noEmit`.

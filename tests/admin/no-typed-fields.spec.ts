@@ -34,6 +34,11 @@ function scan(): string[] {
     if (!visible(el)) continue;
     const name = el.getAttribute('name') ?? '';
     if (name === 'address' || name === 'seoDescription' || el.hasAttribute('readonly')) continue;
+    // plain prose (icon texts, customer quotes): allowed, but never markup or JSON
+    if (el.hasAttribute('data-plain-text')) {
+      if (/^\s*(<[a-z!][\s\S]*>|\{[\s\S]*\}|\[[\s\S]*\])\s*$/i.test((el as HTMLTextAreaElement).value)) out.push(`markup in plain text: ${describe(el)}`);
+      continue;
+    }
     out.push(`textarea: ${describe(el)}`);
   }
   const typedLooking = /^(\/|https?:|\{|\[)/i;
@@ -48,7 +53,7 @@ function scan(): string[] {
   for (const el of Array.from(document.querySelectorAll('label, legend'))) {
     if (!visible(el)) continue;
     const text = (el as HTMLElement).innerText.trim();
-    if (banned.test(text) && !/^web address/i.test(text)) out.push(`label: "${text.slice(0, 80)}"`);
+    if ((banned.test(text) || /\b(ratio|class(name)?|hex)\b/i.test(text)) && !/^web address/i.test(text)) out.push(`label: "${text.slice(0, 80)}"`);
   }
   for (const el of Array.from(document.querySelectorAll('input[type=number]'))) {
     if (/position/i.test(describe(el))) out.push(`position number: ${describe(el)}`);

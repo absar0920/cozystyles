@@ -111,6 +111,7 @@ async function main() {
     prisma.review.deleteMany(),
     prisma.contactSubmission.deleteMany(), prisma.banner.deleteMany(), prisma.menuItem.deleteMany(),
     prisma.productImage.deleteMany(), prisma.variant.deleteMany(),
+    prisma.productLayoutPreview.deleteMany(), prisma.productLayoutSection.deleteMany(), prisma.productLayout.deleteMany(),
     prisma.$executeRawUnsafe('DELETE FROM _ProductCollections'),
     prisma.collection.deleteMany(), prisma.product.deleteMany(),
     prisma.page.deleteMany(), prisma.siteSetting.deleteMany(), prisma.adminUser.deleteMany(),

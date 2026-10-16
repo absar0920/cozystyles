@@ -1,31 +1,47 @@
-/** The 18 below-the-fold product page layouts (keys = template suffixes in components/product/data/templates.json). */
-export const PRODUCT_LAYOUTS: { key: string; label: string; help: string }[] = [
-  { key: 'default', label: 'General furniture (standard)', help: 'Big banner, three photo-and-text blocks, testimonials, “You may also like”, reviews.' },
-  { key: 'living-products', label: 'Living room', help: 'Living room story blocks, testimonials, recommendations, reviews.' },
-  { key: 'sofas', label: 'Sofas', help: 'Sofa story blocks with icons, testimonials, recommendations, reviews.' },
-  { key: 'bedroom-products', label: 'Bedroom', help: 'Bedroom story blocks with icons, testimonials, recommendations, reviews.' },
-  { key: 'bed-sets', label: 'Bed sets', help: 'Bed set story blocks with icons, testimonials, recommendations, reviews.' },
-  { key: 'dining-products', label: 'Dining', help: 'Dining story blocks with icons, testimonials, recommendations, reviews.' },
-  { key: 'study-products', label: 'Study', help: 'Study story blocks with icons, testimonials, recommendations, reviews.' },
-  { key: 'kids-products', label: 'Kids', help: 'Kids room story blocks with icons, testimonials, recommendations, reviews.' },
-  { key: 'office-products', label: 'Office furniture', help: 'Workspace story blocks with icons, testimonials, recommendations, reviews.' },
-  { key: 'wardrobes-products', label: 'Wardrobes', help: 'Wardrobe story blocks with icons, testimonials, recommendations, reviews.' },
-  { key: 'kitchens-products', label: 'Kitchens', help: 'Kitchen story blocks with icons, testimonials, recommendations (no reviews).' },
-  { key: 'door-products', label: 'Doors', help: 'Door story blocks with icons, testimonials, recommendations (no reviews).' },
-  { key: 'decor-products', label: 'Decor accessories', help: 'Decor story blocks with icons, testimonials, recommendations, reviews.' },
-  { key: 'decor-cushions', label: 'Cushions', help: 'Starts with two cushion carousels, then the decor story blocks.' },
-  { key: 'coalesce-living', label: 'Coalesce — living', help: 'Coalesce range: recommendations first, slideshow, story blocks, reviews.' },
-  { key: 'coalesce-dining', label: 'Coalesce — dining', help: 'Coalesce range: recommendations first, slideshow, story blocks, reviews.' },
-  { key: 'coalesce-bedroom', label: 'Coalesce — bedroom', help: 'Coalesce range: recommendations first, slideshow, story blocks, reviews.' },
-  { key: 'blank-template-no-section', label: 'Simple (only “You may also like”)', help: 'No extra sections below the product.' },
-];
+/**
+ * Product page layouts live in the database (`ProductLayout` + `ProductLayoutSection`, docs/product-layouts/SPEC.md).
+ * This module keeps only pure helpers for keys and names (no `server-only`: scripts and tests import it).
+ */
+import { slugify } from './slug';
 
-const LAYOUT_KEYS = new Set(PRODUCT_LAYOUTS.map((l) => l.key));
+/** The layout used whenever a product's key matches no layout. */
+export const DEFAULT_LAYOUT_KEY = 'default';
 
-export function isProductLayout(key: string): boolean {
-  return LAYOUT_KEYS.has(key);
+/** Layouts that can never be deleted. */
+export const PROTECTED_LAYOUT_KEYS: readonly string[] = [DEFAULT_LAYOUT_KEY];
+
+export const MAX_LAYOUT_NAME = 60;
+export const MAX_LAYOUT_KEY = 60;
+
+/** The DB-enforced case-insensitive name key (`ProductLayout.nameKey`). */
+export function layoutNameKey(name: string): string {
+  return name.trim().toLowerCase();
 }
 
-export function layoutLabel(key: string): string {
-  return PRODUCT_LAYOUTS.find((l) => l.key === key)?.label ?? PRODUCT_LAYOUTS[0].label;
+/**
+ * A new, unused key slugged from `name` ("Sofas copy" → "sofas-copy", then "sofas-copy-2", "-3" …). An empty slug
+ * (Urdu name, emoji) becomes "layout". The base is cut to 56 characters so keys stay ≤ 60.
+ */
+export function layoutKeyFromName(name: string, taken: Set<string>): string {
+  const base = slugify(name, 56).replace(/-+$/g, '') || 'layout';
+  if (!taken.has(base)) return base;
+  for (let n = 2; ; n++) {
+    const key = `${base}-${n}`;
+    if (!taken.has(key)) return key;
+  }
+}
+
+/**
+ * "Copy of <base>", then "Copy of <base> 2", "3" … — the first one whose name key is not taken. The base is cut (ending
+ * with "…") so the whole name fits in 60 characters.
+ */
+export function copyName(base: string, takenNameKeys: Set<string>): string {
+  const trimmed = base.trim();
+  for (let n = 1; ; n++) {
+    const suffix = n === 1 ? '' : ` ${n}`;
+    const room = MAX_LAYOUT_NAME - 'Copy of '.length - suffix.length;
+    const cut = trimmed.length > room ? `${trimmed.slice(0, room - 1).trimEnd()}…` : trimmed;
+    const name = `Copy of ${cut}${suffix}`;
+    if (!takenNameKeys.has(layoutNameKey(name))) return name;
+  }
 }

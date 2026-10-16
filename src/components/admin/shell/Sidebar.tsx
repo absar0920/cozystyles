@@ -16,7 +16,7 @@ import {
   UserIcon,
   XIcon,
 } from '@/components/icons';
-import { ChatIcon, DocumentIcon, ExternalLinkIcon, ImagesIcon, KeyIcon, NewspaperIcon } from '@/components/admin/icons';
+import { ChatIcon, DocumentIcon, ExternalLinkIcon, ImagesIcon, KeyIcon, LayoutIcon, NewspaperIcon } from '@/components/admin/icons';
 
 type NavItem = {
   label: string;
@@ -30,6 +30,7 @@ const NAV: NavItem[] = [
   { label: 'Dashboard', href: '/admin', icon: CubeIcon },
   { label: 'WhatsApp inquiries', href: '/admin/inquiries', icon: ChatIcon, badge: 'inquiriesToday', badgeStyle: 'bg-leaf text-white' },
   { label: 'Products', href: '/admin/products', icon: TruckIcon },
+  { label: 'Product page layouts', href: '/admin/product-layouts', icon: LayoutIcon },
   { label: 'Collections', href: '/admin/collections', icon: CheckIcon },
   { label: 'Reviews', href: '/admin/reviews', icon: StarIcon },
   { label: 'Home banners', href: '/admin/banners', icon: ImagesIcon },

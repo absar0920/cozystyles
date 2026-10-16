@@ -9,39 +9,60 @@ import { ProductMain } from '@/components/product/ProductMain';
 import { JudgeReviews } from '@/components/product/JudgeReviews';
 import { CardRow, StaticSection } from '@/components/product/TemplateSections';
 import { ShareFacebookIcon, SharePinterestIcon, ShareTwitterIcon } from '@/components/product/icons';
-import { getFeaturedCards, getRecommendations, templateFor, type FeaturedCollectionSection } from '@/components/product/pdp-data';
+import {
+  getFeaturedCards,
+  getLayoutSections,
+  getLayoutSectionsForPreview,
+  getRecommendations,
+  type FeaturedCollectionSection,
+  type PdpSection,
+} from '@/components/product/pdp-data';
 import type { ProductImageInfo, ProductOption, SwatchMap, VariantInfo } from '@/components/product/types';
 import { richTextToPlainText, sanitizeRichText } from '@/lib/rich-text/sanitize';
 import { NEUTRAL_SWATCH, isSwatchOptionName } from '@/lib/product-options';
 import { schemaAvailability } from '@/lib/variant-status';
 import { getWhatsAppConfig } from '@/lib/whatsapp-server';
+import { getAdminOrNull } from '@/lib/admin-guard';
+import { LayoutPreviewBar } from '@/components/product/LayoutPreviewBar';
 
 export const dynamic = 'force-dynamic';
 
 type Params = {
   params: Promise<{ handle: string }>;
-  searchParams: Promise<{ variant?: string }>;
+  searchParams: Promise<{ variant?: string; layoutPreview?: string }>;
 };
 
-export async function generateMetadata({ params }: Params): Promise<Metadata> {
+/** `?layoutPreview=<token>` is honoured only for a signed-in admin (docs/product-layouts/SPEC.md §6.2). */
+async function previewToken(searchParams: Params['searchParams']): Promise<string | null> {
+  const { layoutPreview } = await searchParams;
+  if (typeof layoutPreview !== 'string' || !layoutPreview) return null;
+  return (await getAdminOrNull()) ? layoutPreview : null;
+}
+
+export async function generateMetadata({ params, searchParams }: Params): Promise<Metadata> {
   const { handle } = await params;
+  const preview = await previewToken(searchParams);
   const product = await getProductByHandle(handle);
-  if (!product || product.status !== 'ACTIVE') return { title: 'Product Not Found' };
+  if (!product || (product.status !== 'ACTIVE' && !preview)) return { title: 'Product Not Found' };
   const description =
     richTextToPlainText(product.bodyHtml).slice(0, 160) || `${product.title} — buy online at ${SITE.name}, ${SITE.tagline}.`;
   return {
     title: product.title,
     description,
+    ...(preview ? { robots: { index: false, follow: false } } : {}),
   };
 }
 
 export default async function ProductPage({ params, searchParams }: Params) {
   const { handle } = await params;
   const { variant: variantParam } = await searchParams;
+  const preview = await previewToken(searchParams);
   const product = await getProductByHandle(handle);
-  if (!product || product.status !== 'ACTIVE') notFound();
+  // Admin previews may show drafts.
+  if (!product || (product.status !== 'ACTIVE' && !preview)) notFound();
 
-  const sections = templateFor(product.layout);
+  const previewData = preview ? await getLayoutSectionsForPreview(preview) : null;
+  const sections: PdpSection[] = previewData?.sections ?? (await getLayoutSections(product.layout));
   const collectionHandles = product.collections.map((c) => c.handle);
   const [reviews, recommendations, featured, whatsapp] = await Promise.all([
     getReviewsForProduct(product.id),
@@ -49,7 +70,7 @@ export default async function ProductPage({ params, searchParams }: Params) {
     Promise.all(
       sections
         .filter((s): s is FeaturedCollectionSection => s.kind === 'featuredCollection')
-        .map(async (s) => ({ s, cards: (await getFeaturedCards(s)).filter((c) => c.id !== product.id) })),
+        .map(async (s) => ({ s, cards: await getFeaturedCards(s, product.id) })),
     ),
     getWhatsAppConfig(),
   ]);
@@ -178,18 +199,18 @@ export default async function ProductPage({ params, searchParams }: Params) {
         </aside>
       </ProductMain>
 
-      {sections.map((s, i) => {
+      {sections.map((s) => {
         if (s.kind === 'recommendations') {
-          return <CardRow key={i} heading="You may also like" cards={recommendations} variant="recommendations" />;
+          return <CardRow key={s.id} heading="You may also like" cards={recommendations} variant="recommendations" />;
         }
         if (s.kind === 'featuredCollection') {
           const f = featured.find((x) => x.s === s);
-          return <CardRow key={i} heading={s.heading} cards={f?.cards ?? []} variant="featured" />;
+          return <CardRow key={s.id} heading={s.heading} cards={f?.cards ?? []} variant="featured" />;
         }
         if (s.kind === 'reviews') {
           return (
             <JudgeReviews
-              key={i}
+              key={s.id}
               productId={product.id}
               reviews={reviews.map((r) => ({
                 id: r.id,
@@ -203,8 +224,10 @@ export default async function ProductPage({ params, searchParams }: Params) {
             />
           );
         }
-        return <StaticSection key={i} s={s} />;
+        return <StaticSection key={s.id} s={s} />;
       })}
+      {/* last, so its sticky-bottom position holds for the whole page (see LayoutPreviewBar) */}
+      {preview && <LayoutPreviewBar expired={!previewData} layoutId={previewData?.layoutId ?? null} />}
     </>
   );
 }

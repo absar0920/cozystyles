@@ -19,7 +19,16 @@ import path from 'node:path';
 import { Prisma, PrismaClient } from '@prisma/client';
 import sharp from 'sharp';
 import { decodeEntities, sanitizeRichText } from '../src/lib/rich-text/sanitize';
-import { isProductLayout } from '../src/lib/product-layouts';
+import { legacyIconAt } from '../src/lib/product-layout-icons';
+import {
+  parseSectionData,
+  sectionRefs,
+  serializeSectionData,
+  serializeSnapshot,
+  isSectionKind,
+  type SectionKind,
+  type SnapshotSection,
+} from '../src/lib/product-layout-sections';
 import { isCardSwatchOptionName, isSwatchOptionName, normalizeHex } from '../src/lib/product-options';
 import { DESIGNED_PAGE_HANDLES, BLOG_HANDLE_PREFIX } from '../src/lib/page-kinds';
 import { backupDatabase } from './backup-db';
@@ -234,15 +243,158 @@ async function productFlags(tx: Tx): Promise<string> {
   return `${isNew} new, ${limited} limited, ${delivery} delivery, ${discount} discount`;
 }
 
-/** 4. product-templates.json → Product.layout. */
+/** The 18 migrated layouts, verbatim from the old templates.json (docs/product-layouts/SPEC.md §7.1). */
+type FrozenLayout = { key: string; name: string; description: string; sections: Record<string, unknown>[] };
+
+function frozenLayouts(): FrozenLayout[] {
+  const file = readData<{ layouts?: unknown }>('product-layouts.json', {});
+  if (!Array.isArray(file.layouts) || !file.layouts.length) throw new Error('prisma/easy-mode-data/product-layouts.json is missing');
+  return file.layouts as FrozenLayout[];
+}
+
+/** 4a. product-layouts.json → ProductLayout + ProductLayoutSection rows (per key; existing keys are skipped). */
+async function productLayoutContent(tx: Tx, log: (s: string) => void): Promise<string> {
+  const layouts = frozenLayouts();
+  const existing = await tx.productLayout.findMany({ select: { key: true, nameKey: true, position: true } });
+  const keys = new Set(existing.map((l) => l.key));
+  const nameKeys = new Set(existing.map((l) => l.nameKey));
+  let position = existing.length ? Math.max(...existing.map((l) => l.position)) + 1 : 0;
+  const collections = new Map((await tx.collection.findMany({ select: { id: true, handle: true } })).map((c) => [c.handle, c.id]));
+  const sizes = new Map<string, { width: number; height: number } | null>();
+  let created = 0;
+  let skipped = 0;
+  let sectionCount = 0;
+  let missingImages = 0;
+  let missingCollections = 0;
+
+  const dims = async (src: unknown): Promise<{ width: number | null; height: number | null }> => {
+    if (typeof src !== 'string' || !src) return { width: null, height: null };
+    if (!sizes.has(src)) {
+      const size = await imageSize(src, { width: 0, height: 0 });
+      sizes.set(src, size.width && size.height ? size : null);
+      if (!size.width) {
+        missingImages++;
+        log(`  product-layout-content: image ${src} not found`);
+      }
+    }
+    const size = sizes.get(src);
+    return { width: size?.width ?? null, height: size?.height ?? null };
+  };
+
+  for (const layout of layouts) {
+    if (keys.has(layout.key)) {
+      skipped++;
+      log(`  product-layout-content: skipped ${layout.key}: already present`);
+      continue;
+    }
+    let name = layout.name;
+    if (nameKeys.has(name.trim().toLowerCase())) {
+      name = `${name} (original)`;
+      log(`  product-layout-content: ${layout.key}: name taken, saved as "${name}"`);
+    }
+    const row = await tx.productLayout.create({
+      data: { key: layout.key, name, nameKey: name.trim().toLowerCase(), description: layout.description ?? '', position: position++ },
+    });
+    keys.add(layout.key);
+    nameKeys.add(row.nameKey);
+
+    const written: SnapshotSection[] = [];
+    for (const [i, raw] of layout.sections.entries()) {
+      const kind = raw.kind;
+      if (!isSectionKind(kind)) throw new Error(`product-layouts.json: ${layout.key} section ${i}: unknown kind ${String(kind)}`);
+      let built: Record<string, unknown> = {};
+      let bodyHtml = '';
+      let collectionId: number | null = null;
+      switch (kind as SectionKind) {
+        case 'overlay': {
+          const d = await dims(raw.image);
+          built = { image: raw.image, imageWidth: d.width, imageHeight: d.height, subheading: raw.subheading, heading: raw.heading, headingClass: raw.headingClass };
+          bodyHtml = sanitizeRichText(String(raw.html ?? ''));
+          break;
+        }
+        case 'imageText': {
+          const d = await dims(raw.image);
+          const button = raw.button as { href?: string; label?: string } | null;
+          built = {
+            ...raw,
+            imageWidth: d.width,
+            imageHeight: d.height,
+            button: button ? { href: button.href === '#' ? '' : (button.href ?? ''), label: button.label ?? '' } : null,
+          };
+          bodyHtml = sanitizeRichText(String(raw.html ?? ''));
+          break;
+        }
+        case 'icons':
+          built = {
+            blocks: ((raw.blocks as { title: string; text: string }[]) ?? []).map((b, j) => ({ icon: legacyIconAt(j), title: b.title, text: b.text })),
+          };
+          break;
+        case 'testimonials':
+          built = raw;
+          break;
+        case 'slideshow': {
+          const dd = await dims(raw.desktop);
+          const md = await dims(raw.mobile);
+          built = {
+            slides: [
+              {
+                desktop: raw.desktop,
+                desktopWidth: dd.width,
+                desktopHeight: dd.height,
+                desktopRatio: raw.desktopRatio,
+                mobile: raw.mobile ?? null,
+                mobileWidth: md.width,
+                mobileHeight: md.height,
+                mobileRatio: raw.mobileRatio ?? null,
+              },
+            ],
+          };
+          break;
+        }
+        case 'featuredCollection': {
+          built = { heading: raw.heading, collection: raw.collection ?? null, handles: raw.handles ?? [], limit: null };
+          collectionId = typeof raw.collection === 'string' ? (collections.get(raw.collection) ?? null) : null;
+          if (collectionId == null) {
+            missingCollections++;
+            log(`  product-layout-content: ${layout.key}: collection "${String(raw.collection)}" not found`);
+          }
+          break;
+        }
+        default:
+          built = {};
+      }
+      const parsed = parseSectionData(kind, JSON.stringify(built));
+      const data = serializeSectionData(kind, parsed.data);
+      await tx.productLayoutSection.create({
+        data: { layoutId: row.id, position: i, kind, hidden: false, bodyHtml, data, refs: sectionRefs(kind, parsed.data, bodyHtml), collectionId },
+      });
+      written.push({ kind, hidden: false, bodyHtml, data, collectionId });
+      sectionCount++;
+    }
+    await tx.productLayout.update({
+      where: { id: row.id },
+      data: { originalVersion: serializeSnapshot({ name: row.name, description: row.description, sections: written }) },
+    });
+    created++;
+  }
+
+  const reset = (await tx.product.updateMany({ where: { layout: { notIn: [...keys] } }, data: { layout: 'default' } })).count;
+  return (
+    `${created} layouts (${skipped} skipped), ${sectionCount} sections, ${missingImages} missing images, ` +
+    `${missingCollections} missing collections, ${reset} products reset to default`
+  );
+}
+
+/** 4. product-templates.json → Product.layout (keys checked against product-layouts.json). */
 async function productLayouts(tx: Tx, log: (s: string) => void): Promise<string> {
   const map = readData<Record<string, string>>('product-templates.json', {});
+  const layoutKeys = new Set(frozenLayouts().map((l) => l.key));
   const handles = new Set((await tx.product.findMany({ select: { handle: true } })).map((p) => p.handle));
   const byLayout = new Map<string, string[]>();
   let unknownHandles = 0;
   let unknownKeys = 0;
   for (const [handle, key] of Object.entries(map)) {
-    if (!isProductLayout(key)) {
+    if (!layoutKeys.has(key)) {
       unknownKeys++;
       log(`  product-layouts: unknown layout "${key}" for ${handle}`);
       continue;
@@ -633,6 +785,7 @@ const STEPS: Step[] = [
   { id: 'options-to-rows', run: optionsToRows },
   { id: 'variant-status', run: variantStatus },
   { id: 'product-flags', run: productFlags },
+  { id: 'product-layout-content', run: productLayoutContent },
   { id: 'product-layouts', run: productLayouts },
   { id: 'swatches', run: swatches },
   { id: 'photo-tags', run: photoTags },

@@ -115,18 +115,20 @@ export function Popover({
   }, [open, anchorRef]);
 
   if (!mounted || !open) return null;
+  // opened from inside a modal dialog (z-[70]): sit above it
+  const z = anchorRef.current?.closest('[aria-modal="true"]') ? 'z-[75]' : 'z-[60]';
 
   return createPortal(
-    <div className="z-[60]" data-testid={testId}>
-      {pos.sheet && <div className="fixed inset-0 z-[60] bg-black/40" aria-hidden onClick={() => closeRef.current()} />}
+    <div className={z} data-testid={testId} data-popover-open="">
+      {pos.sheet && <div className={`fixed inset-0 ${z} bg-black/40`} aria-hidden onClick={() => closeRef.current()} />}
       <div
         ref={panelRef}
         role="dialog"
         aria-label={title}
         className={
           pos.sheet
-            ? 'fixed inset-x-0 bottom-0 z-[60] max-h-[85vh] overflow-y-auto rounded-t-2xl bg-white p-4 pb-[max(env(safe-area-inset-bottom),1rem)] shadow-2xl'
-            : 'fixed z-[60] max-h-[70vh] overflow-y-auto rounded-xl border border-gray-200 bg-white p-3 shadow-xl'
+            ? `fixed inset-x-0 bottom-0 ${z} max-h-[85vh] overflow-y-auto rounded-t-2xl bg-white p-4 pb-[max(env(safe-area-inset-bottom),1rem)] shadow-2xl`
+            : `fixed ${z} max-h-[70vh] overflow-y-auto rounded-xl border border-gray-200 bg-white p-3 shadow-xl`
         }
         style={pos.sheet ? undefined : { top: pos.top, left: pos.left, maxHeight: pos.maxH, width: Math.min(width, typeof window !== 'undefined' ? window.innerWidth - 16 : width) }}
       >

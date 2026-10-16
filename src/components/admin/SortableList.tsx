@@ -49,6 +49,8 @@ export type SortableListProps<T> = {
   disabled?: boolean;
   /** shown as a hint above the list while disabled */
   disabledReason?: string;
+  /** a drag started / ended (e.g. to collapse big items while dragging) */
+  onDragStateChange?: (dragging: boolean) => void;
 };
 
 const arrowBtn =
@@ -135,6 +137,7 @@ export function SortableList<T>({
   arrowLabels,
   disabled = false,
   disabledReason,
+  onDragStateChange,
 }: SortableListProps<T>) {
   const id = useId();
   const sensors = useSensors(
@@ -152,6 +155,7 @@ export function SortableList<T>({
   };
 
   const onDragEnd = (e: DragEndEvent) => {
+    onDragStateChange?.(false);
     if (!e.over || e.active.id === e.over.id) return;
     move(keys.indexOf(String(e.active.id)), keys.indexOf(String(e.over.id)));
   };
@@ -166,7 +170,14 @@ export function SortableList<T>({
   return (
     <div>
       {disabled && disabledReason && <p className="mb-2 text-xs text-gray-500">{disabledReason}</p>}
-      <DndContext id={id} sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+      <DndContext
+        id={id}
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={() => onDragStateChange?.(true)}
+        onDragCancel={() => onDragStateChange?.(false)}
+        onDragEnd={onDragEnd}
+      >
         <SortableContext items={keys} strategy={strategy} disabled={disabled}>
           <div role="list" aria-label={ariaLabel} className={containerClass}>
             {items.map((item, index) => (

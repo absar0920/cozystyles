@@ -62,7 +62,7 @@ Data copies: `prisma/easy-mode-data/*.json` (8 files). The originals in `src/` a
 | `@/lib/admin-guard` (server-only) | `requireAdmin(): Promise<AdminUser>` (redirects), `getAdminOrNull()` |
 | `@/lib/variant-status` | `VARIANT_STATUSES`, `VariantStatus`, `VARIANT_STATUS_COPY`, `isVariantStatus`, `isAvailable`, `asksAvailability`, `cardStatusLabel(statuses)`, `schemaAvailability(statuses)` (full schema.org URL) |
 | `@/lib/product-options` | `MAX_OPTIONS/MAX_VARIANTS/MAX_VALUE_LENGTH/MAX_OPTION_NAME_LENGTH`, `OPTION_NAME_SUGGESTIONS`, `isSwatchOptionName`, `isCardSwatchOptionName`, `variantTitle`, `normalizeHex`, `NEUTRAL_SWATCH` |
-| `@/lib/product-layouts` | `PRODUCT_LAYOUTS`, `isProductLayout`, `layoutLabel` |
+| `@/lib/product-layouts` | `DEFAULT_LAYOUT_KEY`, `PROTECTED_LAYOUT_KEYS`, `layoutNameKey`, `layoutKeyFromName`, `copyName` (layouts now live in the database: see `docs/product-layouts/NOTES.md` §2) |
 | `@/lib/page-kinds` | `PAGE_KINDS`, `PageKind`, `DESIGNED_PAGE_HANDLES` (27), `BLOG_HANDLE_PREFIX`, `blogHandle`, `blogSlug`, `pagePublicPath` |
 | `@/lib/card-swatches` | `CardSwatchData`, `CardSwatchSource`, `buildCardSwatches(p)`, `CARD_SWATCH_SELECT` (`satisfies Prisma.ProductSelect`; spread it into a select) |
 | `@/lib/dates` | `STORE_TIME_ZONE`, `startOfStoreDay`, `storeRangeStart(days)`, `formatStoreDateTime`, `timeAgo` |

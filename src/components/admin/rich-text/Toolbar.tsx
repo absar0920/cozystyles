@@ -66,11 +66,19 @@ export function Toolbar({
   editor,
   images = true,
   youtube = true,
+  headings = true,
+  lists = true,
+  align = true,
+  color = true,
   onImageInserted,
 }: {
   editor: Editor;
   images?: boolean;
   youtube?: boolean;
+  headings?: boolean;
+  lists?: boolean;
+  align?: boolean;
+  color?: boolean;
   onImageInserted?: (pos: number) => void;
 }) {
   const s = useEditorState({
@@ -162,41 +170,55 @@ export function Toolbar({
         <Btn label="Underline" active={s.underline} onClick={() => c().toggleUnderline().run()}>
           <UnderlineIcon className="h-4 w-4" />
         </Btn>
-        <Sep />
-        <Btn label="Heading" active={s.h2} onClick={() => c().toggleHeading({ level: 2 }).run()}>
-          <H2Icon className="h-4 w-4" />
-        </Btn>
-        <Btn label="Subheading" active={s.h3} onClick={() => c().toggleHeading({ level: 3 }).run()}>
-          <H3Icon className="h-4 w-4" />
-        </Btn>
-        <Sep />
-        <Btn label="Bullet list" active={s.bullet} onClick={() => c().toggleBulletList().run()}>
-          <ListBulletIcon className="h-4 w-4" />
-        </Btn>
-        <Btn label="Numbered list" active={s.ordered} onClick={() => c().toggleOrderedList().run()}>
-          <ListNumberIcon className="h-4 w-4" />
-        </Btn>
+        {headings && (
+          <>
+            <Sep />
+            <Btn label="Heading" active={s.h2} onClick={() => c().toggleHeading({ level: 2 }).run()}>
+              <H2Icon className="h-4 w-4" />
+            </Btn>
+            <Btn label="Subheading" active={s.h3} onClick={() => c().toggleHeading({ level: 3 }).run()}>
+              <H3Icon className="h-4 w-4" />
+            </Btn>
+          </>
+        )}
+        {lists && (
+          <>
+            <Sep />
+            <Btn label="Bullet list" active={s.bullet} onClick={() => c().toggleBulletList().run()}>
+              <ListBulletIcon className="h-4 w-4" />
+            </Btn>
+            <Btn label="Numbered list" active={s.ordered} onClick={() => c().toggleOrderedList().run()}>
+              <ListNumberIcon className="h-4 w-4" />
+            </Btn>
+          </>
+        )}
         <Sep />
         <Btn label="Link" active={s.link} btnRef={linkRef} onClick={() => setLinkOpen((o) => !o)}>
           <LinkIcon className="h-4 w-4" />
         </Btn>
-        <Sep />
-        <Btn label="Align left" active={s.left} onClick={() => c().setTextAlign('left').run()}>
-          <AlignLeftIcon className="h-4 w-4" />
-        </Btn>
-        <Btn label="Align center" active={s.center} onClick={() => c().setTextAlign('center').run()}>
-          <AlignCenterIcon className="h-4 w-4" />
-        </Btn>
-        <Btn label="Align right" active={s.right} onClick={() => c().setTextAlign('right').run()}>
-          <AlignRightIcon className="h-4 w-4" />
-        </Btn>
-        <Sep />
-        <Btn label="Text colour" active={!!s.color} btnRef={colorRef} onClick={() => setColorOpen((o) => !o)}>
-          <span className="relative">
-            <PaletteIcon className="h-4 w-4" />
-            <span className="absolute -bottom-1 left-0 right-0 h-0.5 rounded" style={{ background: s.color ?? 'transparent' }} />
-          </span>
-        </Btn>
+        {align && (
+          <>
+            <Sep />
+            <Btn label="Align left" active={s.left} onClick={() => c().setTextAlign('left').run()}>
+              <AlignLeftIcon className="h-4 w-4" />
+            </Btn>
+            <Btn label="Align center" active={s.center} onClick={() => c().setTextAlign('center').run()}>
+              <AlignCenterIcon className="h-4 w-4" />
+            </Btn>
+            <Btn label="Align right" active={s.right} onClick={() => c().setTextAlign('right').run()}>
+              <AlignRightIcon className="h-4 w-4" />
+            </Btn>
+          </>
+        )}
+        {(color || images || youtube) && <Sep />}
+        {color && (
+          <Btn label="Text colour" active={!!s.color} btnRef={colorRef} onClick={() => setColorOpen((o) => !o)}>
+            <span className="relative">
+              <PaletteIcon className="h-4 w-4" />
+              <span className="absolute -bottom-1 left-0 right-0 h-0.5 rounded" style={{ background: s.color ?? 'transparent' }} />
+            </span>
+          </Btn>
+        )}
         {images && (
           <Btn label="Add photo" disabled={uploading != null} onClick={() => fileRef.current?.click()}>
             <ImageIcon className="h-4 w-4" />

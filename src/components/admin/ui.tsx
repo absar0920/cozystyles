@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { CharCount, ToggleSwitch } from './ui-client';
+import { CharCount, SegmentedControl, ToggleSwitch } from './ui-client';
 
 /**
  * Admin UI primitives — presentational and server-component safe (no hooks here; the few interactive
  * pieces live in ./ui-client and are re-exported below).
  */
 
-export { ToggleSwitch };
+export { SegmentedControl, ToggleSwitch };
 
 export function AdminPageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
   return (

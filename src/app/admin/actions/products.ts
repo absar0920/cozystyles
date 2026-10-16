@@ -7,7 +7,8 @@ import { requireAdmin } from '@/lib/admin-guard';
 import { slugify } from '@/lib/slug';
 import { sanitizeRichText } from '@/lib/rich-text/sanitize';
 import { extractUploadUrls, releaseUploads } from '@/lib/uploads';
-import { isProductLayout } from '@/lib/product-layouts';
+import { DEFAULT_LAYOUT_KEY } from '@/lib/product-layouts';
+import { lockLayout } from '@/lib/layout-lock';
 import { MAX_OPTIONS, MAX_OPTION_NAME_LENGTH, MAX_VALUE_LENGTH, MAX_VARIANTS, normalizeHex, variantTitle } from '@/lib/product-options';
 import { isVariantStatus, type VariantStatus } from '@/lib/variant-status';
 import { loadProductEditorState, productDeleteConsequences } from '@/app/admin/(panel)/products/_lib/load';
@@ -37,6 +38,9 @@ class Invalid extends Error {
     super(message);
   }
 }
+/** The chosen page layout was deleted between the check above and this save's write. */
+class LayoutGone extends Error {}
+
 class Stale extends Error {
   constructor(public currentUpdatedAt: string) {
     super('This product was changed somewhere else (another tab or person).');
@@ -94,7 +98,7 @@ function parseInput(raw: unknown) {
   const dg = raw.discountGroup;
   const discountGroup = typeof dg === 'number' && (DISCOUNT_GROUPS as readonly number[]).includes(dg) ? dg : null;
   const trackStock = raw.trackStock === true;
-  const layout = isProductLayout(text(raw.layout)) ? text(raw.layout) : 'default';
+  const layout = text(raw.layout).trim() || DEFAULT_LAYOUT_KEY; // checked against ProductLayout in saveProductAction
 
   /* options */
   const rawOptions = arr(raw.options);
@@ -267,6 +271,12 @@ function revalidateProduct(handles: (string | null | undefined)[]) {
   revalidatePath('/admin/products');
 }
 
+/** "Used by N products" counts changed: the layouts list/editors and every product editor's dropdown. */
+function revalidateLayoutUsage() {
+  revalidatePath('/admin/product-layouts', 'layout');
+  revalidatePath('/admin/products', 'layout');
+}
+
 /* ------------------------------------------------------------------------------------------------ save */
 
 export async function saveProductAction(input: SaveProductInput): Promise<SaveProductResult> {
@@ -289,6 +299,7 @@ export async function saveProductAction(input: SaveProductInput): Promise<SavePr
             handle: true,
             bodyHtml: true,
             tags: true,
+            layout: true,
             updatedAt: true,
             variants: { select: { id: true } },
             images: { select: { id: true, src: true } },
@@ -307,6 +318,10 @@ export async function saveProductAction(input: SaveProductInput): Promise<SavePr
     return { ok: false, code: 'INVALID', error: `Keep each search keyword under ${MAX_TAG_LENGTH} characters (“${longTag.slice(0, 40)}…” is too long).`, field: 'tags' };
   }
 
+  if (!(await prisma.productLayout.count({ where: { key: d.layout } }))) {
+    return { ok: false, code: 'INVALID', error: 'That page layout no longer exists. Pick another one.', field: 'layout' };
+  }
+
   const handle = await uniqueHandle(d.handle, d.id);
   const validCollectionIds = d.collectionIds.length
     ? (await prisma.collection.findMany({ where: { id: { in: d.collectionIds } }, select: { id: true } })).map((c) => c.id)
@@ -321,6 +336,8 @@ export async function saveProductAction(input: SaveProductInput): Promise<SavePr
   let productId: number;
   try {
     productId = await prisma.$transaction(async (tx) => {
+      // lock first and re-check: the layout may have been deleted since the check above (see lockLayout)
+      if (!(await lockLayout(tx, { key: d.layout }))) throw new LayoutGone();
       if (existing && !d.force) {
         const now = await tx.product.findUnique({ where: { id: existing.id }, select: { updatedAt: true } });
         if (now && now.updatedAt.toISOString() !== d.updatedAt) throw new Stale(now.updatedAt.toISOString());
@@ -432,6 +449,7 @@ export async function saveProductAction(input: SaveProductInput): Promise<SavePr
     });
   } catch (e) {
     if (e instanceof Stale) return { ok: false, code: 'STALE', error: e.message, currentUpdatedAt: e.currentUpdatedAt };
+    if (e instanceof LayoutGone) return { ok: false, code: 'INVALID', error: 'That page layout no longer exists. Pick another one.', field: 'layout' };
     console.error('[saveProductAction]', e);
     return { ok: false, code: 'INVALID', error: 'The product could not be saved. Please try again.' };
   }
@@ -449,6 +467,7 @@ export async function saveProductAction(input: SaveProductInput): Promise<SavePr
   }
 
   revalidateProduct([handle, existing?.handle]);
+  if (!existing || existing.layout !== d.layout) revalidateLayoutUsage();
   const state = await loadProductEditorState(productId);
   if (!state) return { ok: false, code: 'INVALID', error: 'The product was saved but could not be reloaded. Please refresh the page.' };
   return { ok: true, state };
@@ -537,6 +556,7 @@ export async function duplicateProductAction(id: number): Promise<{ ok: true; id
   });
 
   revalidatePath('/admin/products');
+  revalidateLayoutUsage();
   return { ok: true, id: newId };
 }
 
@@ -558,6 +578,7 @@ export async function deleteProductAction(formData: FormData): Promise<void> {
   await releaseUploads(productUrls(p));
 
   revalidateProduct([p.handle]);
+  revalidateLayoutUsage();
   redirect('/admin/products?deleted=1');
 }
 

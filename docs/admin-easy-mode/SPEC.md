@@ -135,7 +135,7 @@ Appendix B: review log
 - Editing the **content** of designed pages: about-us, contact, store locator, wedding builder, department landing
   pages, Berlin, city pages and the others listed in §5.3. Their components and data stay in code. Only SEO and
   publish state are editable.
-- Editing the 18 product page section templates (`templates.json`). Only *which* layout a product uses is editable.
+- Editing the 18 product page section templates (`templates.json`): moved to `docs/product-layouts/SPEC.md` (implemented).
 - **Which** products the home page "Hot Selling Products" carousel shows, and in what order
   (`components/home/hotSelling.ts`), stays code-driven. Its swatches, prices, sale badges, stars and status labels do
   **not**: they come from the database like every other card (§5.2.4, decision 23).
