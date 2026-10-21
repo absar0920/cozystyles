@@ -12,6 +12,8 @@ test('mobile: navigate via the menu drawer and add to cart', async ({ page }) =>
 
   await page.getByRole('button', { name: 'Open menu' }).click();
   await page.getByRole('button', { name: 'Toggle Living Room' }).click();
+  // The admin's top bar links are repeated in the drawer (the top bar is hidden on phones).
+  await expect(page.getByRole('link', { name: 'Contact Us' }).filter({ visible: true })).toBeVisible();
   await page.getByRole('link', { name: 'Sofas', exact: true }).filter({ visible: true }).first().click();
   await expect(page).toHaveURL(/\/collections\/sofas$/);
   await shot(page, '51-mobile-collection');

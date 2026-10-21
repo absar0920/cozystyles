@@ -40,6 +40,8 @@ test('orders: confirm an order and the customer sees the new status', async () =
   await page.getByLabel('Order status').selectOption({ label: 'Shipped' });
   await page.getByLabel('Admin notes').fill('Dispatched with TCS, confirmed on WhatsApp.');
   await submit(page, 'Save changes');
+  // The dropdown must show the saved status right away (not snap back to Pending).
+  await expect(page.getByLabel('Order status')).toHaveValue('SHIPPED');
   await page.reload();
   await expect(page.getByLabel('Order status')).toHaveValue('SHIPPED');
   // The app appends a timestamped status-change line to the internal notes.

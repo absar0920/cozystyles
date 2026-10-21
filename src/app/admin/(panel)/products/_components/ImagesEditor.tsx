@@ -12,8 +12,9 @@ const nextKey = () => `i${++seq}`;
 
 const str = (v: string | number | null | undefined) => (v == null ? '' : String(v));
 
-const inputCls =
-  'w-full min-w-0 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs text-ink outline-none transition focus:border-brand focus:ring-1 focus:ring-brand/20';
+const inputBase =
+  'min-w-0 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs text-ink outline-none transition focus:border-brand focus:ring-1 focus:ring-brand/20';
+const inputCls = `w-full ${inputBase}`;
 
 /** Image rows editor — src + alt + position, live thumbnail, serialized to hidden `imagesJson`. */
 export function ImagesEditor({ initial = [] }: { initial?: ImageInit[] }) {
@@ -64,7 +65,7 @@ export function ImagesEditor({ initial = [] }: { initial?: ImageInit[] }) {
               aria-label={`Image ${i + 1} alt text`}
             />
             <input
-              className={`${inputCls} w-16`}
+              className={`${inputBase} w-16 shrink-0`}
               value={r.position}
               onChange={(e) => update(r.key, 'position', e.target.value)}
               inputMode="numeric"

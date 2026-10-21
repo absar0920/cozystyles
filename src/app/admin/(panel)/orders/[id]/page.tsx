@@ -130,7 +130,10 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           </AdminCard>
 
           <AdminCard title="Status & internal notes">
-            <form action={updateOrderAction} className="space-y-4">
+            {/* Keyed by updatedAt: remount after each save so the status <select> shows the saved
+                value (React keeps a select's original defaultValue and the post-action form reset
+                would otherwise restore it, silently reverting the status on the next save). */}
+            <form key={updated.getTime()} action={updateOrderAction} className="space-y-4">
               <input type="hidden" name="id" value={order.id} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Order status" hint="The customer sees this when tracking their order.">

@@ -12,7 +12,8 @@
     "scrape": "node scripts/scrape.mjs",
     "images": "node scripts/download-images.mjs",
     "db:admin": "node --env-file=.env --experimental-strip-types --no-warnings scripts/create-admin.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "docs:walkthrough": "playwright test --config playwright.walkthrough.config.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -89,7 +89,7 @@ export function VariantsEditor({ initial = [] }: { initial?: VariantInit[] }) {
     <div>
       <input type="hidden" name="variantsJson" value={JSON.stringify(rows.map(({ key, ...rest }) => rest))} />
       <div className="overflow-x-auto">
-        <div className="min-w-[880px]">
+        <div className="min-w-[660px]">
           <div className={`${GRID} px-1 pb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500`}>
             {COLS.map((c, i) => (
               <span key={i}>{c}</span>

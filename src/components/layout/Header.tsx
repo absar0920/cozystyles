@@ -173,12 +173,22 @@ export function Header({
               {menu.map((item) => (
                 <MobileMenuItem key={item.id} item={item} onNavigate={() => setMobileOpen(false)} />
               ))}
-              <Link href="/track" onClick={() => setMobileOpen(false)} className="block rounded-lg px-4 py-3 text-sm font-semibold text-ink-dark hover:bg-cream-soft">
-                Track Order
-              </Link>
-              <a href={`tel:${phone.replace(/-/g, '')}`} className="mt-2 flex items-center gap-2 rounded-lg bg-brand-900 px-4 py-3 text-sm font-semibold text-white">
-                <PhoneIcon className="h-4 w-4" /> {phone}
-              </a>
+              {/* Top bar links (admin "Top bar" menu) are hidden on mobile, so repeat them here. */}
+              {(topbarLinks.length > 0 ? topbarLinks : [{ label: 'Track Order', href: '/track' }]).map((link) => (
+                <Link
+                  key={link.href + link.label}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="block rounded-lg px-4 py-3 text-sm font-semibold text-ink-dark hover:bg-cream-soft"
+                >
+                  {link.label}
+                </Link>
+              ))}
+              {phone && (
+                <a href={`tel:${phone.replace(/-/g, '')}`} className="mt-2 flex items-center gap-2 rounded-lg bg-brand-900 px-4 py-3 text-sm font-semibold text-white">
+                  <PhoneIcon className="h-4 w-4" /> {phone}
+                </a>
+              )}
             </div>
           </div>
         </div>
