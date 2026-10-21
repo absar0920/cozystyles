@@ -6,20 +6,18 @@ This guide takes the store from an **empty database** to a fully working shop **
 
 ## 0. Start from scratch
 
-The only step that can't be done in the browser is creating the **first admin login**: the app has no sign-up screen. `npm run db:admin` creates that one user from `ADMIN_EMAIL` / `ADMIN_PASSWORD` in `.env`. Everything else (settings, categories, products, banners, menus, pages, orders, messages, reviews) starts empty.
+Nothing has to be created outside the browser. While the database has no admin, the **first sign-in** with `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env` creates the admin account. Everything else (settings, categories, products and their photos, banners, menus, pages, orders, messages, reviews) starts empty.
 
 ```bash
 cd ~/projects/personal/interwood
 npm install                      # first time only
+npm run db:up                    # start the local MySQL in Docker (first time / after a reboot)
 
-# 1. Delete the database and recreate the empty tables
-rm -f prisma/dev.db
-npm run db:push
+# 1. Delete all data and uploaded photos, recreate the empty tables
+npm run db:reset
+rm -rf uploads
 
-# 2. Create the admin login (the only non-browser step)
-npm run db:admin                 # → "Admin ready: <ADMIN_EMAIL>"
-
-# 3. Build and start the app
+# 2. Build and start the app
 npm run build
 npm start                        # → http://localhost:3000
 ```
@@ -34,6 +32,6 @@ npm start                        # → http://localhost:3000
 **Tips**
 
 - Use **two browser windows**: a normal one for the admin and a **private/incognito** one for the shopper, so the admin login and the shopper's cart stay separate.
-- Images are entered as **paths to files that already exist** in `public/images/` (e.g. `/images/products/alexa-sofa-chair-1.jpg`) or as full `https://` URLs. There is no file upload.
+- **Photos are uploaded from your computer.** This guide uses sample photos that ship with the project in `public/images/`: when the file picker opens, go to the project folder → `public` → `images`. Every upload is converted to WebP, stored in `uploads/` and its URL (`/uploads/…`) is filled in for you. Pasting an existing image URL into the field still works too.
 - Prices are whole Pakistani rupees: type `45000`, not `45,000.00`.
 - Order numbers are assigned in sequence (`IW-100001`, `IW-100002`, …). If you have placed other orders, yours will differ from the screenshots.

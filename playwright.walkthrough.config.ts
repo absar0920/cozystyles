@@ -8,5 +8,5 @@ export default defineConfig({
   reporter: [['list']],
   outputDir: 'e2e-results/walkthrough',
   expect: { timeout: 10_000 },
-  use: { trace: 'retain-on-failure', screenshot: 'only-on-failure' },
+  use: { trace: 'retain-on-failure', screenshot: 'only-on-failure', actionTimeout: 30_000 },
 });

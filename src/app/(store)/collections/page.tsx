@@ -34,15 +34,10 @@ export default async function CollectionsPage() {
   const standalone = roots.filter((r) => (byParent.get(r.id)?.length ?? 0) === 0);
 
   // Active product count per collection (one grouped query).
-  // Note: in `_ProductCollections`, column "A" = collection id, "B" = product id.
-  const countRows = await prisma.$queryRawUnsafe<Array<{ cid: bigint; n: bigint }>>(
-    `SELECT pc."A" AS cid, COUNT(*) AS n
-       FROM "_ProductCollections" pc
-       JOIN "Product" pr ON pr."id" = pc."B" AND pr."status" = 'ACTIVE'
-       JOIN "Collection" c ON c."id" = pc."A"
-      GROUP BY pc."A"`,
-  );
-  const counts = new Map<number, number>(countRows.map((r) => [Number(r.cid), Number(r.n)]));
+  const countRows = await prisma.collection.findMany({
+    select: { id: true, _count: { select: { products: { where: { status: 'ACTIVE' } } } } },
+  });
+  const counts = new Map<number, number>(countRows.map((r) => [r.id, r._count.products]));
 
   return (
     <>

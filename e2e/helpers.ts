@@ -1,4 +1,5 @@
-import { expect, type Browser, type BrowserContext, type Page } from '@playwright/test';
+import path from 'node:path';
+import { expect, type Browser, type BrowserContext, type Locator, type Page } from '@playwright/test';
 
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'admin@cozyfurnitures.pk';
 export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'CozyAdmin@2026';
@@ -47,6 +48,42 @@ export async function adminNav(page: Page, label: string) {
 export async function submit(page: Page, name: string | RegExp) {
   const done = page.waitForResponse((r) => r.request().method() === 'POST' && new URL(r.url()).pathname.startsWith('/admin'));
   await page.getByRole('button', { name }).click();
+  await done;
+  await page.waitForLoadState('networkidle');
+}
+
+/** Path on disk for a sample image, given its site path (e.g. /images/products/x.jpg → public/images/products/x.jpg). */
+export const sample = (sitePath: string) => path.join('public', sitePath);
+
+/** Click an upload control and pick files in the OS file dialog, like a user would. */
+export async function chooseFiles(page: Page, trigger: Locator, files: string | string[]) {
+  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), trigger.click()]);
+  await chooser.setFiles(files);
+}
+
+/** An uploaded image URL: /uploads/<folder>/<yyyy>/<mm>/<name>-<hash>.webp */
+export const uploaded = (folder: string) => new RegExp(`^/uploads/${folder}/\\d{4}/\\d{2}/[a-z0-9-]+-[0-9a-f]{12}\\.webp$`);
+
+/** Every <img> matching the selector has actually loaded (non-zero natural size). */
+export async function expectImagesLoaded(page: Page, selector: string) {
+  await page.waitForLoadState('networkidle');
+  const sizes = await page.locator(selector).evaluateAll((imgs) =>
+    Promise.all(
+      (imgs as HTMLImageElement[]).map(async (img) => {
+        img.loading = 'eager';
+        await img.decode().catch(() => {});
+        return img.naturalWidth;
+      }),
+    ),
+  );
+  expect(sizes.length, `images matching ${selector}`).toBeGreaterThan(0);
+  for (const w of sizes) expect(w).toBeGreaterThan(0);
+}
+
+/** Click a control that runs a server action (toggle, approve, …) and wait for that round-trip to finish. */
+export async function clickAction(page: Page, control: Locator) {
+  const done = page.waitForResponse((r) => r.request().method() === 'POST' && new URL(r.url()).pathname.startsWith('/admin'));
+  await control.click();
   await done;
   await page.waitForLoadState('networkidle');
 }

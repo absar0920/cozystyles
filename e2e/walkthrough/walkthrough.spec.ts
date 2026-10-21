@@ -1,5 +1,5 @@
-import { test, expect, devices, type Browser, type Page } from '@playwright/test';
-import { Guide, readPart } from './guide';
+import { test, expect, devices, type Browser, type Locator, type Page } from '@playwright/test';
+import { chooseFiles, Guide, readPart, samplePath } from './guide';
 
 /**
  * Full manual-test walkthrough, recorded as docs/walkthrough/README.md with screenshots.
@@ -18,6 +18,15 @@ let shopper: Page;
 
 async function ctx(browser: Browser) {
   return browser.newContext({ baseURL: 'http://localhost:3100', viewport: { width: 1440, height: 900 } });
+}
+
+/** Click a control that runs a server action and wait for the round-trip (documented as a step when `md` is given). */
+async function act(control: Locator, md?: string) {
+  const done = admin.waitForResponse((r) => r.request().method() === 'POST' && new URL(r.url()).pathname.startsWith('/admin'));
+  if (md) await g.click(control, md);
+  else await control.click();
+  await done;
+  await admin.waitForLoadState('networkidle');
 }
 
 /** Click an admin sidebar link and wait for the new page to settle. */
@@ -151,7 +160,7 @@ test('walkthrough: build and test the whole store from an empty database', async
       { label: 'Title', value: c.title, locator: admin.getByLabel('Title') },
       { label: 'Handle (URL slug)', value: '', locator: admin.getByLabel('Handle (URL slug)') },
       { label: 'Description', value: c.description, locator: admin.getByLabel('Description') },
-      { label: 'Image (URL field)', value: c.image, locator: admin.getByPlaceholder(/images\/collections/) },
+      { label: 'Image', value: c.image, kind: 'upload', button: 'Upload image', locator: admin.getByRole('button', { name: 'Upload image', exact: true }), uploadedInto: admin.getByPlaceholder(/images\/collections/) },
       { label: 'Parent collection', value: c.parent ?? '— None (top level) —', locator: admin.getByLabel('Parent collection'), kind: 'select' },
       { label: 'Kind', value: c.kind, locator: admin.getByLabel('Kind'), kind: 'select' },
       { label: 'Position', value: c.position, locator: admin.getByLabel('Position') },
@@ -159,7 +168,7 @@ test('walkthrough: build and test the whole store from an empty database', async
       { label: 'Featured on homepage', value: c.featured ? '✓ checked' : '☐ unchecked', locator: admin.getByLabel('Featured on homepage'), kind: c.featured ? 'check' : 'uncheck' },
     ]);
     if (i === 0) {
-      g.note('Leave **Handle** empty — it is generated from the title (“Living Room” → `living-room`). Images are paths to files that already exist under `public/images/`; the preview thumbnail updates as you type.');
+      g.note('Leave **Handle** empty — it is generated from the title (“Living Room” → `living-room`). **Upload image** opens your file picker; the sample photos used in this guide are in the project’s `public/images/` folder. You can also drag a photo onto the square preview. After the upload the URL field fills in by itself (`/uploads/collections/…webp`) and the preview shows the photo.');
       await g.shot(admin, 'New collection form filled in', { fullPage: true });
     }
     await save(admin, /create collection/i, 'Create collection');
@@ -290,13 +299,17 @@ test('walkthrough: build and test the whole store from an empty database', async
     }
     g.text('');
 
-    g.step('**Images** — click **+ Add image** once per row, then fill the source path and alt text:');
-    g.text('\n   | # | Source | Alt text |\n   |---|---|---|');
+    g.step(
+      p.images.length > 1
+        ? '**Images** — click **Upload images**, select these files together (hold ⌘/Ctrl to pick several), then replace each row’s alt text:'
+        : '**Images** — click **Upload images**, choose this file, then replace the alt text:',
+    );
+    g.text('\n   | # | File to choose | Alt text |\n   |---|---|---|');
+    await chooseFiles(admin.getByRole('button', { name: 'Upload images' }), p.images.map(([src]) => samplePath(src)));
+    await expect(admin.getByLabel(`Image ${p.images.length} source`)).toHaveValue(/^\/uploads\/products\//);
     for (const [ii, [src, alt]] of p.images.entries()) {
-      await admin.getByRole('button', { name: 'Add image' }).click();
-      await admin.getByLabel(`Image ${ii + 1} source`).fill(src);
       await admin.getByLabel(`Image ${ii + 1} alt text`).fill(alt);
-      g.text(`   | ${ii + 1} | \`${src}\` | \`${alt}\` |`);
+      g.text(`   | ${ii + 1} | \`${samplePath(src)}\` | \`${alt}\` |`);
     }
     g.text('');
 
@@ -361,8 +374,10 @@ test('walkthrough: build and test the whole store from an empty database', async
         { label: 'Subtitle', value: b.subtitle, locator: form.getByLabel('Subtitle') },
         { label: 'CTA label', value: b.cta, locator: form.getByLabel('CTA label') },
         { label: 'CTA link', value: b.href, locator: form.getByLabel('CTA link') },
-        { label: 'Desktop image URL', value: b.image, locator: form.getByLabel('Desktop image URL') },
-        { label: 'Mobile image URL', value: b.mobile ?? '', locator: form.getByLabel('Mobile image URL') },
+        { label: 'Desktop image', value: b.image, kind: 'upload', button: 'Upload image', locator: form.getByRole('button', { name: 'Desktop image URL preview — click or drop to upload' }), uploadedInto: form.getByLabel('Desktop image URL', { exact: true }) },
+        ...(b.mobile
+          ? [{ label: 'Mobile image', value: b.mobile, kind: 'upload' as const, button: 'Upload image', locator: form.getByRole('button', { name: 'Mobile image URL preview — click or drop to upload' }), uploadedInto: form.getByLabel('Mobile image URL', { exact: true }) }]
+          : [{ label: 'Mobile image', value: '', locator: form.getByLabel('Mobile image URL', { exact: true }), kind: 'none' as const }]),
         { label: 'Location', value: b.location, locator: form.getByLabel('Location'), kind: 'select' },
         { label: 'Position', value: b.position, locator: form.getByLabel('Position') },
         { label: 'Text colour', value: '#ffffff (default, leave as is)', locator: form.getByLabel('Text colour'), kind: 'none' },
@@ -443,6 +458,8 @@ test('walkthrough: build and test the whole store from an empty database', async
       await form.getByRole('button', { name: 'Add item' }).click();
       await done;
       await admin.waitForLoadState('networkidle');
+      // React clears the form once the save completes; wait for that before typing the next link.
+      await expect(form.getByLabel('Label')).toHaveValue('');
       await expect(admin.getByText('Menu saved. Storefront navigation updated.')).toBeVisible();
       g.text(`   | \`${it.label}\` | \`${it.href}\` | ${it.badge ? '`' + it.badge + '`' : '—'} | \`${it.position}\` | ${it.parent ?? '— Top level —'} | ${it.enabled === false ? '☐ **unchecked**' : '✓'} |`);
     }
@@ -458,9 +475,9 @@ test('walkthrough: build and test the whole store from an empty database', async
     '7. Pages and blog posts',
     'Pages are rich HTML content served at `/pages/<handle>`. The page with handle **contact** automatically gets the contact form underneath. Ticking **Blog post** publishes it in the blog at `/blogs/news/<handle>` instead. Unpublished pages return 404.',
   );
-  type Pg = { title: string; handle?: string; body: string; seoTitle?: string; seoDesc?: string; published?: boolean; blog?: boolean };
+  type Pg = { title: string; handle?: string; body: string; photo?: string; seoTitle?: string; seoDesc?: string; published?: boolean; blog?: boolean };
   const pages: Pg[] = [
-    { title: 'About Us', handle: 'about-us', seoTitle: 'About Interwood — Pakistan’s Largest Furniture Manufacturer', seoDesc: 'Our story: crafting furniture in Pakistan since 1974.', body: '<h2>Crafted in Pakistan since 1974</h2>\n<p>Interwood designs and manufactures furniture for homes and offices across Pakistan.</p>\n<h2>Our promise</h2>\n<ul><li>Solid, kiln-dried wood</li><li>Free delivery &amp; installation on orders over Rs. 100,000</li><li>1-year manufacturing warranty</li></ul>' },
+    { title: 'About Us', handle: 'about-us', photo: '/images/collections/living.jpg', seoTitle: 'About Interwood — Pakistan’s Largest Furniture Manufacturer', seoDesc: 'Our story: crafting furniture in Pakistan since 1974.', body: '<h2>Crafted in Pakistan since 1974</h2>\n<p>Interwood designs and manufactures furniture for homes and offices across Pakistan.</p>\n<h2>Our promise</h2>\n<ul><li>Solid, kiln-dried wood</li><li>Free delivery &amp; installation on orders over Rs. 100,000</li><li>1-year manufacturing warranty</li></ul>' },
     { title: 'Contact', handle: 'contact', body: '<p>Call <strong>+92-42-111-203-203</strong> (Mon–Sat, 9am–9pm) or send us a message using the form below.</p>' },
     { title: 'Privacy Policy', body: '<h2>Information we collect</h2>\n<p>We collect your name, phone number, email and delivery address to process your order.</p>\n<h2>How we use it</h2>\n<p>Only to confirm, deliver and support your order. We never sell your data.</p>\n<h2>Contact</h2>\n<p>Questions? Email info@interwood.pk.</p>' },
     { title: 'Terms & Conditions', handle: 'terms-conditions', body: '<h2>Orders</h2>\n<p>All orders are confirmed by phone before production.</p>\n<h2>Pricing</h2>\n<p>Prices are in Pakistani Rupees and include sales tax.</p>' },
@@ -484,6 +501,13 @@ test('walkthrough: build and test the whole store from an empty database', async
       { label: 'Published', value: p.published === false ? '☐ unchecked' : '✓ checked', locator: admin.getByLabel('Published'), kind: p.published === false ? 'uncheck' : 'check' },
       { label: 'Blog post', value: p.blog ? '✓ checked' : '☐ unchecked', locator: admin.getByLabel('Blog post'), kind: p.blog ? 'check' : 'uncheck' },
     ]);
+    if (p.photo) {
+      g.step(`Click at the very end of the **Body (HTML)** text, then click **Insert image** (under the body box) and choose \`${samplePath(p.photo)}\`.`);
+      await admin.getByLabel('Body (HTML)').press('ControlOrMeta+End');
+      await chooseFiles(admin.getByRole('button', { name: 'Insert image' }), [samplePath(p.photo)]);
+      await expect(admin.getByLabel('Body (HTML)')).toHaveValue(/<img src="\/uploads\/pages\/[^"]+" alt="Living"[^>]*\/>$/);
+      g.expect('The photo is uploaded and an `<img src="/uploads/pages/…webp" alt="Living" …/>` tag appears at the cursor. You can edit its `alt` text right in the HTML.');
+    }
     if (i === 0) await g.shot(admin, 'New page form filled in', { fullPage: true });
     await save(admin, 'Create page');
     await expect(admin.getByRole('heading', { level: 1 })).toContainText(p.title);
@@ -802,8 +826,7 @@ test('walkthrough: build and test the whole store from an empty database', async
   await expect(reviewRow).toContainText('Alexa Sofa Chair');
   g.expect('Sana Malik’s 4-star review with an amber **Pending** status.');
   await g.shot(admin, 'Pending review', { fullPage: true });
-  await g.click(reviewRow.getByRole('button', { name: /pending/i }), 'Click **Pending** to approve it.');
-  await admin.waitForLoadState('networkidle');
+  await act(reviewRow.getByRole('button', { name: /pending/i }), 'Click **Pending** to approve it.');
   await expect(admin.getByRole('row', { name: /Sana Malik/ }).getByRole('button', { name: /approved/i })).toBeVisible();
   g.expect('The status turns green **Approved** (click again to unapprove).');
   await g.goto(shopper, '/products/alexa-sofa-chair', 'In the shopper tab, open **Alexa Sofa Chair** again.');
@@ -822,8 +845,7 @@ test('walkthrough: build and test the whole store from an empty database', async
   await save(admin, 'Save product');
   await sidebar('Products');
   admin.once('dialog', (d) => d.accept());
-  await g.click(admin.getByRole('row', { name: /Prototype Dining Table/ }).getByRole('button', { name: /delete/i }), 'On **Prototype Dining Table**, click the trash icon and confirm the browser dialog.');
-  await admin.waitForLoadState('networkidle');
+  await act(admin.getByRole('row', { name: /Prototype Dining Table/ }).getByRole('button', { name: /delete/i }), 'On **Prototype Dining Table**, click the trash icon and confirm the browser dialog.');
   await expect(admin.getByText('7 products in the catalog')).toBeVisible();
   g.expect('The product is deleted: **7 products in the catalog**.');
 
@@ -846,19 +868,16 @@ test('walkthrough: build and test the whole store from an empty database', async
   g.expect('**All Products** disappears from the storefront navigation.');
 
   await sidebar('Banners');
-  await g.click(admin.getByRole('button', { name: 'Deactivate' }).nth(1), 'Click **Deactivate** on **Sleep Like Royalty**.');
-  await admin.waitForLoadState('networkidle');
+  await act(admin.getByRole('button', { name: 'Deactivate' }).nth(1), 'Click **Deactivate** on **Sleep Like Royalty**.');
   await shopper.goto('/');
   await expect(shopper.getByRole('region', { name: 'Featured promotions' }).getByText('Sleep Like Royalty')).toHaveCount(0);
   g.expect('The hero slider now has a single slide.');
 
   await sidebar('Pages');
-  await g.click(admin.getByRole('row', { name: /About Us/ }).getByRole('button', { name: 'Unpublish' }), 'On **About Us**, click **Unpublish**.');
-  await admin.waitForLoadState('networkidle');
+  await act(admin.getByRole('row', { name: /About Us/ }).getByRole('button', { name: 'Unpublish' }), 'On **About Us**, click **Unpublish**.');
   expect((await shopper.goto('/pages/about-us'))?.status()).toBe(404);
   g.expect('`/pages/about-us` returns 404 until you click **Publish** again.');
-  await admin.getByRole('row', { name: /About Us/ }).getByRole('button', { name: 'Publish' }).click();
-  await admin.waitForLoadState('networkidle');
+  await act(admin.getByRole('row', { name: /About Us/ }).getByRole('button', { name: 'Publish' }));
   g.step('Click **Publish** to bring it back.');
   await g.shot(admin, 'Pages list after publishing again', { fullPage: true });
 

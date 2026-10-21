@@ -6,18 +6,25 @@ A faithful full-stack clone of the original site (a rebranded furniture store): 
 
 - **Next.js 15** (App Router, TypeScript, server components + server actions)
 - **Tailwind CSS 3.4** — teal palette (`#108474`), Nunito + Work Sans
-- **Prisma + SQLite** (`prisma/dev.db`) — swappable to Postgres by changing `datasource`
+- **Prisma + MySQL/MariaDB** — local database via Docker (`docker-compose.yml`), Hostinger MySQL in production; migrations in `prisma/migrations/`
+- **Image uploads** — admin uploads are converted to WebP with `sharp`, stored in `UPLOAD_DIR` and served from `/uploads/…` with immutable cache headers (CDN-friendly)
 - **NextAuth-free auth** — HMAC-signed httpOnly cookie sessions (admin)
 
 ## Quickstart
 
 ```bash
+cp .env.example .env   # then set SESSION_SECRET / ADMIN_PASSWORD
 npm install
-npm run db:push        # create schema
-npm run db:seed        # seed from data/raw (scraped source catalog, rebranded to Cozy Furnitures)
-npm run build
-npm start              # http://localhost:3000
+npm run db:up          # local MariaDB in Docker (port 3307)
+npm run build          # generates Prisma client, applies migrations, builds
+npm start              # http://localhost:3000 — sign in at /admin with ADMIN_EMAIL / ADMIN_PASSWORD
 ```
+
+On an empty database the first sign-in with `ADMIN_EMAIL` / `ADMIN_PASSWORD` creates the admin
+(or run `npm run db:admin`). `npm run db:seed` loads the scraped demo catalog instead. Start over with
+`npm run db:reset` (drops all data) and `rm -rf uploads`.
+
+Deploying: see [docs/DEPLOY-HOSTINGER.md](docs/DEPLOY-HOSTINGER.md).
 
 Product/collection/banner images are already downloaded under `public/images/` (≈470 MB, 1,648 files) and git-tracked.
 

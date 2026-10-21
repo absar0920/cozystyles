@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { ADMIN_EMAIL, adminNav, loginAsAdmin, newContext, shot, submit, watchErrors } from './helpers';
+import { ADMIN_EMAIL, adminNav, chooseFiles, expectImagesLoaded, loginAsAdmin, newContext, sample, shot, submit, uploaded, watchErrors } from './helpers';
 
 // Tests run in file order on one worker and build on each other's data; a failure restarts the
 // worker (re-running beforeAll) but does not skip the rest, so every finding gets reported.
@@ -82,7 +82,9 @@ async function createCollection(c: NewCollection) {
   await page.getByRole('link', { name: /new collection/i }).click();
   await page.getByLabel('Title').fill(c.title);
   await page.getByLabel('Description').fill(c.description);
-  await page.getByPlaceholder(/images\/collections/).fill(c.image);
+  // Upload the collection photo through the file dialog; the URL field fills in by itself.
+  await chooseFiles(page, page.getByRole('button', { name: 'Upload image', exact: true }), sample(c.image));
+  await expect(page.getByPlaceholder(/images\/collections/)).toHaveValue(uploaded('collections'));
   if (c.parent) await page.getByLabel('Parent collection').selectOption({ label: c.parent });
   if (c.kind) await page.getByLabel('Kind').selectOption({ label: c.kind });
   await page.getByLabel('Position').fill(c.position);
@@ -104,6 +106,16 @@ test('collections: create a department → category tree', async () => {
   const sofasRow = page.getByRole('row', { name: /Sofas/ });
   await expect(sofasRow).toContainText('Living Room');
   await shot(page, '04-collections-list');
+});
+
+test('uploads: non-images are rejected with a clear message', async () => {
+  await adminNav(page, 'Collections');
+  await page.getByRole('link', { name: /new collection/i }).click();
+  // A text file named .jpg: the server checks the actual bytes, not the extension.
+  await chooseFiles(page, page.getByRole('button', { name: 'Upload image', exact: true }), 'e2e/fixtures/fake-photo.jpg');
+  await expect(page.getByText('fake-photo.jpg is not a supported image')).toBeVisible();
+  await expect(page.getByPlaceholder(/images\/collections/)).toHaveValue('');
+  await shot(page, '04b-upload-rejected');
 });
 
 type NewProduct = {
@@ -140,10 +152,11 @@ async function createProduct(p: NewProduct) {
     if (v.compareAt) await page.getByLabel(`Variant ${n} compare-at price`).fill(v.compareAt);
     await page.getByLabel(`Variant ${n} inventory`).fill(v.inventory);
   }
-  for (const [i, im] of p.images.entries()) {
-    await page.getByRole('button', { name: 'Add image' }).click();
-    await page.getByLabel(`Image ${i + 1} source`).fill(im.src);
-    await page.getByLabel(`Image ${i + 1} alt text`).fill(im.alt);
+  if (p.images.length > 0) {
+    // Select all photos at once in the file dialog; each becomes a row once uploaded.
+    await chooseFiles(page, page.getByRole('button', { name: 'Upload images' }), p.images.map((im) => sample(im.src)));
+    await expect(page.getByLabel(`Image ${p.images.length} source`)).toHaveValue(uploaded('products'));
+    for (const [i, im] of p.images.entries()) await page.getByLabel(`Image ${i + 1} alt text`).fill(im.alt);
   }
   for (const c of p.collections) await page.getByRole('checkbox', { name: c, exact: true }).check();
   if (p.options) await page.locator('textarea[name="options"]').fill(p.options);
@@ -268,4 +281,36 @@ test('collections: product counts reflect the assignments', async () => {
   await expect(page.getByRole('row', { name: /^Sofas/ })).toContainText('2');
   await expect(page.getByRole('row', { name: /^Living Room/ })).toContainText('3');
   await expect(page.getByRole('row', { name: /^Office Chairs/ })).toContainText('1');
+});
+
+test('uploads: replace a product photo by clicking its thumbnail', async () => {
+  await adminNav(page, 'Products');
+  await page.getByRole('row', { name: /Aeon Manager Chair/ }).getByRole('link', { name: 'Edit' }).click();
+  const src = page.getByLabel('Image 1 source');
+  const before = await src.inputValue();
+  await chooseFiles(page, page.getByRole('button', { name: 'Replace image 1' }), sample('/images/products/alexa-sofa-chair-2.jpg'));
+  await expect(src).not.toHaveValue(before);
+  await expect(src).toHaveValue(uploaded('products'));
+  const after = await src.inputValue();
+  await submit(page, 'Save product');
+  await expect(page.getByText('Product saved successfully.')).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel('Image 1 source')).toHaveValue(after);
+});
+
+test('uploads: the storefront shows uploaded photos, cacheable for a CDN', async ({ browser }) => {
+  const shopper = await (await newContext(browser)).newPage();
+  await shopper.goto('/products/alexa-sofa-chair');
+  await expectImagesLoaded(shopper, 'main img[src^="/uploads/products/"]');
+  await shopper.goto('/collections');
+  await expectImagesLoaded(shopper, 'main img[src^="/uploads/collections/"]');
+
+  const src = await shopper.locator('main img[src^="/uploads/collections/"]').first().getAttribute('src');
+  const res = await shopper.goto(src!);
+  expect(res?.status()).toBe(200);
+  expect(res?.headers()['content-type']).toBe('image/webp');
+  expect(res?.headers()['cache-control']).toContain('immutable');
+  // Paths outside the upload folder are never served.
+  expect((await shopper.goto('/uploads/..%2f..%2fpackage.json'))?.status()).toBe(404);
+  await shopper.context().close();
 });

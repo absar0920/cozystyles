@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { adminNav, loginAsAdmin, newContext, shot, submit, watchErrors } from './helpers';
+import { adminNav, clickAction, loginAsAdmin, newContext, shot, submit, watchErrors } from './helpers';
 
 // Admin follow-up on what shoppers did in 03-storefront, then edits/deletes and their storefront effect.
 test.describe.configure({ mode: 'default' });
@@ -79,10 +79,8 @@ test('messages: read the contact form submission and close it', async () => {
   await expect(row).toContainText('Sales');
   await row.getByRole('link', { name: 'Expand message' }).click();
   await expect(page.getByText('Do you make wardrobes in custom sizes? I need a 7ft one.')).toBeVisible();
-  await page.getByRole('button', { name: 'Mark as Read' }).first().click();
-  await page.waitForLoadState('networkidle');
-  await page.getByRole('button', { name: 'Mark as Closed' }).first().click();
-  await page.waitForLoadState('networkidle');
+  await clickAction(page, page.getByRole('button', { name: 'Mark as Read' }).first());
+  await clickAction(page, page.getByRole('button', { name: 'Mark as Closed' }).first());
   await expect(page.getByRole('link', { name: /Closed 1/ })).toBeVisible();
   await shot(page, '43-messages');
 });
@@ -104,8 +102,7 @@ test('reviews: a shopper writes a review, the admin approves it, it appears on t
   await adminNav(page, 'Reviews');
   const row = page.getByRole('row', { name: /Sana Malik/ });
   await expect(row).toContainText('Alexa Sofa Chair');
-  await row.getByRole('button', { name: /pending/i }).click();
-  await page.waitForLoadState('networkidle');
+  await clickAction(page, row.getByRole('button', { name: /pending/i }));
   await expect(page.getByRole('row', { name: /Sana Malik/ }).getByRole('button', { name: /approved/i })).toBeVisible();
   await shot(page, '44-reviews-approved');
 
@@ -139,8 +136,7 @@ test('products: hiding a product (draft) removes it from the storefront', async 
 test('products: delete a product after confirming', async () => {
   await adminNav(page, 'Products');
   page.once('dialog', (d) => d.accept());
-  await page.getByRole('row', { name: /Secret Prototype Table/ }).getByRole('button', { name: /delete/i }).click();
-  await page.waitForLoadState('networkidle');
+  await clickAction(page, page.getByRole('row', { name: /Secret Prototype Table/ }).getByRole('button', { name: /delete/i }));
   await expect(page.getByRole('row', { name: /Secret Prototype Table/ })).toHaveCount(0);
   await expect(page.getByText('4 products in the catalog')).toBeVisible();
 });
@@ -160,16 +156,14 @@ test('menus: disable a menu item and it disappears from the header', async () =>
   await page.locator('summary').filter({ hasText: '/collections/all' }).click();
   const item = page.locator('details[open]');
   await item.getByLabel(/^Enabled/).uncheck();
-  await item.getByRole('button', { name: 'Save item' }).click();
-  await page.waitForLoadState('networkidle');
+  await clickAction(page, item.getByRole('button', { name: 'Save item' }));
   await shopper.goto('/');
   await expect(shopper.locator('header').getByRole('link', { name: 'All Products', exact: true })).toHaveCount(0);
 });
 
 test('banners: deactivate a hero banner', async () => {
   await adminNav(page, 'Banners');
-  await page.getByRole('button', { name: 'Deactivate' }).nth(1).click();
-  await page.waitForLoadState('networkidle');
+  await clickAction(page, page.getByRole('button', { name: 'Deactivate' }).nth(1));
   await shopper.goto('/');
   const hero = shopper.getByRole('region', { name: 'Featured promotions' });
   await expect(hero.getByRole('heading', { name: 'Winter Living Sale' })).toBeVisible();
@@ -178,8 +172,7 @@ test('banners: deactivate a hero banner', async () => {
 
 test('pages: unpublish and delete pages', async () => {
   await adminNav(page, 'Pages');
-  await page.getByRole('row', { name: /About Us/ }).getByRole('button', { name: 'Unpublish' }).click();
-  await page.waitForLoadState('networkidle');
+  await clickAction(page, page.getByRole('row', { name: /About Us/ }).getByRole('button', { name: 'Unpublish' }));
   expect((await shopper.goto('/pages/about-us'))?.status()).toBe(404);
 
   await page.getByRole('row', { name: /Shipping Policy/ }).getByRole('link', { name: 'Edit' }).click();

@@ -6,20 +6,18 @@ This guide takes the store from an **empty database** to a fully working shop **
 
 ## 0. Start from scratch
 
-The only step that can't be done in the browser is creating the **first admin login**: the app has no sign-up screen. `npm run db:admin` creates that one user from `ADMIN_EMAIL` / `ADMIN_PASSWORD` in `.env`. Everything else (settings, categories, products, banners, menus, pages, orders, messages, reviews) starts empty.
+Nothing has to be created outside the browser. While the database has no admin, the **first sign-in** with `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env` creates the admin account. Everything else (settings, categories, products and their photos, banners, menus, pages, orders, messages, reviews) starts empty.
 
 ```bash
 cd ~/projects/personal/interwood
 npm install                      # first time only
+npm run db:up                    # start the local MySQL in Docker (first time / after a reboot)
 
-# 1. Delete the database and recreate the empty tables
-rm -f prisma/dev.db
-npm run db:push
+# 1. Delete all data and uploaded photos, recreate the empty tables
+npm run db:reset
+rm -rf uploads
 
-# 2. Create the admin login (the only non-browser step)
-npm run db:admin                 # → "Admin ready: <ADMIN_EMAIL>"
-
-# 3. Build and start the app
+# 2. Build and start the app
 npm run build
 npm start                        # → http://localhost:3000
 ```
@@ -34,7 +32,7 @@ npm start                        # → http://localhost:3000
 **Tips**
 
 - Use **two browser windows**: a normal one for the admin and a **private/incognito** one for the shopper, so the admin login and the shopper's cart stay separate.
-- Images are entered as **paths to files that already exist** in `public/images/` (e.g. `/images/products/alexa-sofa-chair-1.jpg`) or as full `https://` URLs. There is no file upload.
+- **Photos are uploaded from your computer.** This guide uses sample photos that ship with the project in `public/images/`: when the file picker opens, go to the project folder → `public` → `images`. Every upload is converted to WebP, stored in `uploads/` and its URL (`/uploads/…`) is filled in for you. Pasting an existing image URL into the field still works too.
 - Prices are whole Pakistani rupees: type `45000`, not `45,000.00`.
 - Order numbers are assigned in sequence (`IW-100001`, `IW-100002`, …). If you have placed other orders, yours will differ from the screenshots.
 
@@ -250,7 +248,7 @@ Collections group products. They can be nested (a **parent** department such as 
    | Title | `Living Room` |
    | Handle (URL slug) | _(leave empty)_ |
    | Description | `Sofas, coffee tables and accent chairs for your lounge.` |
-   | Image (URL field) | `/images/collections/living.jpg` |
+   | Image | click **Upload image** and choose `public/images/collections/living.jpg` |
    | Parent collection | `— None (top level) —` |
    | Kind | `Room` |
    | Position | `1` |
@@ -258,7 +256,7 @@ Collections group products. They can be nested (a **parent** department such as 
    | Featured on homepage | `✓ checked` |
 
 
-> ℹ️ Leave **Handle** empty — it is generated from the title (“Living Room” → `living-room`). Images are paths to files that already exist under `public/images/`; the preview thumbnail updates as you type.
+> ℹ️ Leave **Handle** empty — it is generated from the title (“Living Room” → `living-room`). **Upload image** opens your file picker; the sample photos used in this guide are in the project’s `public/images/` folder. You can also drag a photo onto the square preview. After the upload the URL field fills in by itself (`/uploads/collections/…webp`) and the preview shows the photo.
 
 
    ![New collection form filled in](screenshots/010-new-collection-form-filled-in.jpg)
@@ -284,7 +282,7 @@ Collections group products. They can be nested (a **parent** department such as 
    | Title | `Sofas` |
    | Handle (URL slug) | _(leave empty)_ |
    | Description | `Two, three and five seater sofas in fabric and leather.` |
-   | Image (URL field) | `/images/collections/conte.webp` |
+   | Image | click **Upload image** and choose `public/images/collections/conte.webp` |
    | Parent collection | `Living Room` |
    | Kind | `Category` |
    | Position | `1` |
@@ -304,7 +302,7 @@ Collections group products. They can be nested (a **parent** department such as 
    | Title | `Coffee Tables` |
    | Handle (URL slug) | _(leave empty)_ |
    | Description | `Centre and coffee tables in solid wood and glass.` |
-   | Image (URL field) | `/images/collections/antonin.webp` |
+   | Image | click **Upload image** and choose `public/images/collections/antonin.webp` |
    | Parent collection | `Living Room` |
    | Kind | `Category` |
    | Position | `2` |
@@ -324,7 +322,7 @@ Collections group products. They can be nested (a **parent** department such as 
    | Title | `Bedroom` |
    | Handle (URL slug) | _(leave empty)_ |
    | Description | `Beds, bedside tables and dressing tables.` |
-   | Image (URL field) | `/images/collections/bedroom.jpg` |
+   | Image | click **Upload image** and choose `public/images/collections/bedroom.jpg` |
    | Parent collection | `— None (top level) —` |
    | Kind | `Room` |
    | Position | `2` |
@@ -344,7 +342,7 @@ Collections group products. They can be nested (a **parent** department such as 
    | Title | `Beds` |
    | Handle (URL slug) | _(leave empty)_ |
    | Description | `King and queen size beds crafted in solid wood.` |
-   | Image (URL field) | `/images/collections/king-size-beds.jpg` |
+   | Image | click **Upload image** and choose `public/images/collections/king-size-beds.jpg` |
    | Parent collection | `Bedroom` |
    | Kind | `Category` |
    | Position | `1` |
@@ -364,7 +362,7 @@ Collections group products. They can be nested (a **parent** department such as 
    | Title | `Bedside Tables` |
    | Handle (URL slug) | _(leave empty)_ |
    | Description | `Matching side tables with storage drawers.` |
-   | Image (URL field) | `/images/collections/bed-side-tables.jpg` |
+   | Image | click **Upload image** and choose `public/images/collections/bed-side-tables.jpg` |
    | Parent collection | `Bedroom` |
    | Kind | `Category` |
    | Position | `2` |
@@ -384,7 +382,7 @@ Collections group products. They can be nested (a **parent** department such as 
    | Title | `Office Chairs` |
    | Handle (URL slug) | _(leave empty)_ |
    | Description | `Ergonomic manager, executive and visitor chairs.` |
-   | Image (URL field) | `/images/collections/office-chairs.webp` |
+   | Image | click **Upload image** and choose `public/images/collections/office-chairs.webp` |
    | Parent collection | `— None (top level) —` |
    | Kind | `Category` |
    | Position | `3` |
@@ -404,7 +402,7 @@ Collections group products. They can be nested (a **parent** department such as 
    | Title | `Sale` |
    | Handle (URL slug) | _(leave empty)_ |
    | Description | `Limited-time offers across the range.` |
-   | Image (URL field) | `/images/collections/furniture.jpg` |
+   | Image | click **Upload image** and choose `public/images/collections/furniture.jpg` |
    | Parent collection | `— None (top level) —` |
    | Kind | `Helper` |
    | Position | `9` |
@@ -469,12 +467,12 @@ Each product has basics, an HTML description, one or more **variants** (each wit
    |---|---|---|---|---|---|---|
    | 1 | `Default Title` | `ALX-01` | — | `45000` | `52000` | `12` |
 
-5. **Images** — click **+ Add image** once per row, then fill the source path and alt text:
+5. **Images** — click **Upload images**, select these files together (hold ⌘/Ctrl to pick several), then replace each row’s alt text:
 
-   | # | Source | Alt text |
+   | # | File to choose | Alt text |
    |---|---|---|
-   | 1 | `/images/products/alexa-sofa-chair-1.jpg` | `Alexa Sofa Chair front` |
-   | 2 | `/images/products/alexa-sofa-chair-2.jpg` | `Alexa Sofa Chair side` |
+   | 1 | `public/images/products/alexa-sofa-chair-1.jpg` | `Alexa Sofa Chair front` |
+   | 2 | `public/images/products/alexa-sofa-chair-2.jpg` | `Alexa Sofa Chair side` |
 
 6. **Collections** (right column) — tick: **Living Room**, **Sofas**, **Sale**.
 7. Click **Create product**.
@@ -509,13 +507,13 @@ Each product has basics, an HTML description, one or more **variants** (each wit
    | 1 | `3-Seater` | `ANT-3` | `3-Seater` | `120000` | `140000` | `5` |
    | 2 | `2-Seater` | `ANT-2` | `2-Seater` | `85000` | — | `8` |
 
-5. **Images** — click **+ Add image** once per row, then fill the source path and alt text:
+5. **Images** — click **Upload images**, select these files together (hold ⌘/Ctrl to pick several), then replace each row’s alt text:
 
-   | # | Source | Alt text |
+   | # | File to choose | Alt text |
    |---|---|---|
-   | 1 | `/images/products/antonin-sofa-1.jpg` | `Antonin Sofa` |
-   | 2 | `/images/products/antonin-sofa-2.webp` | `Antonin Sofa detail` |
-   | 3 | `/images/products/antonin-sofa-3.webp` | `Antonin Sofa side` |
+   | 1 | `public/images/products/antonin-sofa-1.jpg` | `Antonin Sofa` |
+   | 2 | `public/images/products/antonin-sofa-2.webp` | `Antonin Sofa detail` |
+   | 3 | `public/images/products/antonin-sofa-3.webp` | `Antonin Sofa side` |
 
 6. **Collections** (right column) — tick: **Living Room**, **Sofas**.
 
@@ -548,12 +546,12 @@ Each product has basics, an HTML description, one or more **variants** (each wit
    |---|---|---|---|---|---|---|
    | 1 | `Default Title` | `ANT-CT` | — | `32000` | — | `10` |
 
-5. **Images** — click **+ Add image** once per row, then fill the source path and alt text:
+5. **Images** — click **Upload images**, select these files together (hold ⌘/Ctrl to pick several), then replace each row’s alt text:
 
-   | # | Source | Alt text |
+   | # | File to choose | Alt text |
    |---|---|---|
-   | 1 | `/images/products/antonin-center-table-1.jpg` | `Antonin Center Table` |
-   | 2 | `/images/products/antonin-center-table-2.jpg` | `Antonin Center Table top` |
+   | 1 | `public/images/products/antonin-center-table-1.jpg` | `Antonin Center Table` |
+   | 2 | `public/images/products/antonin-center-table-2.jpg` | `Antonin Center Table top` |
 
 6. **Collections** (right column) — tick: **Living Room**, **Coffee Tables**.
 7. Click **Create product**.
@@ -579,12 +577,12 @@ Each product has basics, an HTML description, one or more **variants** (each wit
    |---|---|---|---|---|---|---|
    | 1 | `Default Title` | `ALP-K` | — | `150000` | `175000` | `3` |
 
-5. **Images** — click **+ Add image** once per row, then fill the source path and alt text:
+5. **Images** — click **Upload images**, select these files together (hold ⌘/Ctrl to pick several), then replace each row’s alt text:
 
-   | # | Source | Alt text |
+   | # | File to choose | Alt text |
    |---|---|---|
-   | 1 | `/images/products/alpen-bed-1.jpg` | `Alpen King Size Bed` |
-   | 2 | `/images/products/alpen-bed-2.png` | `Alpen bed headboard` |
+   | 1 | `public/images/products/alpen-bed-1.jpg` | `Alpen King Size Bed` |
+   | 2 | `public/images/products/alpen-bed-2.png` | `Alpen bed headboard` |
 
 6. **Collections** (right column) — tick: **Bedroom**, **Beds**.
 7. Click **Create product**.
@@ -610,12 +608,12 @@ Each product has basics, an HTML description, one or more **variants** (each wit
    |---|---|---|---|---|---|---|
    | 1 | `Default Title` | `AURA-BT` | — | `18500` | — | `20` |
 
-5. **Images** — click **+ Add image** once per row, then fill the source path and alt text:
+5. **Images** — click **Upload images**, select these files together (hold ⌘/Ctrl to pick several), then replace each row’s alt text:
 
-   | # | Source | Alt text |
+   | # | File to choose | Alt text |
    |---|---|---|
-   | 1 | `/images/products/aura-bedside-table-1.jpg` | `Aura Bedside Table` |
-   | 2 | `/images/products/aura-bedside-table-2.jpg` | `Aura Bedside Table open` |
+   | 1 | `public/images/products/aura-bedside-table-1.jpg` | `Aura Bedside Table` |
+   | 2 | `public/images/products/aura-bedside-table-2.jpg` | `Aura Bedside Table open` |
 
 6. **Collections** (right column) — tick: **Bedroom**, **Bedside Tables**.
 7. Click **Create product**.
@@ -641,11 +639,11 @@ Each product has basics, an HTML description, one or more **variants** (each wit
    |---|---|---|---|---|---|---|
    | 1 | `Black` | `AEON-BLK` | — | `38500` | — | `0` |
 
-5. **Images** — click **+ Add image** once per row, then fill the source path and alt text:
+5. **Images** — click **Upload images**, choose this file, then replace the alt text:
 
-   | # | Source | Alt text |
+   | # | File to choose | Alt text |
    |---|---|---|
-   | 1 | `/images/products/aeon-manager-chair-black-1.jpg` | `Aeon Manager Chair` |
+   | 1 | `public/images/products/aeon-manager-chair-black-1.jpg` | `Aeon Manager Chair` |
 
 6. **Collections** (right column) — tick: **Office Chairs**.
 7. Click **Create product**.
@@ -673,12 +671,12 @@ Each product has basics, an HTML description, one or more **variants** (each wit
    | 1 | `With Headrest` | `APX-HR` | `With Headrest` | `42000` | `48000` | `6` |
    | 2 | `Without Headrest` | `APX-NO` | `Without Headrest` | `37000` | `42000` | `9` |
 
-5. **Images** — click **+ Add image** once per row, then fill the source path and alt text:
+5. **Images** — click **Upload images**, select these files together (hold ⌘/Ctrl to pick several), then replace each row’s alt text:
 
-   | # | Source | Alt text |
+   | # | File to choose | Alt text |
    |---|---|---|
-   | 1 | `/images/products/apex-manager-chair-with-headrest-1.jpg` | `Apex chair with headrest` |
-   | 2 | `/images/products/apex-manager-chair-without-headrest-1.jpg` | `Apex chair without headrest` |
+   | 1 | `public/images/products/apex-manager-chair-with-headrest-1.jpg` | `Apex chair with headrest` |
+   | 2 | `public/images/products/apex-manager-chair-without-headrest-1.jpg` | `Apex chair without headrest` |
 
 6. **Collections** (right column) — tick: **Office Chairs**.
 7. Click **Create product**.
@@ -704,11 +702,11 @@ Each product has basics, an HTML description, one or more **variants** (each wit
    |---|---|---|---|---|---|---|
    | 1 | `Default Title` | `PROTO-DT` | — | `99000` | — | `1` |
 
-5. **Images** — click **+ Add image** once per row, then fill the source path and alt text:
+5. **Images** — click **Upload images**, choose this file, then replace the alt text:
 
-   | # | Source | Alt text |
+   | # | File to choose | Alt text |
    |---|---|---|
-   | 1 | `/images/products/arbour-dining-table-set-1.jpg` | `Prototype dining table` |
+   | 1 | `public/images/products/arbour-dining-table-set-1.jpg` | `Prototype dining table` |
 
 6. **Collections** (right column) — tick: **Living Room**.
 7. Click **Create product**.
@@ -766,8 +764,8 @@ Banners appear on the home page. **Home — Hero slider** banners rotate at the 
    | Subtitle | `Up to 20% off sofas and accent chairs` |
    | CTA label | `Shop Living Room` |
    | CTA link | `/collections/living-room` |
-   | Desktop image URL | `/images/collections/living.jpg` |
-   | Mobile image URL | `/images/products/antonin-sofa-1.jpg` |
+   | Desktop image | click **Upload image** and choose `public/images/collections/living.jpg` |
+   | Mobile image | click **Upload image** and choose `public/images/products/antonin-sofa-1.jpg` |
    | Location | `Home — Hero slider` |
    | Position | `0` |
    | Text colour | `#ffffff (default, leave as is)` |
@@ -794,8 +792,8 @@ Banners appear on the home page. **Home — Hero slider** banners rotate at the 
    | Subtitle | `King size beds, crafted in solid wood` |
    | CTA label | `Shop Bedroom` |
    | CTA link | `/collections/bedroom` |
-   | Desktop image URL | `/images/collections/bedroom.jpg` |
-   | Mobile image URL | _(leave empty)_ |
+   | Desktop image | click **Upload image** and choose `public/images/collections/bedroom.jpg` |
+   | Mobile image | _(leave empty)_ |
    | Location | `Home — Hero slider` |
    | Position | `1` |
    | Text colour | `#ffffff (default, leave as is)` |
@@ -815,8 +813,8 @@ Banners appear on the home page. **Home — Hero slider** banners rotate at the 
    | Subtitle | `Hidden until it is activated` |
    | CTA label | `Preview` |
    | CTA link | `/` |
-   | Desktop image URL | `/images/collections/dining.jpg` |
-   | Mobile image URL | _(leave empty)_ |
+   | Desktop image | click **Upload image** and choose `public/images/collections/dining.jpg` |
+   | Mobile image | _(leave empty)_ |
    | Location | `Home — Hero slider` |
    | Position | `2` |
    | Text colour | `#ffffff (default, leave as is)` |
@@ -836,8 +834,8 @@ Banners appear on the home page. **Home — Hero slider** banners rotate at the 
    | Subtitle | `Ergonomic chairs for long workdays` |
    | CTA label | `Shop Office Chairs` |
    | CTA link | `/collections/office-chairs` |
-   | Desktop image URL | `/images/products/apex-manager-chair-with-headrest-1.jpg` |
-   | Mobile image URL | _(leave empty)_ |
+   | Desktop image | click **Upload image** and choose `public/images/products/apex-manager-chair-with-headrest-1.jpg` |
+   | Mobile image | _(leave empty)_ |
    | Location | `Home — Promo strip 1` |
    | Position | `0` |
    | Text colour | `#ffffff (default, leave as is)` |
@@ -857,8 +855,8 @@ Banners appear on the home page. **Home — Hero slider** banners rotate at the 
    | Subtitle | `Delivery & installation included on bigger orders` |
    | CTA label | `Browse All` |
    | CTA link | `/collections/all` |
-   | Desktop image URL | `/images/collections/furniture.jpg` |
-   | Mobile image URL | _(leave empty)_ |
+   | Desktop image | click **Upload image** and choose `public/images/collections/furniture.jpg` |
+   | Mobile image | _(leave empty)_ |
    | Location | `Home — Promo strip 2` |
    | Position | `0` |
    | Text colour | `#ffffff (default, leave as is)` |
@@ -982,11 +980,15 @@ Pages are rich HTML content served at `/pages/<handle>`. The page with handle **
    | Published | `✓ checked` |
    | Blog post | `☐ unchecked` |
 
+4. Click at the very end of the **Body (HTML)** text, then click **Insert image** (under the body box) and choose `public/images/collections/living.jpg`.
+
+> ✅ **Expected:** The photo is uploaded and an `<img src="/uploads/pages/…webp" alt="Living" …/>` tag appears at the cursor. You can edit its `alt` text right in the HTML.
+
 
    ![New page form filled in](screenshots/021-new-page-form-filled-in.jpg)
    <sub>Screenshot 21: New page form filled in</sub>
 
-4. Click **Create page**.
+5. Click **Create page**.
 
 > ✅ **Expected:** The page is created and its edit screen shows the public URL (here `/pages/about-us`).
 
@@ -1811,8 +1813,8 @@ Open the storefront on a phone, or use your browser’s device toolbar (e.g. Chr
 ## Appendix C — Known limitations
 
 - **No customer accounts.** The person icon in the header opens a login page, but it is only a placeholder; customers track orders with order number + phone instead.
-- **First admin user** must be created with `npm run db:admin`; there is no admin sign-up or user management screen.
-- **No image upload**: images are paths under `public/images/` or external URLs.
+- **One admin account**: created on the first sign-in from `ADMIN_EMAIL` / `ADMIN_PASSWORD` (or `npm run db:admin`); there is no screen for adding more admins.
+- **Uploaded photos are not deleted** when you remove them from a product, collection, banner or page; the file stays in `uploads/` (harmless, but it uses disk space).
 - **Card / Installments** are recorded as the chosen payment method only; no payment gateway is connected.
 - **Newsletter** sign-ups are stored as messages in the inbox (no mailing-list integration).
 - Product form errors detected **only by the server** (e.g. invalid Options JSON) reload the form and clear unsaved changes; price/stock mistakes are caught in the browser first.
@@ -1820,9 +1822,9 @@ Open the storefront on a phone, or use your browser’s device toolbar (e.g. Chr
 ## Regenerating this guide
 
 ```bash
-rm -f prisma/dev.db && npm run db:push && npm run db:admin
+npm run db:up && npm run db:reset && rm -rf uploads
 npm run build && npx next start -p 3100     # the generator expects port 3100
 npm run docs:walkthrough                    # rewrites docs/walkthrough/README.md + screenshots/
 ```
 
-The automated regression suite (44 tests, same "browser only" rules) runs with `npm run test:e2e` against the same kind of fresh database.
+The automated regression suite (47 tests, same "browser only" rules) runs with `npm run test:e2e` against the same kind of fresh database.

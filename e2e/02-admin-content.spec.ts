@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { adminNav, loginAsAdmin, newContext, shot, submit, watchErrors } from './helpers';
+import { adminNav, chooseFiles, clickAction, expectImagesLoaded, loginAsAdmin, newContext, sample, shot, submit, uploaded, watchErrors } from './helpers';
 
 // Tests run in file order on one worker and build on each other's data; a failure restarts the
 // worker (re-running beforeAll) but does not skip the rest, so every finding gets reported.
@@ -36,14 +36,20 @@ async function createBanner(b: NewBanner) {
   await form.getByLabel('Subtitle').fill(b.subtitle);
   await form.getByLabel('CTA label').fill(b.ctaLabel);
   await form.getByLabel('CTA link').fill(b.href);
-  await form.getByLabel('Desktop image URL').fill(b.image);
-  if (b.mobileImage) await form.getByLabel('Mobile image URL').fill(b.mobileImage);
+  await chooseFiles(page, form.getByRole('button', { name: 'Desktop image URL preview — click or drop to upload' }), sample(b.image));
+  await expect(form.getByLabel('Desktop image URL', { exact: true })).toHaveValue(uploaded('banners'));
+  if (b.mobileImage) {
+    await chooseFiles(page, form.getByRole('button', { name: 'Mobile image URL preview — click or drop to upload' }), sample(b.mobileImage));
+    await expect(form.getByLabel('Mobile image URL', { exact: true })).toHaveValue(uploaded('banners'));
+  }
   if (b.location) await form.getByLabel('Location').selectOption({ label: b.location });
   await form.getByLabel('Position').fill(b.position);
   await form.getByLabel(/^Active/).setChecked(b.active ?? true);
   await form.getByRole('button', { name: 'Create banner' }).click();
   await page.waitForLoadState('networkidle');
   await expect(page.getByText('Banner saved. Storefront updated.')).toBeVisible();
+  // The add form starts blank again for the next banner.
+  await expect(page.locator('form').filter({ has: page.getByRole('button', { name: 'Create banner' }) }).getByLabel('Desktop image URL', { exact: true })).toHaveValue('');
 }
 
 test('banners: hero slides and a promo strip', async () => {
@@ -80,8 +86,9 @@ async function addMenuItems(location: string, items: NewMenuItem[]) {
     await form.getByLabel('Position').fill(item.position);
     if (item.parent) await form.getByLabel('Parent').selectOption({ label: item.parent });
     await form.getByLabel(/^Enabled/).setChecked(item.enabled ?? true);
-    await form.getByRole('button', { name: 'Add item' }).click();
-    await page.waitForLoadState('networkidle');
+    await clickAction(page, form.getByRole('button', { name: 'Add item' }));
+    // React clears the form once the save completes; wait for that before typing the next link.
+    await expect(form.getByLabel('Label')).toHaveValue('');
     await expect(page.getByText('Menu saved. Storefront navigation updated.')).toBeVisible();
     await expect(page.locator('summary').filter({ hasText: item.href }).first()).toBeVisible();
   }
@@ -120,7 +127,7 @@ test('menus: top bar and footer columns', async () => {
   ]);
 });
 
-type NewPage = { title: string; handle?: string; body: string; seoTitle?: string; seoDescription?: string; published?: boolean; blog?: boolean };
+type NewPage = { title: string; handle?: string; body: string; photo?: string; seoTitle?: string; seoDescription?: string; published?: boolean; blog?: boolean };
 
 async function createPage(p: NewPage) {
   await adminNav(page, 'Pages');
@@ -128,6 +135,12 @@ async function createPage(p: NewPage) {
   await page.getByLabel('Title', { exact: true }).fill(p.title);
   if (p.handle) await page.getByLabel('Handle').fill(p.handle);
   await page.getByLabel('Body (HTML)').fill(p.body);
+  if (p.photo) {
+    // "Insert image" uploads the photo and drops an <img> tag at the cursor (end of the body here).
+    await page.getByLabel('Body (HTML)').press('End');
+    await chooseFiles(page, page.getByRole('button', { name: 'Insert image' }), sample(p.photo));
+    await expect(page.getByLabel('Body (HTML)')).toHaveValue(/<img src="\/uploads\/pages\/\d{4}\/\d{2}\/[^"]+\.webp" alt="[^"]*" width="\d+" height="\d+" loading="lazy" \/>$/);
+  }
   if (p.seoTitle) await page.getByLabel('SEO title').fill(p.seoTitle);
   if (p.seoDescription) await page.getByLabel('SEO description').fill(p.seoDescription);
   await page.getByLabel('Published').setChecked(p.published ?? true);
@@ -141,6 +154,7 @@ test('pages: about, privacy policy, contact, a draft and a blog post', async () 
     title: 'About Us',
     handle: 'about-us',
     body: '<h2>Crafted in Pakistan since 1974</h2><p>Interwood designs and manufactures furniture for homes and offices.</p>',
+    photo: '/images/collections/living.jpg',
     seoTitle: 'About Interwood',
     seoDescription: 'The story of Pakistan’s largest furniture manufacturer.',
   });
@@ -160,4 +174,9 @@ test('pages: about, privacy policy, contact, a draft and a blog post', async () 
   await expect(page.getByRole('row', { name: /Privacy Policy \/pages\/privacy-policy/ })).toBeVisible();
   await expect(page.getByRole('row', { name: /Shipping Policy/ })).toContainText(/draft/i);
   await shot(page, '12-pages-list');
+
+  const shopper = await (await newContext(page.context().browser()!)).newPage();
+  await shopper.goto('/pages/about-us');
+  await expectImagesLoaded(shopper, 'main img[src^="/uploads/pages/"]');
+  await shopper.context().close();
 });

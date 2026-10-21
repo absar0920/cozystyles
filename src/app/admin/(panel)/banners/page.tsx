@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db';
 import { saveBannerAction, toggleBannerAction, deleteBannerAction } from '@/app/admin/actions/content';
 import { AdminCard, AdminPageHeader, Field, Select, TextInput } from '@/components/admin/ui';
 import { SubmitButton } from '@/components/admin/SubmitButton';
+import { ImageUpload } from '@/components/admin/ImageUpload';
 import { PlusIcon } from '@/components/icons';
 
 export const dynamic = 'force-dynamic';
@@ -243,14 +244,27 @@ function BannerForm({
           <TextInput name="href" defaultValue={banner?.href ?? ''} placeholder="/collections/all" />
         </Field>
         <div className="sm:col-span-2">
-          <Field label="Desktop image URL" hint="Local path (e.g. /images/banners/home-02.webp) or a full https:// URL. Required.">
-            <TextInput name="image" defaultValue={banner?.image ?? ''} placeholder="/images/banners/home-02.webp" required />
-          </Field>
+          <ImageUpload
+            name="image"
+            label="Desktop image URL"
+            folder="banners"
+            initial={banner?.image ?? ''}
+            placeholder="/images/banners/home-02.webp"
+            previewClass="h-20 w-52"
+            hint="Upload a wide image (about 1200×462 for the hero, 1200×400 for strips) or paste a URL. Required."
+            required
+          />
         </div>
         <div className="sm:col-span-2">
-          <Field label="Mobile image URL" hint="Portrait 450×700. Optional — desktop image is used when empty.">
-            <TextInput name="mobileImage" defaultValue={banner?.mobileImage ?? ''} placeholder="/images/banners/home-03.webp" />
-          </Field>
+          <ImageUpload
+            name="mobileImage"
+            label="Mobile image URL"
+            folder="banners"
+            initial={banner?.mobileImage ?? ''}
+            placeholder="/images/banners/home-03.webp"
+            previewClass="h-28 w-[4.5rem]"
+            hint="Portrait 450×700. Optional — the desktop image is used when empty."
+          />
         </div>
         <Field label="Location">
           <Select name="location" defaultValue={locationDefault}>

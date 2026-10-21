@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import type { Locator, Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 export const DOC_DIR = 'docs/walkthrough';
 const SHOT_DIR = path.join(DOC_DIR, 'screenshots');
@@ -11,9 +11,25 @@ export type FieldRow = {
   /** Value typed/selected; for checkboxes use "✓ checked" / "☐ unchecked". */
   value: string;
   locator: Locator;
-  /** 'none' documents a field the reader should leave unchanged. */
-  kind?: 'fill' | 'select' | 'check' | 'uncheck' | 'click' | 'none';
+  /**
+   * 'none' documents a field the reader should leave unchanged. 'upload' clicks `locator` (an upload
+   * button), picks `value` (a site path under public/) in the file dialog and waits until `uploadedInto`
+   * holds the new /uploads/… URL.
+   */
+  kind?: 'fill' | 'select' | 'check' | 'uncheck' | 'click' | 'none' | 'upload';
+  /** For 'upload': the button the reader clicks (shown in the table). */
+  button?: string;
+  uploadedInto?: Locator;
 };
+
+/** Sample photos ship in public/images; the guide asks the reader to pick them from there. */
+export const samplePath = (sitePath: string) => `public${sitePath}`;
+
+/** Click an upload control and choose files in the OS file dialog. */
+export async function chooseFiles(trigger: Locator, files: string[]) {
+  const [chooser] = await Promise.all([trigger.page().waitForEvent('filechooser'), trigger.click()]);
+  await chooser.setFiles(files.map((f) => path.join(process.cwd(), f)));
+}
 
 /**
  * Records a manual-test guide while Playwright drives the browser: every action becomes a
@@ -86,9 +102,20 @@ export class Guide {
     this.step(intro);
     this.out.push('\n   | Field | Value |\n   |---|---|');
     for (const r of rows) {
-      const shown = r.value.includes('\n') ? r.value.replace(/\n/g, '<br>') : r.value;
-      this.out.push(`   | ${r.label} | ${shown === '' ? '_(leave empty)_' : '`' + shown.replace(/\|/g, '\\|') + '`'} |`);
       const kind = r.kind ?? 'fill';
+      const shown = r.value.includes('\n') ? r.value.replace(/\n/g, '<br>') : r.value;
+      const cell =
+        kind === 'upload'
+          ? `click **${r.button ?? 'Upload image'}** and choose \`${samplePath(r.value)}\``
+          : shown === ''
+            ? '_(leave empty)_'
+            : '`' + shown.replace(/\|/g, '\\|') + '`';
+      this.out.push(`   | ${r.label} | ${cell} |`);
+      if (kind === 'upload') {
+        await chooseFiles(r.locator, [samplePath(r.value)]);
+        if (r.uploadedInto) await expect(r.uploadedInto).toHaveValue(/^\/uploads\//);
+        continue;
+      }
       if (kind === 'fill') await r.locator.fill(r.value);
       else if (kind === 'select') await r.locator.selectOption({ label: r.value });
       else if (kind === 'check') await r.locator.check();

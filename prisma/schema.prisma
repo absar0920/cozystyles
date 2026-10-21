@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model AdminUser {
@@ -21,45 +21,45 @@ model AdminUser {
 }
 
 model Product {
-  id             Int          @id @default(autoincrement())
-  handle         String       @unique
-  title          String
-  bodyHtml       String       @default("")
-  vendor         String       @default("Interwood")
-  productType    String       @default("")
-  status         String       @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED
-  featured       Boolean      @default(false)
-  hot            Boolean      @default(false)
-  tags           String       @default("") // comma separated
-  options        String       @default("[]") // JSON: [{name:"Size", values:[...]}]
-  rating         Float        @default(4.9)
-  reviewCount    Int          @default(0)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  variants       Variant[]
-  images         ProductImage[]
-  collections    Collection[] @relation("ProductCollections")
-  reviews        Review[]
-  orderItems     OrderItem[]
+  id          Int            @id @default(autoincrement())
+  handle      String         @unique
+  title       String
+  bodyHtml    String         @default("") @db.MediumText
+  vendor      String         @default("Interwood")
+  productType String         @default("")
+  status      String         @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED
+  featured    Boolean        @default(false)
+  hot         Boolean        @default(false)
+  tags        String         @default("") @db.Text // comma separated
+  options     String         @default("[]") @db.Text // JSON: [{name:"Size", values:[...]}]
+  rating      Float          @default(4.9)
+  reviewCount Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  variants    Variant[]
+  images      ProductImage[]
+  collections Collection[]   @relation("ProductCollections")
+  reviews     Review[]
+  orderItems  OrderItem[]
 
   @@index([status, hot])
   @@index([title])
 }
 
 model Variant {
-  id            Int      @id @default(autoincrement())
-  productId     Int
-  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  title         String   @default("Default Title")
-  sku           String?
-  price         Int
+  id             Int     @id @default(autoincrement())
+  productId      Int
+  product        Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  title          String  @default("Default Title")
+  sku            String?
+  price          Int
   compareAtPrice Int?
-  option1       String?
-  option2       String?
-  option3       String?
-  inventory     Int      @default(50)
-  position      Int      @default(0)
-  weightGrams   Int      @default(0)
+  option1        String?
+  option2        String?
+  option3        String?
+  inventory      Int     @default(50)
+  position       Int     @default(0)
+  weightGrams    Int     @default(0)
 
   @@index([productId])
 }
@@ -68,73 +68,73 @@ model ProductImage {
   id        Int     @id @default(autoincrement())
   productId Int
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  src       String
-  alt       String  @default("")
+  src       String  @db.Text
+  alt       String  @default("") @db.Text
   position  Int     @default(0)
 
   @@index([productId])
 }
 
 model Collection {
-  id          Int       @id @default(autoincrement())
-  handle      String    @unique
+  id          Int          @id @default(autoincrement())
+  handle      String       @unique
   title       String
-  description String    @default("")
-  image       String?
+  description String       @default("") @db.Text
+  image       String?      @db.Text
   parentId    Int?
-  parent      Collection? @relation("CollectionTree", fields: [parentId], references: [id])
+  parent      Collection?  @relation("CollectionTree", fields: [parentId], references: [id])
   children    Collection[] @relation("CollectionTree")
-  products    Product[] @relation("ProductCollections")
-  featured    Boolean   @default(false)
-  showInNav   Boolean   @default(true)
-  position    Int       @default(0)
-  kind        String    @default("CATEGORY") // CATEGORY | ROOM | LOOKBOOK | HELPER
-  metafield   String    @default("{}") // JSON free-form (e.g. footer column)
+  products    Product[]    @relation("ProductCollections")
+  featured    Boolean      @default(false)
+  showInNav   Boolean      @default(true)
+  position    Int          @default(0)
+  kind        String       @default("CATEGORY") // CATEGORY | ROOM | LOOKBOOK | HELPER
+  metafield   String       @default("{}") @db.Text // JSON free-form (e.g. footer column)
 
   @@index([parentId])
 }
 
 model MenuItem {
-  id        Int        @id @default(autoincrement())
-  label     String
-  href      String
-  location  String     @default("MAIN") // MAIN | FOOTER_1 | FOOTER_2 | ... | TOPBAR | MOBILE
-  parentId  Int?
-  parent    MenuItem?  @relation("MenuTree", fields: [parentId], references: [id], onDelete: Cascade)
-  children  MenuItem[] @relation("MenuTree")
-  position  Int        @default(0)
-  badge     String?    // e.g. "NEW", "SALE"
-  enabled   Boolean    @default(true)
+  id       Int        @id @default(autoincrement())
+  label    String
+  href     String     @db.Text
+  location String     @default("MAIN") // MAIN | FOOTER_1 | FOOTER_2 | ... | TOPBAR | MOBILE
+  parentId Int?
+  parent   MenuItem?  @relation("MenuTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children MenuItem[] @relation("MenuTree")
+  position Int        @default(0)
+  badge    String? // e.g. "NEW", "SALE"
+  enabled  Boolean    @default(true)
 
   @@index([location, parentId])
 }
 
 model Banner {
-  id        Int     @id @default(autoincrement())
-  location  String  @default("HOME_HERO") // HOME_HERO | HOME_STRIP_1 | HOME_STRIP_2 | HOME_GRID | POPUP
-  title     String  @default("")
-  subtitle  String  @default("")
-  ctaLabel  String?
-  href      String?
-  image     String
-  mobileImage String?
-  position  Int     @default(0)
-  active    Boolean @default(true)
-  textColor String  @default("#ffffff")
-  overlay   Int     @default(20) // percent dark overlay behind text
+  id          Int     @id @default(autoincrement())
+  location    String  @default("HOME_HERO") // HOME_HERO | HOME_STRIP_1 | HOME_STRIP_2 | HOME_GRID | POPUP
+  title       String  @default("")
+  subtitle    String  @default("") @db.Text
+  ctaLabel    String?
+  href        String? @db.Text
+  image       String  @db.Text
+  mobileImage String? @db.Text
+  position    Int     @default(0)
+  active      Boolean @default(true)
+  textColor   String  @default("#ffffff")
+  overlay     Int     @default(20) // percent dark overlay behind text
 }
 
 model Page {
-  id          Int      @id @default(autoincrement())
-  handle      String   @unique
-  title       String
-  bodyHtml    String   @default("")
-  published   Boolean  @default(true)
-  isBlogPost  Boolean  @default(false)
-  seoTitle    String?
-  seoDescription String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  handle         String   @unique
+  title          String
+  bodyHtml       String   @default("") @db.MediumText
+  published      Boolean  @default(true)
+  isBlogPost     Boolean  @default(false)
+  seoTitle       String?
+  seoDescription String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Review {
@@ -144,45 +144,45 @@ model Review {
   author    String
   rating    Int // 1..5
   title     String   @default("")
-  body      String
+  body      String   @db.Text
   approved  Boolean  @default(true)
   createdAt DateTime @default(now())
 }
 
 model Order {
-  id            Int      @id @default(autoincrement())
-  orderNumber   String   @unique // IW-100001
+  id            Int         @id @default(autoincrement())
+  orderNumber   String      @unique // IW-100001
   customerName  String
   phone         String
   email         String?
-  address       String
+  address       String      @db.Text
   city          String
-  province      String   @default("Punjab")
-  notes         String   @default("")
-  paymentMethod String   @default("COD") // COD | CARD | BANK_TRANSFER | INSTALLMENTS
-  status        String   @default("PENDING") // PENDING | CONFIRMED | PROCESSING | SHIPPED | DELIVERED | CANCELLED
+  province      String      @default("Punjab")
+  notes         String      @default("") @db.Text
+  paymentMethod String      @default("COD") // COD | CARD | BANK_TRANSFER | INSTALLMENTS
+  status        String      @default("PENDING") // PENDING | CONFIRMED | PROCESSING | SHIPPED | DELIVERED | CANCELLED
   subtotal      Int
-  discount      Int      @default(0)
-  shippingFee   Int      @default(0)
+  discount      Int         @default(0)
+  shippingFee   Int         @default(0)
   total         Int
-  adminNotes    String   @default("")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  adminNotes    String      @default("") @db.Text
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
   items         OrderItem[]
 }
 
 model OrderItem {
-  id          Int     @id @default(autoincrement())
-  orderId     Int
-  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId   Int?
-  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-  variantId   Int?
-  title       String
-  variantTitle String @default("")
-  price       Int
-  quantity    Int
-  image       String  @default("")
+  id           Int      @id @default(autoincrement())
+  orderId      Int
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    Int?
+  product      Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variantId    Int?
+  title        String
+  variantTitle String   @default("")
+  price        Int
+  quantity     Int
+  image        String   @default("") @db.Text
 
   @@index([orderId])
 }
@@ -193,12 +193,12 @@ model ContactSubmission {
   email     String   @default("")
   phone     String   @default("")
   subject   String   @default("")
-  message   String
+  message   String   @db.Text
   status    String   @default("NEW") // NEW | READ | CLOSED
   createdAt DateTime @default(now())
 }
 
 model SiteSetting {
-  key       String   @id
-  value     String   @default("") // scalar strings; JSON for structured values
+  key   String @id
+  value String @default("") @db.Text // scalar strings; JSON for structured values
 }

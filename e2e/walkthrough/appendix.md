@@ -29,8 +29,8 @@
 ## Appendix C — Known limitations
 
 - **No customer accounts.** The person icon in the header opens a login page, but it is only a placeholder; customers track orders with order number + phone instead.
-- **First admin user** must be created with `npm run db:admin`; there is no admin sign-up or user management screen.
-- **No image upload**: images are paths under `public/images/` or external URLs.
+- **One admin account**: created on the first sign-in from `ADMIN_EMAIL` / `ADMIN_PASSWORD` (or `npm run db:admin`); there is no screen for adding more admins.
+- **Uploaded photos are not deleted** when you remove them from a product, collection, banner or page; the file stays in `uploads/` (harmless, but it uses disk space).
 - **Card / Installments** are recorded as the chosen payment method only; no payment gateway is connected.
 - **Newsletter** sign-ups are stored as messages in the inbox (no mailing-list integration).
 - Product form errors detected **only by the server** (e.g. invalid Options JSON) reload the form and clear unsaved changes; price/stock mistakes are caught in the browser first.
@@ -38,9 +38,9 @@
 ## Regenerating this guide
 
 ```bash
-rm -f prisma/dev.db && npm run db:push && npm run db:admin
+npm run db:up && npm run db:reset && rm -rf uploads
 npm run build && npx next start -p 3100     # the generator expects port 3100
 npm run docs:walkthrough                    # rewrites docs/walkthrough/README.md + screenshots/
 ```
 
-The automated regression suite (44 tests, same "browser only" rules) runs with `npm run test:e2e` against the same kind of fresh database.
+The automated regression suite (47 tests, same "browser only" rules) runs with `npm run test:e2e` against the same kind of fresh database.

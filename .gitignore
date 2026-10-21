@@ -9,3 +9,9 @@ out/
 /e2e-results/
 /e2e-report/
 /e2e/shots/
+
+# Local secrets, database and uploads
+.env
+/uploads/
+/prisma/*.db
+/prisma/*.db-journal

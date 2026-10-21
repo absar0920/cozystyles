@@ -106,6 +106,12 @@ export const MinusIcon = (p: P) => (
 export const TrashIcon = (p: P) => (
   <svg {...base(p)}><path d="M4 7h16M9 7V4.5h6V7m-9 0 1 13.5h10L18 7M10 11v6M14 11v6" /></svg>
 );
+export const UploadIcon = (p: P) => (
+  <svg {...base(p)}><path d="M12 15V4m0 0-4 4m4-4 4 4M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15" /></svg>
+);
+export const ImageIcon = (p: P) => (
+  <svg {...base(p)}><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="m21 16-5-5-9 9" /></svg>
+);
 export const EditIcon = (p: P) => (
   <svg {...base(p)}><path d="M4 20h4.5L20 8.5a2.1 2.1 0 0 0-3-3L5.5 17 4 20z" /></svg>
 );

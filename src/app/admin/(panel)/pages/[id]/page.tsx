@@ -1,3 +1,4 @@
+import { HtmlBodyEditor } from '@/components/admin/HtmlBodyEditor';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -114,9 +115,9 @@ export default async function PageEditorPage({
 
               <Field
                 label="Body (HTML)"
-                hint="Full HTML content — headings, paragraphs, tables, images and iframes are all supported."
+                hint="Full HTML content — headings, paragraphs, tables, images and iframes are all supported. Use Insert image to upload a photo into the page."
               >
-                <TextArea
+                <HtmlBodyEditor
                   name="bodyHtml"
                   rows={22}
                   defaultValue={page?.bodyHtml ?? ''}
