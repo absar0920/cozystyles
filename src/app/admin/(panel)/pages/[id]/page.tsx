@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import type { Page as PageModel } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { savePageAction, deletePageAction } from '@/app/admin/actions/content';
+import { blogSlug } from '@/components/pages/content';
 import { AdminCard, AdminPageHeader, Field, TextArea, TextInput } from '@/components/admin/ui';
 import { SubmitButton } from '@/components/admin/SubmitButton';
 import { ChevronLeft } from '@/components/icons';
@@ -20,7 +21,7 @@ const ghostBtn =
 
 /** Public storefront URL — blog posts live under /blogs/news/<slug-after-news->. */
 function publicUrl(handle: string, isBlogPost: boolean): string {
-  return isBlogPost ? `/blogs/news/${handle.replace(/^news-/, '')}` : `/pages/${handle}`;
+  return isBlogPost ? `/blogs/news/${blogSlug(handle)}` : `/pages/${handle}`;
 }
 
 const fmtDate = (d: Date) => new Date(d).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -190,8 +191,8 @@ export default async function PageEditorPage({
               <p className="mt-1 break-all font-mono text-sm text-gray-500">/pages/&lt;handle&gt;</p>
             )}
             <p className="mt-3 text-xs text-gray-400">
-              Handles of blog posts start with <span className="font-mono">news-</span>; the public blog URL drops that
-              prefix.
+              Blog posts are served at <span className="font-mono">/blogs/news/&lt;handle&gt;</span> (a leading{' '}
+              <span className="font-mono">news-</span> in the handle is dropped from the URL).
             </p>
           </AdminCard>
 

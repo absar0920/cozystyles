@@ -1,4 +1,5 @@
 import { Stars } from '@/components/ui/Stars';
+import { ReviewForm } from './ReviewForm';
 
 export type ReviewData = {
   id: number;
@@ -13,10 +14,12 @@ const dateFormatter = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 
 
 /** Server-rendered customer reviews block with stars summary. */
 export function ReviewsSection({
+  productId,
   rating,
   reviewCount,
   reviews,
 }: {
+  productId: number;
   rating: number;
   reviewCount: number;
   reviews: ReviewData[];
@@ -30,14 +33,20 @@ export function ReviewsSection({
       <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
         {/* Summary */}
         <div className="h-fit rounded-xl border border-cream-border bg-cream-soft/70 p-5 text-center lg:text-left">
-          <p className="font-heading text-4xl font-bold text-ink-dark">{rating.toFixed(1)}</p>
-          <div className="mt-2 flex justify-center lg:justify-start">
-            <Stars rating={rating} size="md" />
-          </div>
-          <p className="mt-2 text-xs text-ink-muted">
-            Based on <span className="font-semibold text-ink-dark">{reviewCount.toLocaleString('en-PK')}</span>{' '}
-            {reviewCount === 1 ? 'review' : 'reviews'}
-          </p>
+          {reviewCount > 0 ? (
+            <>
+              <p className="font-heading text-4xl font-bold text-ink-dark">{rating.toFixed(1)}</p>
+              <div className="mt-2 flex justify-center lg:justify-start">
+                <Stars rating={rating} size="md" />
+              </div>
+              <p className="mt-2 text-xs text-ink-muted">
+                Based on <span className="font-semibold text-ink-dark">{reviewCount.toLocaleString('en-PK')}</span>{' '}
+                {reviewCount === 1 ? 'review' : 'reviews'}
+              </p>
+            </>
+          ) : (
+            <p className="font-heading text-lg font-semibold text-ink-dark">No reviews yet</p>
+          )}
         </div>
 
         {/* Review list */}
@@ -62,6 +71,10 @@ export function ReviewsSection({
             ))}
           </ul>
         )}
+      </div>
+
+      <div className="mt-6">
+        <ReviewForm productId={productId} />
       </div>
     </section>
   );

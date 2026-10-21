@@ -79,7 +79,12 @@ export function toCard(p: CardRaw): ProductCardData & { compareAtPrice: number |
   const vs = p.variants;
   const price = displayPrice(vs.map((v) => v.price)) ?? 0;
   const priceOnRequest = price === 0;
-  const compares = vs.map((v) => v.compareAtPrice).filter((c): c is number => c != null && c > price);
+  // Compare-at must come from a variant actually sold at the displayed price — mixing one
+  // variant's price with another's compare-at overstates the discount.
+  const compares = vs
+    .filter((v) => v.price === price)
+    .map((v) => v.compareAtPrice)
+    .filter((c): c is number => c != null && c > price);
   const compareAtPrice = priceOnRequest ? null : compares.length ? Math.max(...compares) : null;
   return {
     id: p.id,
@@ -106,6 +111,8 @@ export type ProductListParams = {
   minPrice?: number;
   maxPrice?: number;
   inStockOnly?: boolean;
+  /** Only products flagged "Hot" in the admin. */
+  hotOnly?: boolean;
 };
 
 export type ProductListResult = {
@@ -124,7 +131,7 @@ export async function listProducts(params: ProductListParams): Promise<ProductLi
   const clampPrice = (n: number) => Math.min(MAX_PRICE_FILTER, Math.max(0, n));
   const minPrice = params.minPrice != null ? clampPrice(params.minPrice) : undefined;
   const maxPrice = params.maxPrice != null ? clampPrice(params.maxPrice) : undefined;
-  const where: Prisma.ProductWhereInput = { status: 'ACTIVE' };
+  const where: Prisma.ProductWhereInput = { status: 'ACTIVE', ...(params.hotOnly ? { hot: true } : {}) };
 
   if (params.collectionHandle) {
     where.collections = { some: { handle: params.collectionHandle } };
@@ -239,6 +246,12 @@ export async function getCollectionByHandle(handle: string) {
 
 export async function getPageByHandle(handle: string) {
   return prisma.page.findUnique({ where: { handle } });
+}
+
+/** Blog post for a /blogs/news/<slug> URL — matches handles with or without the `news-` prefix. */
+export async function getBlogPostBySlug(slug: string) {
+  const posts = await prisma.page.findMany({ where: { handle: { in: [`news-${slug}`, slug] }, isBlogPost: true } });
+  return posts.find((p) => p.handle === `news-${slug}`) ?? posts[0] ?? null;
 }
 
 export async function listBlogPosts(limit = 12) {

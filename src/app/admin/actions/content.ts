@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/auth';
+import { blogSlug } from '@/components/pages/content';
 
 /* ------------------------------------------------------------------ helpers */
 
@@ -279,7 +280,7 @@ export async function savePageAction(formData: FormData) {
   revalidatePath(`/pages/${handle}`);
   revalidatePath('/blogs');
   revalidatePath('/blogs/news');
-  revalidatePath(`/blogs/news/${handle.replace(/^news-/, '')}`);
+  revalidatePath(`/blogs/news/${blogSlug(handle)}`);
   revalidateStorefront();
   redirect(`/admin/pages/${pageId}?saved=1`);
 }
@@ -299,7 +300,7 @@ export async function togglePagePublishedAction(formData: FormData) {
   revalidatePath('/admin/pages');
   revalidatePath(`/admin/pages/${id}`);
   revalidatePath(`/pages/${page.handle}`);
-  revalidatePath(`/blogs/news/${page.handle.replace(/^news-/, '')}`);
+  revalidatePath(`/blogs/news/${blogSlug(page.handle)}`);
   revalidateStorefront();
 }
 

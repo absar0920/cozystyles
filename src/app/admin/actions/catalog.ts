@@ -135,9 +135,9 @@ export async function saveProductAction(formData: FormData) {
       const compareRaw = str('compareAtPrice').replace(/,/g, '');
       if (!title2 && !sku && !priceRaw && !compareRaw && !option1 && !option2 && !option3) continue; // fully blank row
       const price = Number(priceRaw);
-      if (!priceRaw || !Number.isFinite(price)) throw new Error(`Variant ${i + 1}: price must be a whole number of PKR rupees.`);
+      if (!priceRaw || !Number.isFinite(price) || price < 0) throw new Error(`Variant ${i + 1}: price must be a whole number of PKR rupees.`);
       const compare = compareRaw ? Number(compareRaw) : null;
-      if (compare != null && !Number.isFinite(compare)) throw new Error(`Variant ${i + 1}: compare-at price must be a number.`);
+      if (compare != null && (!Number.isFinite(compare) || compare < 0)) throw new Error(`Variant ${i + 1}: compare-at price must be a positive number.`);
       const inventoryRaw = str('inventory');
       const inventory = inventoryRaw === '' ? 50 : Math.round(Number(inventoryRaw));
       if (!Number.isFinite(inventory) || inventory < 0) throw new Error(`Variant ${i + 1}: inventory must be 0 or more.`);

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
@@ -5,6 +6,12 @@ import { AdminPageHeader } from '@/components/admin/ui';
 import { deleteCollectionAction } from '@/app/admin/actions/catalog';
 import { ConfirmSubmit } from '../../_catalog/ConfirmSubmit';
 import { CollectionForm } from '../_components/CollectionForm';
+
+export const metadata: Metadata = {
+  title: 'Edit collection',
+  robots: { index: false, follow: false },
+};
+
 
 export const dynamic = 'force-dynamic';
 

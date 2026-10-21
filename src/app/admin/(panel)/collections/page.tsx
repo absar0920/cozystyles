@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { AdminPageHeader, AdminTable, Badge, EmptyRow } from '@/components/admin/ui';
@@ -5,6 +6,12 @@ import { TrashIcon } from '@/components/icons';
 import { deleteCollectionAction } from '@/app/admin/actions/catalog';
 import { ConfirmSubmit } from '../_catalog/ConfirmSubmit';
 import { Pager } from '../_catalog/Pager';
+
+export const metadata: Metadata = {
+  title: 'Collections',
+  robots: { index: false, follow: false },
+};
+
 
 export const dynamic = 'force-dynamic';
 

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import type { Prisma } from '@prisma/client';
@@ -6,6 +7,12 @@ import { StarIcon, TrashIcon } from '@/components/icons';
 import { deleteReviewAction, toggleReviewApprovedAction } from '@/app/admin/actions/catalog';
 import { ConfirmSubmit } from '../_catalog/ConfirmSubmit';
 import { Pager } from '../_catalog/Pager';
+
+export const metadata: Metadata = {
+  title: 'Reviews',
+  robots: { index: false, follow: false },
+};
+
 
 export const dynamic = 'force-dynamic';
 

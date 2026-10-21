@@ -44,11 +44,11 @@ function parseOptions(json: string): ProductOption[] {
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { handle } = await params;
   const product = await getProductByHandle(handle);
-  if (!product || product.status !== 'ACTIVE') return { title: `Product Not Found | ${SITE.name}` };
+  if (!product || product.status !== 'ACTIVE') return { title: 'Product Not Found' };
   const description =
     stripHtml(product.bodyHtml).slice(0, 160) || `${product.title} — buy online at ${SITE.name}, ${SITE.tagline}.`;
   return {
-    title: `${product.title} | ${SITE.name}`,
+    title: product.title,
     description,
   };
 }
@@ -179,8 +179,12 @@ export default async function ProductPage({ params }: Params) {
             )}
           </div>
 
-          <a href="#reviews" className="mt-2.5 w-fit transition hover:opacity-80">
-            <Stars rating={product.rating} count={product.reviewCount} size="md" />
+          <a href="#reviews" className="mt-2.5 w-fit text-xs text-ink-muted transition hover:opacity-80">
+            {product.reviewCount > 0 ? (
+              <Stars rating={product.rating} count={product.reviewCount} size="md" />
+            ) : (
+              'No reviews yet — write the first one'
+            )}
           </a>
 
           <div className="my-5 h-px bg-cream-border" />
@@ -276,7 +280,7 @@ export default async function ProductPage({ params }: Params) {
       </section>
 
       <div className="border-t border-cream-border bg-cream">
-        <ReviewsSection rating={product.rating} reviewCount={product.reviewCount} reviews={reviews} />
+        <ReviewsSection productId={product.id} rating={product.rating} reviewCount={product.reviewCount} reviews={reviews} />
       </div>
 
       {/* Testimonials strip */}

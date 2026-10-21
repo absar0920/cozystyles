@@ -3,7 +3,7 @@ import { TruckIcon } from '@/components/icons';
 import { TrackForm } from '@/components/checkout/TrackForm';
 
 export const metadata: Metadata = {
-  title: 'Track Your Order | Interwood',
+  title: 'Track Your Order',
   description: 'Track your Interwood order status — from production to delivery and free installation.',
 };
 

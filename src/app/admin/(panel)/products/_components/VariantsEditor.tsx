@@ -63,6 +63,9 @@ function blankRow(index: number): Row {
   };
 }
 
+/** Non-negative whole rupees, thousands separators allowed ("84000" or "84,000"). */
+const WHOLE_RUPEES = '\\d[\\d,]*';
+
 const GRID = 'grid grid-cols-[1.35fr_1fr_1fr_1fr_1fr_0.85fr_0.85fr_0.65fr_0.55fr_2rem] gap-2 items-center';
 const COLS = ['Title', 'SKU', 'Option 1', 'Option 2', 'Option 3', 'Price (PKR)', 'Compare at', 'Inventory', 'Pos', ''];
 const cellCls =
@@ -100,9 +103,9 @@ export function VariantsEditor({ initial = [] }: { initial?: VariantInit[] }) {
                 <input className={cellCls} value={r.option1} onChange={(e) => update(r.key, 'option1', e.target.value)} placeholder="e.g. 2-Seater" aria-label={`Variant ${i + 1} option 1`} />
                 <input className={cellCls} value={r.option2} onChange={(e) => update(r.key, 'option2', e.target.value)} aria-label={`Variant ${i + 1} option 2`} />
                 <input className={cellCls} value={r.option3} onChange={(e) => update(r.key, 'option3', e.target.value)} aria-label={`Variant ${i + 1} option 3`} />
-                <input className={cellCls} value={r.price} onChange={(e) => update(r.key, 'price', e.target.value)} inputMode="numeric" placeholder="84000" aria-label={`Variant ${i + 1} price`} />
-                <input className={cellCls} value={r.compareAtPrice} onChange={(e) => update(r.key, 'compareAtPrice', e.target.value)} inputMode="numeric" aria-label={`Variant ${i + 1} compare-at price`} />
-                <input className={cellCls} value={r.inventory} onChange={(e) => update(r.key, 'inventory', e.target.value)} inputMode="numeric" aria-label={`Variant ${i + 1} inventory`} />
+                <input className={cellCls} value={r.price} onChange={(e) => update(r.key, 'price', e.target.value)} inputMode="numeric" required pattern={WHOLE_RUPEES} title="Whole PKR rupees, e.g. 84000" placeholder="84000" aria-label={`Variant ${i + 1} price`} />
+                <input className={cellCls} value={r.compareAtPrice} onChange={(e) => update(r.key, 'compareAtPrice', e.target.value)} inputMode="numeric" pattern={WHOLE_RUPEES} title="Whole PKR rupees, e.g. 99000" aria-label={`Variant ${i + 1} compare-at price`} />
+                <input className={cellCls} value={r.inventory} onChange={(e) => update(r.key, 'inventory', e.target.value)} inputMode="numeric" pattern="\d+" title="0 or more" aria-label={`Variant ${i + 1} inventory`} />
                 <input className={cellCls} value={r.position} onChange={(e) => update(r.key, 'position', e.target.value)} inputMode="numeric" aria-label={`Variant ${i + 1} position`} />
                 <button
                   type="button"

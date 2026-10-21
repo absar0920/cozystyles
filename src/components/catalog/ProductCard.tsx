@@ -28,7 +28,7 @@ export function ProductCard({ product }: { product: ProductCardData & { compareA
         )}
         {product.inventory === 0 ? (
           <span className="absolute bottom-3 left-3 rounded-md bg-ink-dark/80 px-2 py-0.5 text-[11px] font-medium text-white">
-            Sold Out
+            Made to Order
           </span>
         ) : (
           <span className="absolute bottom-3 left-3 rounded-md bg-white/90 px-2 py-0.5 text-[11px] font-medium text-brand-700 shadow-sm backdrop-blur-sm">

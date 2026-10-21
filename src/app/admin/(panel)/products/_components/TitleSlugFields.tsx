@@ -32,10 +32,11 @@ export function TitleSlugFields({
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <div>
-        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+        <label htmlFor="product-title" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
           Title <span className="text-red-500">*</span>
         </label>
         <input
+          id="product-title"
           name="title"
           required
           value={title}
@@ -49,8 +50,9 @@ export function TitleSlugFields({
         />
       </div>
       <div>
-        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">Handle (URL slug)</label>
+        <label htmlFor="product-handle" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">Handle (URL slug)</label>
         <input
+          id="product-handle"
           name="handle"
           value={handle}
           onChange={(e) => {

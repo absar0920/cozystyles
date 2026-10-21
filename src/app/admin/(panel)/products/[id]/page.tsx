@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
@@ -5,6 +6,12 @@ import { AdminPageHeader } from '@/components/admin/ui';
 import { deleteProductAction } from '@/app/admin/actions/catalog';
 import { ConfirmSubmit } from '../../_catalog/ConfirmSubmit';
 import { ProductForm, buildCollectionTree } from '../_components/ProductForm';
+
+export const metadata: Metadata = {
+  title: 'Edit product',
+  robots: { index: false, follow: false },
+};
+
 
 export const dynamic = 'force-dynamic';
 

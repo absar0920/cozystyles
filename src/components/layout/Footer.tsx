@@ -35,18 +35,24 @@ export function Footer({ columns, settings }: FooterProps) {
             {settings.legalBlurb ?? 'Interwood offers an exciting and affordable range of bedroom, living and office furniture, kitchens, doors, wardrobes, flooring and home décor — to suit every style & space.'}
           </p>
           <ul className="space-y-2.5 text-[13px] text-white/80">
-            <li className="flex items-start gap-2.5">
-              <PhoneIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-300" />
-              <a href={`tel:${(settings.phone ?? '').replace(/-/g, '')}`} className="hover:text-white">{settings.phone}</a>
-            </li>
-            <li className="flex items-start gap-2.5">
-              <MailIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-300" />
-              <a href={`mailto:${settings.email}`} className="hover:text-white">{settings.email}</a>
-            </li>
-            <li className="flex items-start gap-2.5">
-              <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-300" />
-              <span>{settings.address}</span>
-            </li>
+            {settings.phone && (
+              <li className="flex items-start gap-2.5">
+                <PhoneIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-300" />
+                <a href={`tel:${settings.phone.replace(/-/g, '')}`} className="hover:text-white">{settings.phone}</a>
+              </li>
+            )}
+            {settings.email && (
+              <li className="flex items-start gap-2.5">
+                <MailIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-300" />
+                <a href={`mailto:${settings.email}`} className="hover:text-white">{settings.email}</a>
+              </li>
+            )}
+            {settings.address && (
+              <li className="flex items-start gap-2.5">
+                <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand-300" />
+                <span>{settings.address}</span>
+              </li>
+            )}
           </ul>
           <div className="mt-5 flex gap-2.5">
             {socials.map(({ href, label, Icon }) => (

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { PAYMENT_METHODS } from '@/lib/constants';
 import { getSettingsMap } from '@/lib/queries';
+import { shippingFeeFor, shippingRuleFromSettings } from '@/lib/shipping';
 import { PHONE_RE, MAX_QTY, normalizePhone, type CheckoutCustomer, type CheckoutLine } from '@/components/checkout/validation';
 
 export const dynamic = 'force-dynamic';
@@ -162,11 +163,7 @@ export async function POST(req: Request) {
     }
 
     // --- shipping from SiteSetting (admin-controlled) ---
-    const settings = await getSettingsMap();
-    const configuredFee = Math.max(0, parseInt(settings.shippingFee ?? '', 10) || 0);
-    const freeThreshold = Math.max(0, parseInt(settings.freeShippingThreshold ?? '', 10) || 0);
-    // Free shipping when no threshold is configured or the cart reaches it.
-    const shippingFee = freeThreshold > 0 && subtotal < freeThreshold ? configuredFee : 0;
+    const shippingFee = shippingFeeFor(subtotal, shippingRuleFromSettings(await getSettingsMap()));
     const discount = 0;
     const total = subtotal - discount + shippingFee;
     if (total > MAX_TOTAL) return bad('Order total exceeds maximum. Please contact us directly for bulk orders.');

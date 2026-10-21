@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { togglePagePublishedAction, deletePageAction } from '@/app/admin/actions/content';
+import { blogSlug } from '@/components/pages/content';
 import { AdminPageHeader, AdminTable, EmptyRow } from '@/components/admin/ui';
 import { ChevronLeft, ChevronRight, EditIcon, PlusIcon, SearchIcon } from '@/components/icons';
 
@@ -22,7 +23,7 @@ const fmtDate = (d: Date) => new Date(d).toLocaleDateString('en-PK', { day: 'num
 
 /** Public storefront URL for a page — blog posts live under /blogs/news/<slug-after-news->. */
 function publicUrl(handle: string, isBlogPost: boolean): string {
-  return isBlogPost ? `/blogs/news/${handle.replace(/^news-/, '')}` : `/pages/${handle}`;
+  return isBlogPost ? `/blogs/news/${blogSlug(handle)}` : `/pages/${handle}`;
 }
 
 function PublishedPill({ published }: { published: boolean }) {

@@ -1,6 +1,8 @@
 import { StarIcon } from '@/components/icons';
 
 export function Stars({ rating, count, size = 'sm' }: { rating: number; count?: number; size?: 'sm' | 'md' }) {
+  // A product with zero reviews has no rating to show.
+  if (count === 0) return null;
   const cls = size === 'md' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5';
   return (
     <div className="flex items-center gap-1.5">

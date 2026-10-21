@@ -155,11 +155,6 @@ export function Header({
               {item.children.length > 0 && <MegaMenu item={item} />}
             </li>
           ))}
-          <li className="ml-auto">
-            <Link href="/collections/sale" className="flex h-12 items-center px-4 text-[13px] font-semibold tracking-wide text-[#ffd7d7] transition hover:bg-brand-800">
-              Sale — Up to 40% Off
-            </Link>
-          </li>
         </ul>
       </nav>
 

@@ -1,5 +1,6 @@
 import { formatPKR } from '@/lib/money';
 import { TruckIcon } from '@/components/icons';
+import { shippingFeeFor, type ShippingRule } from '@/lib/shipping';
 
 export type SummaryItem = {
   key?: string;
@@ -19,16 +20,21 @@ export function OrderSummary({
   items = [],
   subtotal,
   savings,
+  shipping,
   showItems = true,
   children,
 }: {
   items?: SummaryItem[];
   subtotal: number;
   savings: number;
+  /** Admin-configured delivery rule; must match what /api/orders charges. */
+  shipping: ShippingRule;
   showItems?: boolean;
   children?: React.ReactNode;
 }) {
-  const total = subtotal;
+  const shippingFee = shippingFeeFor(subtotal, shipping);
+  const total = subtotal + shippingFee;
+  const toFree = shipping.freeThreshold - subtotal;
   return (
     <div className="rounded-xl border border-cream-border bg-white p-5 shadow-card">
       <h2 className="font-heading text-base font-semibold text-ink-dark">Order Summary</h2>
@@ -83,13 +89,23 @@ export function OrderSummary({
             <TruckIcon className="h-4 w-4 text-brand" />
             Delivery &amp; Installation
           </dt>
-          <dd className="font-semibold uppercase tracking-wide text-brand">Free</dd>
+          {shippingFee > 0 ? (
+            <dd className="font-semibold text-ink-dark">{formatPKR(shippingFee)}</dd>
+          ) : (
+            <dd className="font-semibold uppercase tracking-wide text-brand">Free</dd>
+          )}
         </div>
         <div className="mt-2 flex items-center justify-between border-t border-cream-border pt-3 text-base">
           <dt className="font-heading font-semibold text-ink-dark">Total</dt>
           <dd className="font-heading text-lg font-bold text-brand">{formatPKR(total)}</dd>
         </div>
       </dl>
+
+      {shippingFee > 0 && toFree > 0 && (
+        <p className="mt-2 text-xs text-ink-muted">
+          Add {formatPKR(toFree)} more for free delivery &amp; installation.
+        </p>
+      )}
 
       <p className="mt-3 text-[11px] leading-relaxed text-ink-muted">
         Pay on your terms — Cash on Delivery, Card, Bank Transfer or Easy Installments available at checkout.

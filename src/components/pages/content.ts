@@ -67,3 +67,11 @@ const DATE_FORMAT = new Intl.DateTimeFormat('en-GB', {
 export function formatDate(date: Date): string {
   return DATE_FORMAT.format(date);
 }
+
+/**
+ * Public slug of a blog post under /blogs/news/<slug>. Scraped posts use a
+ * `news-` handle prefix that the URL drops; admin-created posts may not have it.
+ */
+export function blogSlug(handle: string): string {
+  return handle.startsWith('news-') ? handle.slice('news-'.length) : handle;
+}

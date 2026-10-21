@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { listBlogPosts } from '@/lib/queries';
 import { Breadcrumbs } from '@/components/catalog/Breadcrumbs';
 import { ChevronRight } from '@/components/icons';
-import { blogExcerpt, coverImage, formatDate } from '@/components/pages/content';
+import { blogExcerpt, blogSlug, coverImage, formatDate } from '@/components/pages/content';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,7 +52,7 @@ export default async function BlogsPage() {
         <article>
           <h2 className="sr-only">Featured story</h2>
           <Link
-            href={`/blogs/news/${featured.handle.slice(5)}`}
+            href={`/blogs/news/${blogSlug(featured.handle)}`}
             className="group grid overflow-hidden rounded-2xl border border-cream-border bg-white shadow-card transition hover:shadow-hover sm:grid-cols-2"
           >
             <div className="aspect-[16/10] overflow-hidden bg-cream sm:aspect-auto sm:min-h-[320px]">
@@ -102,7 +102,7 @@ export default async function BlogsPage() {
               return (
                 <Link
                   key={post.id}
-                  href={`/blogs/news/${post.handle.slice(5)}`}
+                  href={`/blogs/news/${blogSlug(post.handle)}`}
                   className="group flex flex-col overflow-hidden rounded-xl border border-cream-border bg-white shadow-card transition hover:-translate-y-0.5 hover:shadow-hover"
                 >
                   <div className="aspect-[16/10] overflow-hidden bg-cream">

@@ -65,8 +65,11 @@ export function Badge({ children }: { children: string }) {
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <div>
-      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</label>
-      {children}
+      {/* Wrapping label ties the text to its control (click-to-focus, screen-reader name). */}
+      <label className="block">
+        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</span>
+        {children}
+      </label>
       {hint && <p className="mt-1 text-xs text-gray-400">{hint}</p>}
     </div>
   );

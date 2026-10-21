@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getPageByHandle } from '@/lib/queries';
+import { getBlogPostBySlug } from '@/lib/queries';
 import { Breadcrumbs } from '@/components/catalog/Breadcrumbs';
 import { ChevronLeft } from '@/components/icons';
 import { blogExcerpt, decodeEntities } from '@/components/pages/content';
@@ -12,7 +12,7 @@ type PageParams = Promise<{ handle: string }>;
 
 export async function generateMetadata({ params }: { params: PageParams }): Promise<Metadata> {
   const { handle } = await params;
-  const post = await getPageByHandle(`news-${handle}`);
+  const post = await getBlogPostBySlug(handle);
   if (!post || !post.published || !post.isBlogPost) return { title: 'Article not found' };
   const title = decodeEntities(post.seoTitle?.trim() || post.title);
   const description = post.seoDescription?.trim() || blogExcerpt(post.bodyHtml, 160);
@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
 
 export default async function BlogPostPage({ params }: { params: PageParams }) {
   const { handle } = await params;
-  const post = await getPageByHandle(`news-${handle}`);
+  const post = await getBlogPostBySlug(handle);
   if (!post || !post.published || !post.isBlogPost) notFound();
 
   const title = decodeEntities(post.title);

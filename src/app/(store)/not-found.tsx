@@ -32,7 +32,7 @@ export default function NotFound() {
             name="q"
             placeholder="Search beds, sofas, kitchens…"
             aria-label="Search products"
-            className="input rounded-r-none pl-10"
+            className="input rounded-r-none !pl-10"
           />
         </div>
         <button type="submit" className="btn-primary rounded-l-none px-5 py-3">

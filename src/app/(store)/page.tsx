@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { ChevronRight } from '@/components/icons';
-import { prisma } from '@/lib/db';
 import {
   getBanners,
   getFeaturedCollections,
@@ -15,47 +14,13 @@ import { ProductCarousel } from '@/components/home/ProductCarousel';
 import { CategoryTiles } from '@/components/home/CategoryTiles';
 import { RatingBanner } from '@/components/home/RatingBanner';
 import { Testimonials } from '@/components/home/Testimonials';
+import { PromoBanner } from '@/components/home/PromoBanner';
 
 export const dynamic = 'force-dynamic';
 
-/** Curated Shopify collection powering the "Hot Selling Products" row. */
-const HOT_SELLING_COLLECTION = 'hot-selling-items-homepage';
-
-/** Category rows shown mid-page, mirroring the real store's home sections. */
-const CATEGORY_SECTIONS = [
-  { handle: 'bedroom', title: 'Bedroom Furniture' },
-  { handle: 'sofas-all', title: 'Sofas' },
-  { handle: 'office-chairs', title: 'Office Chairs' },
-  { handle: 'beds', title: 'Beds' },
-  { handle: 'dining-table-sets', title: 'Dining Table Sets' },
-  { handle: 'kids', title: 'Kids' },
-  { handle: 'decor-acc', title: 'Decor' },
-] as const;
-
-/** Collections used for the "Shop by Category" tiles, in live-site order. */
-const CATEGORY_TILE_HANDLES = [
-  'coalesce-bedroom',
-  'sofas-all',
-  'office-chairs',
-  'beds',
-  'dining-table-sets',
-  'kids',
-  'decor-acc',
-] as const;
-
-type TileCollection = { handle: string; title: string; image: string | null };
-
-/** Fetch a fixed list of collections by handle, preserving the given order. */
-async function getCollectionsByHandles(handles: readonly string[]): Promise<TileCollection[]> {
-  const rows = await prisma.collection.findMany({
-    where: { handle: { in: [...handles] } },
-    select: { handle: true, title: true, image: true },
-  });
-  const byHandle = new Map(rows.map((r) => [r.handle, r]));
-  return handles
-    .map((h) => byHandle.get(h))
-    .filter((c): c is TileCollection => Boolean(c));
-}
+/** Max featured collections shown as tiles; the first few also get their own product row. */
+const FEATURED_LIMIT = 12;
+const CATEGORY_ROW_LIMIT = 6;
 
 function SectionHeader({ title, href }: { title: string; href: string }) {
   return (
@@ -73,23 +38,21 @@ function SectionHeader({ title, href }: { title: string; href: string }) {
 }
 
 export default async function HomePage() {
-  const [bannerRows, hotFromCollection, tileCollections, reviewRows, settings] = await Promise.all([
+  // Everything here is admin-driven: hero/promo banners, products flagged "Hot",
+  // and collections flagged "Featured on homepage" (ordered by position).
+  const [bannerRows, strip1, strip2, hot, featured, reviewRows, settings] = await Promise.all([
     getBanners('HOME_HERO'),
-    listProducts({ collectionHandle: HOT_SELLING_COLLECTION, perPage: 12 }),
-    getCollectionsByHandles(CATEGORY_TILE_HANDLES),
+    getBanners('HOME_STRIP_1'),
+    getBanners('HOME_STRIP_2'),
+    listProducts({ hotOnly: true, perPage: 12 }),
+    getFeaturedCollections(FEATURED_LIMIT),
     getRecentReviews(10),
     getSettingsMap(),
   ]);
+  const rowCollections = featured.slice(0, CATEGORY_ROW_LIMIT);
   const sectionResults = await Promise.all(
-    CATEGORY_SECTIONS.map((s) => listProducts({ collectionHandle: s.handle, perPage: 8 }))
+    rowCollections.map((c) => listProducts({ collectionHandle: c.handle, perPage: 8 }))
   );
-
-  // Live site curates "Hot Selling Products" from a dedicated collection; fall
-  // back to the default hot-flag listing if that collection has no products.
-  const hot =
-    hotFromCollection.items.length > 0 ? hotFromCollection : await listProducts({ perPage: 12 });
-  const featured =
-    tileCollections.length > 0 ? tileCollections : await getFeaturedCollections(10);
 
   const slides = bannerRows.map((b) => ({
     id: b.id,
@@ -103,11 +66,9 @@ export default async function HomePage() {
     overlay: b.overlay,
   }));
 
-  const categoryRows = CATEGORY_SECTIONS.map((s, i) => ({
-    handle: s.handle,
-    title: s.title,
-    products: sectionResults[i].items,
-  })).filter((s) => s.products.length > 0);
+  const categoryRows = rowCollections
+    .map((c, i) => ({ handle: c.handle, title: c.title, products: sectionResults[i].items }))
+    .filter((s) => s.products.length > 0);
 
   const testimonials = reviewRows.map((r) => ({
     id: r.id,
@@ -127,6 +88,7 @@ export default async function HomePage() {
       <HeroSlider slides={slides} />
       <MarqueeStrip />
       <TrustStrip />
+      <PromoBanner banners={strip1} />
 
       {/* Hot Selling Products */}
       {hot.items.length > 0 && (
@@ -151,6 +113,7 @@ export default async function HomePage() {
       )}
 
       <RatingBanner rating={settings.ratingSummary} count={settings.ratingSummaryCount} />
+      <PromoBanner banners={strip2} />
 
       {/* Per-category product rows */}
       {categoryRows.map((row) => (

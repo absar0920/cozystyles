@@ -10,7 +10,9 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "scrape": "node scripts/scrape.mjs",
-    "images": "node scripts/download-images.mjs"
+    "images": "node scripts/download-images.mjs",
+    "db:admin": "node --env-file=.env --experimental-strip-types --no-warnings scripts/create-admin.ts",
+    "test:e2e": "playwright test"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -23,6 +25,7 @@
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@types/node": "^22.10.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
