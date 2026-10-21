@@ -23,26 +23,42 @@ your **home directory**, and **Hostinger CDN** caches the site and images at the
 
 ## One-time setup
 
-### 1. Create the database
-hPanel → **Websites → Manage → Databases → MySQL Databases**: create a database and user (e.g.
-`u123456789_interwood` / `u123456789_iw`) with a strong password.
+Order matters on Hostinger: a MySQL database belongs to a website, so the website has to exist
+before its database can be created. The first build therefore fails at `prisma migrate deploy`; you
+create the database and redeploy (steps 1–3 below).
 
-### 2. Create the uploads folder
-hPanel → **File Manager**: in your home directory (`/home/u123456789/`, the folder that contains
-`domains/`), create `interwood-uploads`. Note the full path — File Manager shows it in the address bar.
-
-> Not inside `domains/<site>/` — that tree belongs to the deployment and is replaced on each deploy.
-
-### 3. Create the Node.js Web App
-hPanel → **Websites → Add website → Node.js Web App**, connect the GitHub repository (or upload a zip
-without `node_modules`, `.next`, `.git`, `uploads`), and set:
+### 1. Create the Node.js Web App
+hPanel → **Websites → Create site → Web App** → domain (e.g. `cozystyle.pk`, or a free subdomain such
+as `staging.cozystyle.pk`) → **Import your Git repository → Continue with GitHub** → pick the repo.
+If the repo is missing from the list, the Hostinger GitHub app hasn't been granted access to it:
+GitHub → Settings → Applications → Hostinger → *Only select repositories* → add it, then
+**Refresh repositories**. Build settings:
 
 | Setting | Value |
 |---|---|
-| Framework | Next.js |
+| Framework preset | Next.js |
+| Branch | `staging` for the staging site, `master` for production |
 | Node version | 22.x |
 | Build command | `npm run build` (generates Prisma client, applies migrations, builds) |
-| Start command | `npm start` |
+| Package manager / output | npm / `.next` |
+
+The variable names are pre-filled from `.env.example`; fill the values as in step 4, choosing the
+database name, user and password now (they are created in step 2). **Deploy** — this first build stops
+at `prisma migrate deploy` with an authentication error, which is expected.
+
+### 2. Create the database
+hPanel → the new site → **Databases → Management**: create the database and user with exactly the
+name, user and password used in `DATABASE_URL` (Hostinger prefixes both with your account id, e.g.
+`u123456789_`). Passwords need upper and lower case letters and a digit; letters and digits only avoid
+URL-encoding.
+
+### 3. Redeploy
+Site → **Deployments → Redeploy**. The *Settings and redeploy* panel keeps **its own copy** of the
+environment variables — check `DATABASE_URL` there too, then **Save and redeploy**. The log should show
+`prisma migrate deploy` applying `…_init`, then the Next.js build.
+
+The uploads folder (`UPLOAD_DIR`) is created by the app on the first upload; it must be in your home
+directory, **not** inside `domains/<site>/`, which belongs to the deployment and is replaced on each deploy.
 
 ### 4. Environment variables
 In the app's **Environment variables** panel:
@@ -53,21 +69,20 @@ In the app's **Environment variables** panel:
 | `SESSION_SECRET` | output of `openssl rand -base64 48` (a new one — never reuse the dev value) |
 | `ADMIN_EMAIL` | the admin's email |
 | `ADMIN_PASSWORD` | a strong password (8+ characters) |
-| `UPLOAD_DIR` | `/home/u123456789/interwood-uploads` (the folder from step 2) |
+| `UPLOAD_DIR` | `/home/u123456789/interwood-uploads` — one folder per site (e.g. `cozystyles-staging-uploads`, `cozystyles-prod-uploads`) |
 | `NEXT_PUBLIC_SITE_NAME` | `Interwood` |
 | `NEXT_PUBLIC_SITE_URL` | `https://interwood.pk` |
-
-Save, then **Deploy**. The build log should show `prisma migrate deploy` applying `…_init`.
 
 ### 5. First sign-in
 Open `https://<your-domain>/admin`, sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD`. The account is
 created on that first sign-in. From then on, use the admin panel as described in
 [the walkthrough](walkthrough/README.md).
 
-### 6. Turn on the CDN
-hPanel → **Websites → Manage → Performance → CDN** → enable. No app changes are needed: uploads and
-Next.js static assets are already sent with long-lived cache headers, and pages are dynamic (`no-store`)
-so orders and stock are always fresh.
+### 6. CDN
+Hostinger enables its CDN automatically (Site → **Performance → CDN**). No app changes are needed:
+uploads and Next.js static assets are sent with long-lived cache headers, and pages are dynamic
+(`no-store`), so orders and stock are always fresh. New sites sometimes show a short *"Checking your
+browser before accessing …"* page from the CDN; it passes by itself within ~5 seconds.
 
 ## Upgrading later
 Push to the connected branch (or upload a new zip) and **Redeploy**. Migrations in `prisma/migrations/`
