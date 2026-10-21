@@ -179,7 +179,7 @@ export async function saveProductAction(formData: FormData) {
       handle,
       status,
       hot: formData.get('hot') === 'on',
-      vendor: String(formData.get('vendor') ?? '').trim() || 'Cozy Furnitures',
+      vendor: String(formData.get('vendor') ?? '').trim() || 'Interwood',
       productType: String(formData.get('productType') ?? '').trim(),
       tags: String(formData.get('tags') ?? '').trim(),
       bodyHtml: String(formData.get('bodyHtml') ?? ''),

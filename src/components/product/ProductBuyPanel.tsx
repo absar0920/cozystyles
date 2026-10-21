@@ -75,7 +75,7 @@ export function ProductBuyPanel({ product }: { product: BuyPanelProduct }) {
             <span className="text-base font-medium text-ink-light line-through">{formatPKR(activeVariant.compareAtPrice)}</span>
           )}
           {off != null && (
-            <span className="rounded-full bg-sale/10 px-2.5 py-1 text-xs font-bold text-sale">-{off}% OFF</span>
+            <span className="rounded-md bg-sale/10 px-2 py-0.5 text-xs font-bold text-sale">-{off}% OFF</span>
           )}
         </div>
       )}
@@ -139,28 +139,20 @@ export function ProductBuyPanel({ product }: { product: BuyPanelProduct }) {
 
           {/* Trust icons */}
           <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <li className="flex flex-col items-center gap-1.5 rounded-2xl border-0 bg-cream-soft px-2 py-3 text-center">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand">
-                <TruckIcon className="h-4.5 w-4.5" />
-              </span>
+            <li className="flex flex-col items-center gap-1 rounded-lg border border-cream-border bg-cream-soft/60 px-2 py-2.5 text-center">
+              <TruckIcon className="h-4.5 w-4.5 text-brand" />
               <span className="text-[11px] font-semibold leading-tight text-ink-dark">Free Delivery</span>
             </li>
-            <li className="flex flex-col items-center gap-1.5 rounded-2xl border-0 bg-cream-soft px-2 py-3 text-center">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand">
-                <ShieldIcon className="h-4.5 w-4.5" />
-              </span>
+            <li className="flex flex-col items-center gap-1 rounded-lg border border-cream-border bg-cream-soft/60 px-2 py-2.5 text-center">
+              <ShieldIcon className="h-4.5 w-4.5 text-brand" />
               <span className="text-[11px] font-semibold leading-tight text-ink-dark">1-Year Warranty</span>
             </li>
-            <li className="flex flex-col items-center gap-1.5 rounded-2xl border-0 bg-cream-soft px-2 py-3 text-center">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand">
-                <CubeIcon className="h-4.5 w-4.5" />
-              </span>
+            <li className="flex flex-col items-center gap-1 rounded-lg border border-cream-border bg-cream-soft/60 px-2 py-2.5 text-center">
+              <CubeIcon className="h-4.5 w-4.5 text-brand" />
               <span className="text-[11px] font-semibold leading-tight text-ink-dark">View in AR</span>
             </li>
-            <li className="flex flex-col items-center gap-1.5 rounded-2xl border-0 bg-cream-soft px-2 py-3 text-center">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand">
-                <PhoneIcon className="h-4.5 w-4.5" />
-              </span>
+            <li className="flex flex-col items-center gap-1 rounded-lg border border-cream-border bg-cream-soft/60 px-2 py-2.5 text-center">
+              <PhoneIcon className="h-4.5 w-4.5 text-brand" />
               <span className="text-[11px] font-semibold leading-tight text-ink-dark">Expert Support</span>
               <span className="text-[10px] leading-tight text-ink-muted">{SITE.phone}</span>
             </li>

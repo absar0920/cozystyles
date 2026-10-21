@@ -42,10 +42,10 @@ export function VariantPicker({
                   type="button"
                   aria-pressed={isActive}
                   onClick={() => onSelect(group.index, value)}
-                  className={`inline-flex items-center gap-1.5 rounded-full border-0 px-4 py-2 text-[13px] font-medium transition ${
+                  className={`inline-flex items-center gap-1.5 rounded-md border px-3.5 py-2 text-[13px] font-medium transition ${
                     isActive
-                      ? 'bg-brand text-white shadow-card'
-                      : 'bg-cream-soft text-ink-dark hover:bg-brand hover:text-white'
+                      ? 'border-brand bg-brand text-white shadow-card'
+                      : 'border-cream-border bg-white text-ink-dark hover:border-brand hover:text-brand'
                   }`}
                 >
                   {isActive && <CheckIcon className="h-3.5 w-3.5" strokeWidth={2.4} />}

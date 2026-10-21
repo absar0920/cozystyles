@@ -6,20 +6,20 @@ import { ChevronLeft, ChevronRight } from '@/components/icons';
 
 export type HeroSlide = {
   id: number;
-  eyebrow: string;
   title: string;
   subtitle: string;
   ctaLabel: string | null;
   href: string | null;
-  image: string | null;
+  image: string;
+  mobileImage: string | null;
+  textColor: string;
+  overlay: number;
 };
 
 /**
- * Typographic split hero. The legacy banner artwork has the old brand's logo
- * baked into it, so each slide is rebuilt as copy over a brand gradient (left)
- * plus a photo resolved from the banner's target collection (right, stacked
- * below the copy on mobile). Autoplays every 5s, pauses on hover/focus;
- * slides without an image render as a full-bleed gradient panel.
+ * Full-width hero carousel. Web banner is 1200x462 (landscape); the mobile
+ * banner is 450x700 (portrait) and is swapped in below the sm breakpoint via
+ * a <picture> element. Autoplays every 5s, pauses on hover/focus.
  */
 export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
   const [index, setIndex] = useState(0);
@@ -57,79 +57,85 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
     >
-      {/* the gradient lives on the frame so crossfading slides never mismatch */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900">
+      {/* aspect switches between the portrait mobile art and landscape web art */}
+      <div className="relative aspect-[450/700] overflow-hidden bg-brand-900 sm:aspect-[1200/462]">
         {slides.map((slide, i) => {
           const active = i === index;
+          const dim = Math.min(0.85, Math.max(0, slide.overlay / 100));
           return (
             <div
               key={slide.id}
               aria-hidden={!active}
               aria-roledescription="slide"
               aria-label={`${i + 1} of ${count}: ${slide.title}`}
-              className={`transition-opacity duration-700 ease-out ${
-                active
-                  ? 'relative z-10 opacity-100'
-                  : 'pointer-events-none absolute inset-0 z-0 opacity-0'
-              }`}
+              className={`absolute inset-0 transition-opacity duration-700 ease-out ${active ? 'z-10 opacity-100' : 'z-0 opacity-0'}`}
             >
-              <div
-                className={`container-iw grid gap-6 py-8 sm:py-10 lg:items-stretch lg:gap-10 lg:py-12 ${
-                  slide.image ? 'lg:min-h-[540px] lg:grid-cols-2' : 'lg:min-h-[440px]'
-                }`}
-              >
-                {/* copy panel */}
-                <div
-                  className={`flex flex-col justify-center ${
-                    active ? 'animate-fadeIn' : 'opacity-0'
-                  }`}
-                >
-                  {slide.eyebrow && (
-                    <p className="text-xs font-bold uppercase tracking-widest text-brand-200">
-                      {slide.eyebrow}
-                    </p>
-                  )}
-                  {slide.title && (
-                    <h2 className="mt-3 font-heading text-3xl font-extrabold leading-tight text-white sm:text-4xl lg:text-[2.9rem]">
-                      {slide.title}
-                    </h2>
-                  )}
-                  {slide.subtitle && (
-                    <p className="mt-3 max-w-md text-sm font-medium text-white/80 sm:text-base lg:text-lg">
-                      {slide.subtitle}
-                    </p>
-                  )}
-                  {slide.ctaLabel && (
-                    <Link
-                      href={slide.href || '/collections/all'}
-                      tabIndex={active ? 0 : -1}
-                      className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-brand-900 shadow-lg shadow-brand-950/25 transition hover:bg-cream sm:px-7 sm:text-[15px]"
-                    >
-                      {slide.ctaLabel}
-                      <ChevronRight className="h-4 w-4" />
-                    </Link>
-                  )}
-                </div>
-
-                {/* image panel — decorative art; the slide label carries the copy */}
-                {slide.image && (
-                  <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-brand-800 sm:aspect-[16/10] lg:aspect-auto lg:min-h-[380px]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={slide.image}
-                      alt=""
-                      draggable={false}
-                      className={`absolute inset-0 h-full w-full object-cover transition-transform duration-[6000ms] ease-out ${
-                        active ? 'scale-100' : 'scale-105'
-                      }`}
-                    />
-                    {/* soften the photo edge against the gradient */}
-                    <span
-                      aria-hidden
-                      className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/15"
-                    />
-                  </div>
+              <picture>
+                {slide.mobileImage && (
+                  <source media="(max-width: 639px)" srcSet={slide.mobileImage} />
                 )}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={slide.image}
+                  alt={slide.title || 'Interwood promotion'}
+                  width={1200}
+                  height={462}
+                  draggable={false}
+                  className={`h-full w-full object-cover transition-transform duration-[6000ms] ease-out ${
+                    active ? 'scale-100' : 'scale-105'
+                  }`}
+                />
+              </picture>
+
+              {/* subtle gradient scrim so text stays legible */}
+              <div
+                aria-hidden
+                className="absolute inset-0 hidden sm:block"
+                style={{
+                  background: `linear-gradient(90deg, rgba(16,58,58,${dim}) 0%, rgba(16,58,58,${dim * 0.45}) 42%, rgba(16,58,58,0) 72%)`,
+                }}
+              />
+              <div
+                aria-hidden
+                className="absolute inset-0 sm:hidden"
+                style={{
+                  background: `linear-gradient(0deg, rgba(16,58,58,${Math.min(0.9, dim + 0.25)}) 0%, rgba(16,58,58,${dim * 0.3}) 45%, rgba(16,58,58,0) 75%)`,
+                }}
+              />
+
+              {/* copy */}
+              <div
+                className="absolute inset-0 flex items-end sm:items-center"
+                style={{ color: slide.textColor || '#ffffff' }}
+              >
+                <div className="container-iw">
+                  <div
+                    className={`max-w-[22rem] pb-16 sm:max-w-xl sm:pb-0 ${
+                      active ? 'animate-fadeIn' : 'opacity-0'
+                    }`}
+                  >
+                    {slide.title && (
+                      <h2 className="font-heading text-2xl font-bold leading-tight drop-shadow-sm sm:text-3xl lg:text-[2.6rem]">
+                        {slide.title}
+                      </h2>
+                    )}
+                    {slide.subtitle && (
+                      <p className="mt-2 text-sm font-medium opacity-90 drop-shadow-sm sm:mt-3 sm:text-lg">
+                        {slide.subtitle}
+                      </p>
+                    )}
+                    {slide.ctaLabel && (
+                      <Link
+                        href={slide.href || '/collections/all'}
+                        tabIndex={active ? 0 : -1}
+                        className="mt-4 inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-brand-900 shadow-lg shadow-brand-950/20 transition hover:bg-brand hover:text-white sm:mt-6 sm:px-7 sm:py-3 sm:text-[15px]"
+                      >
+                        {slide.ctaLabel}
+                        <ChevronRight className="h-4 w-4" />
+                      </Link>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           );

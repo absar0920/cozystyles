@@ -42,7 +42,7 @@ export function AddToCartBar({ item, qty }: { item: Omit<CartItem, 'key' | 'qty'
         {added ? <CheckIcon className="h-4 w-4" strokeWidth={2.4} /> : <CartIcon className="h-4.5 w-4.5" />}
         {added ? 'Added to Cart' : 'Add to Cart'}
       </button>
-      <button type="button" onClick={handleBuyNow} disabled={buying} className="btn-outline flex-1 !py-3">
+      <button type="button" onClick={handleBuyNow} disabled={buying} className="btn-dark flex-1">
         {buying ? 'Taking you to checkout…' : 'Buy Now'}
       </button>
     </div>

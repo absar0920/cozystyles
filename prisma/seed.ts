@@ -42,27 +42,6 @@ function priceToInt(p?: string | null): number | null {
   return Math.round(parseFloat(p));
 }
 
-/** Rebrand scraped Interwood content → Cozy Furnitures (longest patterns first). */
-function rebrand(s: string): string {
-  if (!s) return s;
-  return s
-    .replace(/Interwood Mobel \(Pvt\.?\) ?\.? Ltd\.?/gi, 'Cozy Furnitures (Pvt.) Ltd.')
-    .replace(/Interwood Mobel/gi, 'Cozy Furnitures')
-    .replace(/Interwoodmobel/gi, 'Cozy Furnitures')
-    .replace(/https?:\/\/careers\.interwood\.pk\/?/gi, '/pages/contact')
-    .replace(/https?:\/\/corporate\.interwood\.pk\/?[a-z/-]*/gi, '/pages/contact')
-    .replace(/[\w.+-]*@[\w-]*interwood[\w.-]*\.[a-z.]+/gi, (m) => m.replace(/[\w.-]*interwood[\w.-]*/i, 'cozyfurnitures'))
-    .replace(/https?:\/\/(?:www\.)?interwood\.pk/gi, '')
-    .replace(/interwood\.pk/gi, 'cozyfurnitures.pk')
-    .replace(/Interwood/g, 'Cozy Furnitures')
-    .replace(/interwood/gi, 'Cozy Furnitures')
-    .replace(/Cozy Furnitures began as a humble carpentry shop[\s\S]{0,200}?/i, (m) =>
-      m.replace(/[\s\S]*/, 'Cozy Furnitures grew from a small Lahore workshop into one of Pakistan’s most loved furniture brands.'),
-    )
-    .replace(/ {2,}/g, ' ')
-    .trim();
-}
-
 /** Extract page body HTML between template header and footer. */
 function extractPageBody(html: string): string {
   let s = html.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<style[\s\S]*?<\/style>/gi, '');
@@ -107,8 +86,8 @@ async function main() {
   // ---------- admin ----------
   await prisma.adminUser.create({
     data: {
-      email: (process.env.ADMIN_EMAIL ?? 'admin@cozyfurnitures.pk').toLowerCase(),
-      passwordHash: await bcrypt.hash(process.env.ADMIN_PASSWORD ?? 'CozyAdmin@2026', 10),
+      email: (process.env.ADMIN_EMAIL ?? 'admin@interwood.local').toLowerCase(),
+      passwordHash: await bcrypt.hash(process.env.ADMIN_PASSWORD ?? 'Interwood@2026', 10),
       name: 'Interwood Admin',
       role: 'SUPERADMIN',
     },
@@ -146,8 +125,8 @@ async function main() {
       data: {
         handle: p.handle,
         title: p.title,
-        bodyHtml: rebrand(p.body_html ?? ''),
-        vendor: rebrand(p.vendor ?? 'Cozy Furnitures'),
+        bodyHtml: p.body_html ?? '',
+        vendor: p.vendor ?? 'Interwood',
         productType: p.product_type ?? '',
         status: 'ACTIVE',
         hot: hotHandles.has(p.handle),
@@ -250,7 +229,7 @@ async function main() {
       data: {
         handle: c.handle,
         title: c.title.trim(),
-        description: rebrand(c.body_html ?? ''),
+        description: c.body_html ?? '',
         image: img,
         parentId: parent ?? null,
         position: pos++,
@@ -316,8 +295,8 @@ async function main() {
     await prisma.page.create({
       data: {
         handle,
-        title: rebrand(titleFromHtml(html)),
-        bodyHtml: rebrand(extractPageBody(html)),
+        title: titleFromHtml(html),
+        bodyHtml: extractPageBody(html),
         isBlogPost: false,
       },
     });
@@ -330,7 +309,7 @@ async function main() {
       const html = readFileSync(path.join(blogsDir, f), 'utf8');
       const handle = f.replace('.html', '');
       await prisma.page.create({
-        data: { handle: `news-${handle}`, title: rebrand(titleFromHtml(html)), bodyHtml: rebrand(extractPageBody(html)), isBlogPost: true },
+        data: { handle: `news-${handle}`, title: titleFromHtml(html), bodyHtml: extractPageBody(html), isBlogPost: true },
       });
     }
   }
@@ -492,12 +471,12 @@ async function main() {
     { label: 'About Us', href: '/pages/about-us' }, { label: 'Store Locator', href: '/pages/store-locator' },
     { label: 'Product Catalogues', href: '/pages/catalogues' }, { label: 'Blog', href: '/blogs/news' },
     { label: 'Payments', href: '/pages/payment' }, { label: 'Shipping', href: '/pages/shipping-and-delivery' },
-    { label: 'Authorized Dealers', href: '/pages/authorized' }, { label: 'Careers', href: '/pages/contact' },
+    { label: 'Authorized Dealers', href: '/pages/authorized' }, { label: 'Careers', href: 'https://careers.interwood.pk/' },
     { label: 'Terms of Offers for Sale', href: '/pages/terms-of-offers-for-sale' },
     { label: 'Terms of Use', href: '/pages/terms-of-use' }, { label: 'Privacy Policy', href: '/pages/privacy-policy' },
   ];
   const FOOTER_SUPPORT: MenuSpec[] = [
-    { label: 'Contact Us', href: '/pages/contact' }, { label: 'Corporate', href: '/pages/contact' },
+    { label: 'Contact Us', href: '/pages/contact' }, { label: 'Corporate', href: 'https://corporate.interwood.pk/' },
     { label: 'Information/Lead Form', href: '/pages/lead-form' }, { label: 'Rewards', href: '/pages/rewards' },
     { label: 'Loyalty Form', href: '/pages/loyalty-form' }, { label: 'Customer Service', href: '/pages/support-complaint-form' },
     { label: 'Track My Ticket', href: '/pages/track-your-ticket' }, { label: 'Track Your Order', href: '/track' },
@@ -602,16 +581,16 @@ async function main() {
 
   // ---------- settings ----------
   const settings: Record<string, string> = {
-    announcement: 'Free Delivery & Installation Nationwide — Cozy Furnitures',
-    phone: '+92-42-111-269-926',
-    email: 'info@cozyfurnitures.pk',
-    complaintsEmail: 'complaints@cozyfurnitures.pk',
-    whatsapp: '+9242111269926',
-    address: 'Main Boulevard, Gulberg III, Lahore, Pakistan',
-    facebook: '#',
-    instagram: '#',
-    youtube: '#',
-    linkedin: '#',
+    announcement: 'Free Delivery & Installation Nationwide — Pakistan’s Largest Furniture Manufacturer since 1974',
+    phone: '+92-42-111-203-203',
+    email: 'info@interwood.pk',
+    complaintsEmail: 'complaints@interwoodmobel.com',
+    whatsapp: '+9242111203203',
+    address: '12-KM Ferozepur Road, Lahore, Pakistan',
+    facebook: 'https://www.facebook.com/Interwood.pk',
+    instagram: 'https://www.instagram.com/interwood.pk/',
+    youtube: 'https://www.youtube.com/user/InterwoodMobel',
+    linkedin: 'https://www.linkedin.com/company/interwood-mobel-pvt-ltd',
     shippingFee: '0',
     freeShippingThreshold: '0',
     ratingSummary: '4.92',

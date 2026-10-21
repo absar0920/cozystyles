@@ -4,28 +4,29 @@ import Link from 'next/link';
 import { useCart } from '@/lib/cart';
 import { formatPKR } from '@/lib/money';
 import { CartIcon, MinusIcon, PlusIcon, TrashIcon, ShieldIcon, TruckIcon } from '@/components/icons';
-import { Breadcrumbs } from '@/components/catalog/Breadcrumbs';
 import { OrderSummary } from '@/components/checkout/OrderSummary';
 
 function QtyStepper({ value, onChange }: { value: number; onChange: (next: number) => void }) {
   return (
-    <div className="inline-flex items-center rounded-full border border-cream-border bg-white shadow-sm">
+    <div className="inline-flex items-stretch overflow-hidden rounded-md border border-cream-border bg-white">
       <button
         type="button"
         aria-label="Decrease quantity"
         onClick={() => onChange(Math.max(1, value - 1))}
         disabled={value <= 1}
-        className="flex h-9 w-9 items-center justify-center rounded-full text-ink-dark transition hover:bg-brand hover:text-white disabled:cursor-not-allowed disabled:text-ink-light disabled:hover:bg-transparent disabled:hover:text-ink-light"
+        className="flex w-9 items-center justify-center text-ink-dark transition hover:bg-cream disabled:cursor-not-allowed disabled:text-ink-light"
       >
         <MinusIcon className="h-4 w-4" />
       </button>
-      <span className="flex w-10 items-center justify-center text-sm font-semibold text-ink-dark">{value}</span>
+      <span className="flex w-11 items-center justify-center border-x border-cream-border text-sm font-semibold text-ink-dark">
+        {value}
+      </span>
       <button
         type="button"
         aria-label="Increase quantity"
         onClick={() => onChange(Math.min(99, value + 1))}
         disabled={value >= 99}
-        className="flex h-9 w-9 items-center justify-center rounded-full text-ink-dark transition hover:bg-brand hover:text-white disabled:cursor-not-allowed disabled:text-ink-light disabled:hover:bg-transparent disabled:hover:text-ink-light"
+        className="flex w-9 items-center justify-center text-ink-dark transition hover:bg-cream disabled:cursor-not-allowed disabled:text-ink-light"
       >
         <PlusIcon className="h-4 w-4" />
       </button>
@@ -38,17 +39,17 @@ function CartSkeleton() {
     <div className="grid gap-8 lg:grid-cols-3" aria-hidden>
       <div className="space-y-4 lg:col-span-2">
         {[0, 1].map((i) => (
-          <div key={i} className="flex animate-pulse gap-4 rounded-2xl bg-cream-soft p-4">
+          <div key={i} className="flex animate-pulse gap-4 rounded-xl border border-cream-border bg-white p-4">
             <div className="h-24 w-24 shrink-0 rounded-lg bg-cream" />
             <div className="flex-1 space-y-3 py-1">
               <div className="h-4 w-2/3 rounded bg-cream" />
               <div className="h-3 w-1/3 rounded bg-cream" />
-              <div className="h-8 w-28 rounded-full bg-cream" />
+              <div className="h-8 w-28 rounded bg-cream" />
             </div>
           </div>
         ))}
       </div>
-      <div className="h-72 animate-pulse rounded-2xl bg-cream-soft" />
+      <div className="h-72 animate-pulse rounded-xl bg-cream" />
     </div>
   );
 }
@@ -57,17 +58,20 @@ export default function CartPage() {
   const { items, count, subtotal, savings, hydrated, setQty, removeItem } = useCart();
 
   return (
-    <div className="bg-white py-8 sm:py-12">
+    <div className="bg-cream-soft py-8 sm:py-12">
       <div className="container-iw">
-        <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Cart' }]} className="mb-4" />
+        <nav aria-label="Breadcrumb" className="mb-4 text-xs text-ink-muted">
+          <Link href="/" className="transition hover:text-brand">
+            Home
+          </Link>
+          <span className="mx-1.5">/</span>
+          <span className="font-medium text-ink-dark">Cart</span>
+        </nav>
 
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-brand">Shopping Bag</p>
-            <h1 className="mt-1 font-heading text-2xl font-bold text-ink-dark sm:text-3xl">Your Cart</h1>
-          </div>
+          <h1 className="font-heading text-2xl font-bold text-ink-dark sm:text-3xl">Your Cart</h1>
           {hydrated && items.length > 0 && (
-            <p className="pb-0.5 text-sm text-ink-muted">
+            <p className="text-sm text-ink-muted">
               {count} {count === 1 ? 'item' : 'items'} in your cart
             </p>
           )}
@@ -76,7 +80,7 @@ export default function CartPage() {
         {!hydrated ? (
           <CartSkeleton />
         ) : items.length === 0 ? (
-          <div className="mx-auto max-w-md rounded-2xl bg-white px-6 py-14 text-center shadow-card">
+          <div className="mx-auto max-w-md rounded-xl border border-cream-border bg-white px-6 py-14 text-center shadow-card">
             <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-brand-50 text-brand">
               <CartIcon className="h-9 w-9" />
             </span>
@@ -94,11 +98,11 @@ export default function CartPage() {
               {items.map((item) => (
                 <div
                   key={item.key}
-                  className="flex gap-4 rounded-2xl bg-cream-soft p-4 transition sm:p-5"
+                  className="flex gap-4 rounded-xl border border-cream-border bg-white p-4 shadow-card transition sm:p-5"
                 >
                   <Link
                     href={`/products/${item.handle}`}
-                    className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-white sm:h-28 sm:w-28"
+                    className="h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-cream-border bg-cream-soft sm:h-28 sm:w-28"
                   >
                     {item.image ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -138,7 +142,7 @@ export default function CartPage() {
                         type="button"
                         onClick={() => removeItem(item.key)}
                         aria-label={`Remove ${item.title} from cart`}
-                        className="shrink-0 rounded-full p-2 text-ink-muted transition hover:bg-sale/10 hover:text-sale"
+                        className="shrink-0 rounded-md p-2 text-ink-muted transition hover:bg-sale/10 hover:text-sale"
                       >
                         <TrashIcon className="h-4.5 w-4.5" />
                       </button>

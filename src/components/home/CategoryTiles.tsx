@@ -6,7 +6,7 @@ export type CategoryTile = {
   image: string | null;
 };
 
-/** Borderless "Shop by Category" tiles: rounded photo, gradient wash, label pill. */
+/** "Shop by Category" square tiles with a name overlay. Responsive 2/3/5 columns. */
 export function CategoryTiles({ collections }: { collections: CategoryTile[] }) {
   if (collections.length === 0) return null;
   return (
@@ -15,7 +15,7 @@ export function CategoryTiles({ collections }: { collections: CategoryTile[] }) 
         <Link
           key={c.handle}
           href={`/collections/${c.handle}`}
-          className="group relative block aspect-square overflow-hidden rounded-2xl bg-cream-soft"
+          className="group relative block aspect-square overflow-hidden rounded-xl bg-cream-soft shadow-card transition duration-200 hover:-translate-y-0.5 hover:shadow-hover"
         >
           {c.image ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -28,15 +28,18 @@ export function CategoryTiles({ collections }: { collections: CategoryTile[] }) 
               className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-3xl font-bold text-cream-border">CF</div>
+            <div className="flex h-full items-center justify-center text-3xl font-bold text-cream-border">IW</div>
           )}
           <span
             aria-hidden
-            className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent"
+            className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-80 transition group-hover:opacity-95"
           />
-          <span className="absolute inset-x-0 bottom-3 flex justify-center px-2">
-            <span className="max-w-full truncate rounded-full bg-white/90 px-3.5 py-1.5 text-[13px] font-semibold text-brand-900 shadow-sm sm:text-sm">
+          <span className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-0.5 p-3">
+            <span className="text-center text-[13px] font-semibold text-white drop-shadow sm:text-sm">
               {c.title}
+            </span>
+            <span className="text-tiny font-medium text-white/0 transition group-hover:text-white/85">
+              Shop Now
             </span>
           </span>
         </Link>

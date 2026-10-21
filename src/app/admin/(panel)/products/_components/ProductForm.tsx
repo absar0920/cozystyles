@@ -97,7 +97,7 @@ export function ProductForm({
                 </Select>
               </Field>
               <Field label="Vendor">
-                <TextInput name="vendor" defaultValue={p?.vendor ?? 'Cozy Furnitures'} />
+                <TextInput name="vendor" defaultValue={p?.vendor ?? 'Interwood'} />
               </Field>
               <Field label="Product type">
                 <TextInput name="productType" defaultValue={p?.productType ?? ''} placeholder="e.g. Sofa, Chair, Storage" />

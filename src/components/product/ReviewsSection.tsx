@@ -29,7 +29,7 @@ export function ReviewsSection({
 
       <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
         {/* Summary */}
-        <div className="h-fit rounded-2xl border-0 bg-white p-5 text-center shadow-card lg:text-left">
+        <div className="h-fit rounded-xl border border-cream-border bg-cream-soft/70 p-5 text-center lg:text-left">
           <p className="font-heading text-4xl font-bold text-ink-dark">{rating.toFixed(1)}</p>
           <div className="mt-2 flex justify-center lg:justify-start">
             <Stars rating={rating} size="md" />
@@ -42,13 +42,13 @@ export function ReviewsSection({
 
         {/* Review list */}
         {reviews.length === 0 ? (
-          <div className="flex items-center rounded-2xl border border-dashed border-cream-border bg-white/60 p-8 text-sm text-ink-muted">
+          <div className="flex items-center rounded-xl border border-dashed border-cream-border bg-white p-8 text-sm text-ink-muted">
             This product hasn&rsquo;t been reviewed yet. Be the first to share your experience with it.
           </div>
         ) : (
           <ul className="grid gap-4 sm:grid-cols-2">
             {reviews.map((review) => (
-              <li key={review.id} className="flex flex-col gap-2 rounded-2xl border-0 bg-cream-soft p-4.5 shadow-card">
+              <li key={review.id} className="flex flex-col gap-2 rounded-xl border border-cream-border bg-white p-4.5 shadow-card">
                 <div className="flex items-center justify-between gap-3">
                   <span className="truncate text-sm font-semibold text-ink-dark">{review.author}</span>
                   <time dateTime={new Date(review.createdAt).toISOString()} className="shrink-0 text-[11px] text-ink-light">

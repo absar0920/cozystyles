@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
     return {
       title: 'All Products',
       description:
-        'Browse the complete Cozy Furnitures catalogue — bedroom, living, dining and office furniture, doors, kitchens and decor.',
+        'Browse the complete Interwood catalogue — bedroom, living, dining and office furniture, doors, kitchens and decor.',
     };
   }
   const collection = await getCollectionByHandle(handle);
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
     title: collection.title,
     description: desc
       ? desc.slice(0, 160)
-      : `Shop ${collection.title} at Cozy Furnitures — Pakistan's largest furniture manufacturer. Free delivery & installation nationwide.`,
+      : `Shop ${collection.title} at Interwood — Pakistan's largest furniture manufacturer. Free delivery & installation nationwide.`,
   };
 }
 
@@ -104,7 +104,6 @@ export default async function CollectionPage({
           }`}
         />
         <div className="relative flex min-h-[190px] flex-col justify-end gap-1.5 p-6 sm:min-h-[250px] sm:p-10">
-          <p className="text-xs font-semibold uppercase tracking-widest text-brand-200">Collection</p>
           <h1 className="text-2xl font-bold text-white sm:text-4xl">{title}</h1>
           <p className="text-sm text-white/80">
             {result.total} {result.total === 1 ? 'product' : 'products'} · Free Delivery &amp; Installation
@@ -113,7 +112,7 @@ export default async function CollectionPage({
       </section>
 
       {description.trim() !== '' && (
-        <section className="rounded-2xl bg-white p-5 shadow-card sm:p-6">
+        <section className="rounded-xl border border-cream-border bg-white p-5 sm:p-6">
           <ExpandableRte html={description} />
         </section>
       )}

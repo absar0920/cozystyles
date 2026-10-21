@@ -45,36 +45,37 @@ export function Testimonials({ reviews }: { reviews: Testimonial[] }) {
   return (
     <section className="bg-cream">
       <div className="container-iw py-10 lg:py-14">
-        <div className="mb-5 flex flex-col items-center gap-1.5 text-center">
-          <p className="text-xs font-semibold uppercase tracking-widest text-brand">Testimonials</p>
-          <h2 className="font-heading text-xl font-semibold text-ink-dark sm:text-2xl">
-            Our customer speaks for us
-          </h2>
-          <p className="mt-1 text-sm text-ink-muted">Real reviews from verified Cozy Furnitures customers</p>
-        </div>
-        <div className="mb-4 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => scroll(-1)}
-            aria-label="Previous reviews"
-            disabled={!canPrev}
-            className={`flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-dark shadow-hover transition ${
-              canPrev ? 'hover:bg-brand hover:text-white' : 'cursor-default opacity-40'
-            }`}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => scroll(1)}
-            aria-label="More reviews"
-            disabled={!canNext}
-            className={`flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink-dark shadow-hover transition ${
-              canNext ? 'hover:bg-brand hover:text-white' : 'cursor-default opacity-40'
-            }`}
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
+        <div className="mb-5 flex items-end justify-between gap-4">
+          <div>
+            <h2 className="font-heading text-xl font-semibold text-ink-dark sm:text-2xl">
+              Our customer speaks for us
+            </h2>
+            <p className="mt-1 text-sm text-ink-muted">Real reviews from verified Interwood customers</p>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <button
+              type="button"
+              onClick={() => scroll(-1)}
+              aria-label="Previous reviews"
+              disabled={!canPrev}
+              className={`flex h-10 w-10 items-center justify-center rounded-full border border-cream-border bg-white text-ink-dark shadow-card transition ${
+                canPrev ? 'hover:bg-brand hover:text-white' : 'cursor-default opacity-40'
+              }`}
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scroll(1)}
+              aria-label="More reviews"
+              disabled={!canNext}
+              className={`flex h-10 w-10 items-center justify-center rounded-full border border-cream-border bg-white text-ink-dark shadow-card transition ${
+                canNext ? 'hover:bg-brand hover:text-white' : 'cursor-default opacity-40'
+              }`}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         <div
@@ -87,14 +88,8 @@ export function Testimonials({ reviews }: { reviews: Testimonial[] }) {
           {reviews.map((r) => (
             <figure
               key={r.id}
-              className="flex w-[86%] shrink-0 snap-start flex-col rounded-2xl bg-cream-soft p-5 shadow-card sm:w-[380px]"
+              className="flex w-[86%] shrink-0 snap-start flex-col rounded-xl border border-cream-border bg-white p-5 shadow-card sm:w-[380px]"
             >
-              <span
-                aria-hidden
-                className="mb-2 font-heading text-4xl font-extrabold leading-none text-brand"
-              >
-                &ldquo;
-              </span>
               <Stars rating={r.rating} />
               <blockquote className="mt-3 flex-1">
                 {r.title && (

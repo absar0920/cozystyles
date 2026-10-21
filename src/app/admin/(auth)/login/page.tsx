@@ -1,4 +1,3 @@
-import { Logo } from '@/components/brand/Logo';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getCurrentAdmin } from '@/lib/auth';
@@ -20,7 +19,7 @@ export default async function LoginPage() {
     <div className="rounded-2xl bg-white p-8 shadow-2xl sm:p-10">
       <div className="mb-8 flex flex-col items-center text-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <Logo size="lg" withTagline />
+        <img src="/images/logo.png" alt="Interwood" className="h-10 w-auto" width={160} height={40} />
         <h1 className="mt-6 font-heading text-lg font-bold text-ink-dark">Admin Panel</h1>
         <p className="mt-1 text-sm text-ink-muted">Sign in to manage your store</p>
       </div>

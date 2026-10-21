@@ -30,14 +30,14 @@ export function OrderSummary({
 }) {
   const total = subtotal;
   return (
-    <div className="rounded-2xl bg-white p-5 shadow-card">
+    <div className="rounded-xl border border-cream-border bg-white p-5 shadow-card">
       <h2 className="font-heading text-base font-semibold text-ink-dark">Order Summary</h2>
 
       {showItems && (
-        <ul className="mt-4 space-y-2.5 pb-1">
+        <ul className="mt-4 space-y-3 border-b border-cream-border pb-4">
           {items.map((item, idx) => (
-            <li key={item.key ?? idx} className="flex items-center gap-3 rounded-xl bg-cream-soft p-2.5">
-              <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-white">
+            <li key={item.key ?? idx} className="flex items-center gap-3">
+              <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-cream-border bg-cream-soft">
                 {item.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -47,7 +47,7 @@ export function OrderSummary({
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <span className="flex h-full items-center justify-center text-[11px] font-semibold text-ink-light">CF</span>
+                  <span className="flex h-full items-center justify-center text-[11px] font-semibold text-ink-light">IW</span>
                 )}
                 <span className="absolute -right-0 -top-0 rounded-bl-md bg-ink-dark/80 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                   ×{item.qty}

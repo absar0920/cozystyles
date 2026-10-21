@@ -15,7 +15,7 @@ export default function AccountLoginPage() {
 
   return (
     <div className="container-iw flex items-center justify-center py-14 sm:py-20">
-      <div className="w-full max-w-md rounded-2xl bg-white p-7 shadow-card sm:p-9">
+      <div className="w-full max-w-md rounded-2xl border border-cream-border bg-white p-7 shadow-card sm:p-9">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand">
           <UserIcon className="h-6 w-6" />
         </div>
@@ -25,7 +25,7 @@ export default function AccountLoginPage() {
         </p>
 
         {submitted ? (
-          <div className="mt-6 rounded-2xl bg-cream p-5">
+          <div className="mt-6 rounded-xl border border-cream-border bg-cream p-5">
             <p className="text-sm font-semibold text-ink-dark">
               Customer accounts are coming soon. Track your order or contact us.
             </p>
@@ -80,7 +80,7 @@ export default function AccountLoginPage() {
               Sign In
             </button>
             <p className="text-center text-xs leading-relaxed text-ink-muted">
-              New to Cozy Furnitures? Continue shopping as a guest — no account needed at checkout.
+              New to Interwood? Continue shopping as a guest — no account needed at checkout.
             </p>
           </form>
         )}

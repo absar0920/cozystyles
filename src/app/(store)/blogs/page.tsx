@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'News & Stories',
   description:
-    'Interior design ideas, buying guides, seasonal looks and company news from Cozy Furnitures.',
+    'Interior design ideas, buying guides, seasonal looks and company news from Interwood — Pakistan’s largest furniture manufacturer.',
 };
 
 export default async function BlogsPage() {
@@ -26,7 +26,7 @@ export default async function BlogsPage() {
       <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-600 px-6 py-10 sm:px-10 sm:py-14">
         <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-white/10 blur-2xl" aria-hidden />
         <div className="relative max-w-2xl">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-200">Cozy Journal</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-200">Interwood Journal</p>
           <h1 className="mt-2 text-3xl font-bold text-white sm:text-4xl lg:text-5xl">News &amp; Stories</h1>
           <p className="mt-3 text-sm leading-relaxed text-white/80 sm:text-base">
             Interior ideas, buying guides, seasonal inspirations and updates from Pakistan&rsquo;s largest furniture
@@ -36,7 +36,7 @@ export default async function BlogsPage() {
       </section>
 
       {posts.length === 0 && (
-        <div className="rounded-2xl bg-white px-6 py-16 text-center shadow-card">
+        <div className="rounded-2xl border border-cream-border bg-white px-6 py-16 text-center">
           <h2 className="text-lg font-bold text-ink-dark">No stories published yet</h2>
           <p className="mt-2 text-sm text-ink-muted">
             Check back soon — fresh ideas for bedrooms, living rooms and workspaces are on the way.
@@ -53,7 +53,7 @@ export default async function BlogsPage() {
           <h2 className="sr-only">Featured story</h2>
           <Link
             href={`/blogs/news/${featured.handle.slice(5)}`}
-            className="group grid overflow-hidden rounded-2xl bg-white shadow-card transition hover:shadow-hover sm:grid-cols-2"
+            className="group grid overflow-hidden rounded-2xl border border-cream-border bg-white shadow-card transition hover:shadow-hover sm:grid-cols-2"
           >
             <div className="aspect-[16/10] overflow-hidden bg-cream sm:aspect-auto sm:min-h-[320px]">
               {featuredImage ? (
@@ -68,7 +68,7 @@ export default async function BlogsPage() {
                 />
               ) : (
                 <div className="flex h-full min-h-[220px] items-center justify-center bg-gradient-to-br from-brand-50 to-cream">
-                  <span className="font-heading text-4xl font-bold text-brand/30">CF</span>
+                  <span className="font-heading text-4xl font-bold text-brand/30">IW</span>
                 </div>
               )}
             </div>
@@ -103,7 +103,7 @@ export default async function BlogsPage() {
                 <Link
                   key={post.id}
                   href={`/blogs/news/${post.handle.slice(5)}`}
-                  className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-card transition hover:-translate-y-0.5 hover:shadow-hover"
+                  className="group flex flex-col overflow-hidden rounded-xl border border-cream-border bg-white shadow-card transition hover:-translate-y-0.5 hover:shadow-hover"
                 >
                   <div className="aspect-[16/10] overflow-hidden bg-cream">
                     {image ? (
@@ -118,7 +118,7 @@ export default async function BlogsPage() {
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center bg-gradient-to-br from-brand-50 to-cream">
-                        <span className="font-heading text-3xl font-bold text-brand/30">CF</span>
+                        <span className="font-heading text-3xl font-bold text-brand/30">IW</span>
                       </div>
                     )}
                   </div>

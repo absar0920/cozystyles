@@ -15,7 +15,7 @@ const STEPS = [
 export function StatusTimeline({ status }: { status: string }) {
   if (status === 'CANCELLED') {
     return (
-      <div className="rounded-2xl bg-sale/5 px-5 py-4">
+      <div className="rounded-lg border border-sale/30 bg-sale/5 px-5 py-4">
         <p className="text-sm font-semibold uppercase tracking-wide text-sale">Order Cancelled</p>
         <p className="mt-1 text-xs leading-relaxed text-ink-muted">
           This order has been cancelled. If you believe this is a mistake, please contact us at +92-42-111-203-203.
@@ -40,7 +40,7 @@ export function StatusTimeline({ status }: { status: string }) {
             {!last && (
               <span
                 aria-hidden
-                className={`absolute left-[15px] top-9 h-[calc(100%-2rem)] w-0.5 ${done ? 'bg-brand' : 'bg-brand-100'}`}
+                className={`absolute left-[15px] top-9 h-[calc(100%-2rem)] w-0.5 ${done ? 'bg-brand' : 'bg-cream-border'}`}
               />
             )}
             <span
@@ -49,7 +49,7 @@ export function StatusTimeline({ status }: { status: string }) {
                   ? 'border-brand bg-brand text-white'
                   : current
                     ? 'border-brand bg-white text-brand'
-                    : 'border-brand-100 bg-brand-50 text-brand-300'
+                    : 'border-cream-border bg-white text-ink-light'
               }`}
             >
               {done ? (
@@ -63,25 +63,23 @@ export function StatusTimeline({ status }: { status: string }) {
                   <span className="h-2.5 w-2.5 rounded-full bg-brand" />
                 )
               ) : (
-                <span className="h-2 w-2 rounded-full bg-brand-200" />
+                <span className="h-2 w-2 rounded-full bg-cream-border" />
               )}
             </span>
-            <span className="pt-0.5">
+            <span className="pt-1">
               <span
-                className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
-                  done
-                    ? 'bg-brand-50 text-brand-700'
-                    : current
-                      ? 'bg-brand text-white'
-                      : 'bg-cream-soft text-ink-light'
+                className={`block text-sm font-semibold ${
+                  done || current ? 'text-ink-dark' : 'text-ink-light'
                 }`}
               >
                 {step.label}
                 {current && (
-                  <span className="text-[10px] font-bold uppercase tracking-wide text-white/80">Current</span>
+                  <span className="ml-2 rounded-md bg-brand px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                    Current
+                  </span>
                 )}
               </span>
-              <span className={`mt-1 block text-xs ${done || current ? 'text-ink-muted' : 'text-ink-light/80'}`}>
+              <span className={`mt-0.5 block text-xs ${done || current ? 'text-ink-muted' : 'text-ink-light/80'}`}>
                 {step.note}
               </span>
             </span>

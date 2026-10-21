@@ -51,9 +51,9 @@ export function NewsletterForm() {
   if (status === 'done') {
     return (
       <div className="mt-6">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Newsletter</p>
-        <p className="mt-2 text-[13px] font-semibold text-brand">Subscribed!</p>
-        <p className="mt-1 text-[12.5px] text-ink-muted">
+        <p className="text-[11px] font-bold uppercase tracking-wider text-white/60">Newsletter</p>
+        <p className="mt-2 text-[13px] font-semibold text-brand-200">Subscribed!</p>
+        <p className="mt-1 text-[12.5px] text-white/60">
           You&rsquo;ll hear about new collections and seasonal offers first.
         </p>
       </div>
@@ -62,10 +62,10 @@ export function NewsletterForm() {
 
   return (
     <form className="mt-6" onSubmit={onSubmit} noValidate>
-      <label htmlFor="newsletter-email" className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+      <label htmlFor="newsletter-email" className="text-[11px] font-bold uppercase tracking-wider text-white/60">
         Newsletter
       </label>
-      <p className="mt-1.5 text-[12.5px] text-ink-muted">
+      <p className="mt-1.5 text-[12.5px] text-white/60">
         New arrivals, seasonal offers and interior ideas — straight to your inbox.
       </p>
       <div className="mt-2.5 flex max-w-sm gap-2">
@@ -77,17 +77,17 @@ export function NewsletterForm() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Your email address"
           autoComplete="email"
-          className="w-full min-w-0 rounded-full border border-cream-border bg-white px-4 py-2.5 text-[13px] text-ink-dark placeholder:text-ink-light outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+          className="w-full min-w-0 rounded-lg border border-white/20 bg-white/10 px-3.5 py-2.5 text-[13px] text-white placeholder:text-white/40 outline-none transition focus:border-brand-300 focus:bg-white/15"
         />
         <button
           type="submit"
           disabled={status === 'loading'}
-          className="shrink-0 rounded-full bg-brand px-5 py-2.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-70"
+          className="shrink-0 rounded-lg bg-brand px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-brand-500 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {status === 'loading' ? '…' : 'Subscribe'}
         </button>
       </div>
-      {status === 'error' && error && <p className="mt-2 text-[12px] font-medium text-sale">{error}</p>}
+      {status === 'error' && error && <p className="mt-2 text-[12px] text-[#ffb4a8]">{error}</p>}
     </form>
   );
 }

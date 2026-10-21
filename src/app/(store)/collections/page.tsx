@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'All Categories',
   description:
-    'Browse every Cozy Furnitures category — bedroom, living and dining furniture, office chairs and desks, wardrobes, doors, kitchens, kids furniture and home decor.',
+    'Browse every Interwood category — bedroom, living and dining furniture, office chairs and desks, wardrobes, doors, kitchens, kids furniture and home decor.',
 };
 
 type NavCollection = Awaited<ReturnType<typeof getAllNavCollections>>[number];
@@ -49,8 +49,7 @@ export default async function CollectionsPage() {
       <div className="border-b border-cream-border bg-cream">
         <div className="container-iw py-8 sm:py-12">
           <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Collections' }]} className="mb-3" />
-          <p className="text-xs font-semibold uppercase tracking-widest text-brand">Our Collections</p>
-          <h1 className="mt-1.5 text-2xl font-bold text-ink-dark sm:text-4xl">All Categories</h1>
+          <h1 className="text-2xl font-bold text-ink-dark sm:text-4xl">All Categories</h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-muted">
             {nav.length} collections across bedroom, living, dining, office, doors, kitchens and decor — handcrafted by
             Pakistan&apos;s largest furniture manufacturer, with free delivery &amp; installation nationwide.
@@ -120,7 +119,7 @@ export default async function CollectionsPage() {
         })}
 
         {standalone.length > 0 && (
-          <section className="rounded-2xl bg-cream-soft/70 p-5 shadow-card sm:p-8">
+          <section className="rounded-2xl border border-cream-border bg-cream-soft/70 p-5 sm:p-8">
             <h2 className="text-lg font-bold text-ink-dark">More categories</h2>
             <p className="mt-1 text-xs text-ink-muted">
               Every collection in our catalogue — from specialist ranges to signature designer sets.

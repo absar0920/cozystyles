@@ -46,9 +46,9 @@ export function Pagination({
   if (pages <= 1) return null;
   const items = pageWindow(page, pages);
   const baseBtn =
-    'inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-full border-0 px-2.5 text-sm font-medium transition';
-  const idleBtn = `${baseBtn} bg-cream-soft text-ink-dark hover:bg-brand hover:text-white`;
-  const disabledBtn = `${baseBtn} cursor-not-allowed bg-cream-soft text-ink-light`;
+    'inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-md border px-2 text-sm font-medium transition';
+  const idleBtn = `${baseBtn} border-cream-border bg-white text-ink-dark hover:border-brand hover:text-brand`;
+  const disabledBtn = `${baseBtn} cursor-not-allowed border-cream-border bg-cream-soft text-ink-light`;
 
   return (
     <nav aria-label="Pagination" className={`flex flex-wrap items-center justify-center gap-1.5 ${className ?? ''}`}>
@@ -68,7 +68,7 @@ export function Pagination({
             …
           </span>
         ) : item === page ? (
-          <span key={item} aria-current="page" className={`${baseBtn} bg-brand text-white shadow-card`}>
+          <span key={item} aria-current="page" className={`${baseBtn} border-brand bg-brand text-white shadow-card`}>
             {item}
           </span>
         ) : (

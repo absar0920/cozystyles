@@ -69,7 +69,7 @@ export function TrackForm({ initialOrder = '' }: { initialOrder?: string }) {
     <div className="mx-auto max-w-3xl">
       <form
         onSubmit={handleSubmit}
-        className="rounded-2xl bg-white p-5 shadow-card sm:p-6"
+        className="rounded-xl border border-cream-border bg-white p-5 shadow-card sm:p-6"
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -81,9 +81,9 @@ export function TrackForm({ initialOrder = '' }: { initialOrder?: string }) {
               type="text"
               value={orderNo}
               onChange={(e) => setOrderNo(e.target.value)}
-              placeholder="CF-100001"
+              placeholder="IW-100001"
               autoComplete="off"
-              className="input rounded-full uppercase placeholder:normal-case"
+              className="input uppercase placeholder:normal-case"
             />
           </div>
           <div>
@@ -97,7 +97,7 @@ export function TrackForm({ initialOrder = '' }: { initialOrder?: string }) {
               onChange={(e) => setPhone(e.target.value)}
               placeholder="0300 1234567"
               autoComplete="tel"
-              className="input rounded-full"
+              className="input"
             />
           </div>
         </div>
@@ -113,13 +113,13 @@ export function TrackForm({ initialOrder = '' }: { initialOrder?: string }) {
       </form>
 
       {error && (
-        <div role="alert" className="mt-5 rounded-2xl bg-sale/5 px-5 py-4 text-sm font-medium text-sale">
+        <div role="alert" className="mt-5 rounded-xl border border-sale/30 bg-sale/5 px-5 py-4 text-sm text-sale">
           {error}
         </div>
       )}
 
       {result && (
-        <div className="mt-6 animate-fadeIn rounded-2xl bg-white p-5 shadow-card sm:p-6">
+        <div className="mt-6 animate-fadeIn rounded-xl border border-cream-border bg-white p-5 shadow-card sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3 border-b border-cream-border pb-4">
             <div>
               <p className="text-xs uppercase tracking-wide text-ink-muted">Order</p>
@@ -149,10 +149,10 @@ export function TrackForm({ initialOrder = '' }: { initialOrder?: string }) {
               <h3 className="mb-4 font-heading text-sm font-semibold uppercase tracking-wide text-ink-muted">
                 Order Details
               </h3>
-              <ul className="space-y-2.5">
+              <ul className="divide-y divide-cream-border rounded-lg border border-cream-border">
                 {result.items.map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-3 rounded-2xl bg-cream-soft p-3">
-                    <span className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-white">
+                  <li key={idx} className="flex items-center gap-3 p-3">
+                    <span className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-cream-border bg-cream-soft">
                       {item.image ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={item.image} alt={item.title} loading="lazy" className="h-full w-full object-cover" />
@@ -179,7 +179,7 @@ export function TrackForm({ initialOrder = '' }: { initialOrder?: string }) {
                   </li>
                 ))}
               </ul>
-              <div className="mt-3 flex items-center justify-between rounded-xl bg-cream px-4 py-3 text-sm">
+              <div className="mt-3 flex items-center justify-between rounded-lg bg-cream px-4 py-3 text-sm">
                 <span className="font-medium text-ink-muted">Total (incl. free delivery)</span>
                 <span className="font-heading text-base font-bold text-brand">{formatPKR(result.total)}</span>
               </div>

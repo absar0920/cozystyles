@@ -11,7 +11,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       />
       <div className="relative z-10 w-full max-w-md">{children}</div>
       <p className="relative z-10 mt-8 text-center text-xs text-white/35">
-        © {new Date().getFullYear()} Cozy Furnitures (Pvt.) Ltd. — Admin Panel
+        © {new Date().getFullYear()} Interwood Mobel (Pvt.) Ltd. — Admin Panel
       </p>
     </div>
   );
