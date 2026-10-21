@@ -120,20 +120,21 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Rich text heading above the reviews widget */}
-      <section className="container-iw text-center">
-        <div className="mx-auto max-w-[800px]">
-          <h3 className="m-0 text-[22.1px] font-semibold leading-[42px] text-accent md:mb-5 md:text-[36px] md:leading-[44px] lg:text-[40px] lg:leading-[48px]">
-            Our customer speaks for us
-          </h3>
-        </div>
-      </section>
+      {/* Customer reviews widget: only once the owner has set a store rating in Settings (a new store has none,
+          and the built-in quotes would otherwise speak for a shop that has no reviews yet). */}
+      {settings.ratingSummary && (
+        <>
+          <section className="container-iw text-center">
+            <div className="mx-auto max-w-[800px]">
+              <h3 className="m-0 text-[22.1px] font-semibold leading-[42px] text-accent md:mb-5 md:text-[36px] md:leading-[44px] lg:text-[40px] lg:leading-[48px]">
+                Our customer speaks for us
+              </h3>
+            </div>
+          </section>
 
-      <Testimonials
-        reviews={HOME_REVIEWS}
-        rating={settings.ratingSummary || '4.92'}
-        count={settings.ratingSummaryCount || '102'}
-      />
+          <Testimonials reviews={HOME_REVIEWS} rating={settings.ratingSummary} count={settings.ratingSummaryCount || '0'} />
+        </>
+      )}
 
       <SeoTextBlock />
     </>

@@ -10,3 +10,8 @@ out/
 /test-results/
 /playwright-report/
 /tests/.auth/
+
+# Local secrets and database (MySQL now; see docker-compose.yml)
+.env
+/prisma/*.db
+/prisma/*.db-journal

@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -10,12 +11,14 @@ import { sanitizeRichText } from '../../src/lib/rich-text/sanitize';
 
 /**
  * The product-layout-content migration step (docs/product-layouts/SPEC.md §7, §13.5). Node only (no browser).
- * Runs against a scratch database built from scratch in a temp folder (schema copied with an absolute URL, every
- * PrismaClient pointed at it by a preload) — never prisma/dev.db, whose checksum is compared before and after.
+ * Runs against a scratch MySQL database (`<dev db>_scratch_<random>` on the same server, schema copied with its URL,
+ * every PrismaClient pointed at it by a preload) — never the dev database, whose row counts are compared before and
+ * after. The scratch database is dropped afterwards.
  */
 
 const ROOT = path.resolve(__dirname, '../..');
-const DEV_DB = path.join(ROOT, 'prisma/dev.db');
+const DEV_URL =
+  process.env.DATABASE_URL ?? readFileSync(path.join(ROOT, '.env'), 'utf8').match(/^\s*DATABASE_URL\s*=\s*"?([^"\n]+)"?/m)?.[1] ?? '';
 type Frozen = { key: string; name: string; description: string; sections: Record<string, unknown>[] };
 const frozen = (JSON.parse(readFileSync(path.join(ROOT, 'prisma/easy-mode-data/product-layouts.json'), 'utf8')) as { layouts: Frozen[] }).layouts;
 
@@ -25,30 +28,46 @@ let dir = '';
 let url = '';
 let db: PrismaClient;
 let devSum = '';
+let scratchName = '';
 
-const sum = (file: string) => execFileSync('shasum', [file], { encoding: 'utf8' }).split(' ')[0];
+/** Row counts of the dev database: a fingerprint that would change if anything wrote to it. */
+async function devFingerprint(): Promise<string> {
+  const dev = new PrismaClient({ datasourceUrl: DEV_URL });
+  try {
+    const counts = await Promise.all([dev.product.count(), dev.productLayout.count(), dev.productLayoutSection.count(), dev.collection.count(), dev.page.count()]);
+    return counts.join('/');
+  } finally {
+    await dev.$disconnect();
+  }
+}
 /** Runs a tsx script with every PrismaClient redirected to the scratch database. */
 const run = (args: string[]) =>
   execFileSync('npx', ['tsx', '-r', path.join(dir, 'preload.cjs'), ...args], { cwd: ROOT, env: { ...process.env, SEED_DB: url }, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 
 test.beforeAll(async () => {
   test.setTimeout(240_000);
-  devSum = sum(DEV_DB);
+  expect(DEV_URL.startsWith('mysql://'), 'DATABASE_URL must be a MySQL URL').toBe(true);
+  devSum = await devFingerprint();
   dir = mkdtempSync(path.join(os.tmpdir(), 'pl-migration-'));
-  url = `file:${path.join(dir, 'fresh.db')}`;
-  const schema = readFileSync(path.join(ROOT, 'prisma/schema.prisma'), 'utf8').replace(/url\s*=\s*"file:\.\/dev\.db"/, `url = "${url}"`);
+  const dev = new URL(DEV_URL);
+  scratchName = `${dev.pathname.slice(1)}_scratch_${randomBytes(4).toString('hex')}`;
+  const scratch = new URL(DEV_URL);
+  scratch.pathname = `/${scratchName}`;
+  url = scratch.toString();
+  const schema = readFileSync(path.join(ROOT, 'prisma/schema.prisma'), 'utf8').replace(/url\s*=\s*env\("DATABASE_URL"\)/, `url = "${url}"`);
   expect(schema).toContain(url);
   writeFileSync(path.join(dir, 'schema.prisma'), schema);
   writeFileSync(
     path.join(dir, 'preload.cjs'),
     `const url = process.env.SEED_DB;
-if (!url || !url.startsWith('file:') || url.includes(${JSON.stringify(path.join(ROOT, 'prisma'))})) throw new Error('SEED_DB must point at a scratch database');
+if (!url || !url.startsWith('mysql:') || !url.includes('_scratch_')) throw new Error('SEED_DB must point at a scratch database');
 const m = require(require.resolve('@prisma/client', { paths: [${JSON.stringify(ROOT)}] }));
 const Orig = m.PrismaClient;
 class P extends Orig { constructor(o = {}) { super({ ...o, datasourceUrl: url }); } }
 m.PrismaClient = P;
 `,
   );
+  // db push creates the scratch database itself
   execFileSync('npx', ['prisma', 'db', 'push', '--schema', path.join(dir, 'schema.prisma'), '--skip-generate'], { cwd: ROOT, stdio: 'pipe' });
   const log = run(['prisma/seed.ts']);
   expect(log).toContain('SEED COMPLETE');
@@ -56,9 +75,10 @@ m.PrismaClient = P;
 });
 
 test.afterAll(async () => {
+  if (db && scratchName) await db.$executeRawUnsafe(`DROP DATABASE IF EXISTS \`${scratchName}\``);
   await db?.$disconnect();
   if (dir) rmSync(dir, { recursive: true, force: true });
-  if (devSum) expect(sum(DEV_DB)).toBe(devSum);
+  if (devSum) expect(await devFingerprint()).toBe(devSum);
 });
 
 test('every migrated layout equals the frozen input', async () => {

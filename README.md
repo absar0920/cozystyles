@@ -6,7 +6,7 @@ A faithful full-stack clone of the original site (a rebranded furniture store): 
 
 - **Next.js 15** (App Router, TypeScript, server components + server actions)
 - **Tailwind CSS 3.4** — the live theme's tokens (`tailwind.config.ts`, `src/app/globals.css`): accent `#103a3a`, accent2 `#c25b41`, cream `#f6f6f0`
-- **Prisma + SQLite** (`prisma/dev.db`) — swappable to Postgres by changing `datasource`
+- **Prisma + MySQL/MariaDB** — local database in Docker (`docker-compose.yml`), Hostinger MySQL in production; schema changes ship as migrations in `prisma/migrations/`. Deploying: [docs/DEPLOY-HOSTINGER.md](docs/DEPLOY-HOSTINGER.md)
 - **NextAuth-free auth** — HMAC-signed httpOnly cookie sessions (admin)
 
 ## Running the shop: admin guide
@@ -204,12 +204,18 @@ messages arrive in your WhatsApp, not in the admin.
 ### Quickstart
 
 ```bash
+cp .env.example .env   # then set SESSION_SECRET / ADMIN_PASSWORD
 npm install
-npm run db:push        # create schema
-npm run db:seed        # seed from data/raw (rebranded), then the fidelity scripts and the easy-mode migration
-npm run build
+npm run db:up          # local MariaDB in Docker (port 3307)
+npm run db:migrate     # create the tables
+npm run db:seed        # optional: the demo catalog (rebranded), fidelity scripts and the easy-mode migration
+npm run build          # generates the Prisma client, applies migrations, builds
 npm start              # http://localhost:3000
 ```
+
+Without `db:seed` the store starts empty, like a new deployment: sign in at `/admin` with `ADMIN_EMAIL` /
+`ADMIN_PASSWORD` (the first sign-in creates the admin) and add everything in the admin. `npm run db:reset` drops
+all data and recreates the tables.
 
 Product/collection/banner images are already downloaded under `public/images/` (≈470 MB, 1,648 files) and git-tracked.
 
@@ -235,12 +241,13 @@ Re-run `npm run scrape && npm run images && npm run db:seed` to refresh from the
 #### Backups and uploads
 
 Photos uploaded in the admin are processed with `sharp` (longest side ≤ 2000 px, WebP, EXIF/GPS removed) and stored
-on the server's disk in `storage/uploads/` (gitignored; `UPLOADS_DIR` overrides the folder), served by the
+on the server's disk in `storage/uploads/` (gitignored; `UPLOADS_DIR` overrides the folder and is required in
+production, outside the deployed app folder), served by the
 `/uploads/[...path]` route because `next start` does not serve files added to `public/` at runtime. All file access
 goes through `src/lib/storage/` (one interface, local-disk backend), so a cloud backend can be swapped in later.
 
-**Back up `storage/uploads/` together with `prisma/dev.db`.** `npm run db:backup` copies the database into
-`prisma/backups/` (gitignored). Bundled images in `public/images/` are never deleted; an uploaded file is deleted
+**Back up the uploads folder together with the database.** `npm run db:backup` dumps the local MySQL database
+into `prisma/backups/` (gitignored); on Hostinger use hPanel backups / phpMyAdmin export. Bundled images in `public/images/` are never deleted; an uploaded file is deleted
 when the last record using it is saved without it, and a background sweep removes uploads that nothing references
 after 24 hours. Re-seeding keeps the `Upload` table and the files.
 
@@ -262,9 +269,8 @@ npx tsx scripts/migrate-admin-easy-mode.ts --no-backup
 ```
 
 It is idempotent: each step records a `MigrationStep` row, so a second run prints "skipped" for every step.
-`prisma/seed.ts` runs it as its last step, so a fresh `db:push` + `db:seed` reaches the same state as a migrated
-database. The datasource URL is fixed in `prisma/schema.prisma` (`file:./dev.db`), so `DATABASE_URL` does not
-redirect the CLI or the seed: to seed a different file, copy the schema with another `url` or pass `datasourceUrl`.
+`prisma/seed.ts` runs it as its last step, so a fresh `db:migrate` + `db:seed` reaches the same state as a migrated
+database. Everything reads the database from `DATABASE_URL`.
 
 #### Tests
 
@@ -272,7 +278,14 @@ redirect the CLI or the seed: to seed a different file, copy the schema with ano
 npm run test:e2e                 # = npx playwright test; reuses the dev server on :3100 (starts one if none answers)
 E2E_EXCLUSIVE=1 npx playwright test tests/integration   # also runs the store-wide settings scenarios
 BASE_URL=https://staging.example npx playwright test   # against another server
+E2E_FRESH_URL=http://localhost:3200 npx playwright test --project=fresh-install   # a server on an EMPTY database
 ```
+
+The main suite expects the seeded demo database (`npm run db:seed`). `tests/fresh-install/` checks a new deployment
+instead: run a second server on a database that only has its tables (`DATABASE_URL=…/cozy_fresh npx prisma migrate
+deploy`, then `DATABASE_URL=…/cozy_fresh UPLOADS_DIR=/tmp/fresh-uploads npx next start -p 3200`) and point
+`E2E_FRESH_URL` at it: the store and every admin screen work with no data, the first sign-in creates the admin, a
+first product with a photo is published and WhatsApp ordering is switched on.
 
 Playwright (`@playwright/test`, installed Chrome via `channel: 'chrome'`) covers: creating a sofa with Size × Color,
 uploading and tagging photos, writing the description, publishing and editing in place (ids kept); banners with

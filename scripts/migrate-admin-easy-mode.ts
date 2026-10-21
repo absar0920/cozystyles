@@ -711,10 +711,12 @@ async function menus(tx: Tx): Promise<string> {
  * and only while the old column still exists (a database migrated before the column was dropped has nothing to do).
  */
 async function banners(tx: Tx, log: (s: string) => void): Promise<string> {
-  const columns = await tx.$queryRawUnsafe<{ name: string }[]>('PRAGMA table_info("Banner")');
+  const columns = await tx.$queryRawUnsafe<{ name: string }[]>(
+    "SELECT COLUMN_NAME AS name FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Banner'",
+  );
   if (!columns.some((c) => c.name === 'location')) return 'no location column: nothing to check';
   const other = await tx.$queryRawUnsafe<{ id: number | bigint; location: string; title: string }[]>(
-    `SELECT id, location, title FROM "Banner" WHERE location <> 'HOME_HERO'`,
+    "SELECT id, location, title FROM `Banner` WHERE location <> 'HOME_HERO'",
   );
   for (const b of other) log(`  banners: deleting banner ${b.id} (${b.location}) "${b.title}"`);
   if (other.length) await tx.banner.deleteMany({ where: { id: { in: other.map((b) => Number(b.id)) } } });
@@ -846,8 +848,8 @@ export async function exportOrders(prisma: PrismaClient): Promise<string | null>
   let orders: unknown[] = [];
   let items: unknown[] = [];
   try {
-    orders = await prisma.$queryRawUnsafe<unknown[]>('SELECT * FROM "Order"');
-    items = await prisma.$queryRawUnsafe<unknown[]>('SELECT * FROM "OrderItem"');
+    orders = await prisma.$queryRawUnsafe<unknown[]>('SELECT * FROM `Order`');
+    items = await prisma.$queryRawUnsafe<unknown[]>('SELECT * FROM `OrderItem`');
   } catch {
     return null; // tables already gone
   }

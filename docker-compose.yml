@@ -1,0 +1,23 @@
+# Local MySQL-compatible database matching Hostinger's managed MySQL (MariaDB).
+#   npm run db:up      start it (data persists in the cozy-mysql volume)
+#   npm run db:down    stop it
+services:
+  mysql:
+    image: mariadb:11.4
+    container_name: cozystyles-mysql
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: cozystyles
+      MARIADB_DATABASE: cozystyles
+      MARIADB_USER: cozystyles
+      MARIADB_PASSWORD: cozystyles
+    ports:
+      - "3307:3306"
+    volumes:
+      - cozy-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      retries: 20
+volumes:
+  cozy-mysql:

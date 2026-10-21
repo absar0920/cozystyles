@@ -89,6 +89,8 @@ test('reorder the Customer Support footer menu', async ({ page }) => {
     await page.mouse.up();
     const afterDrag = [afterArrows[1], afterArrows[0], ...afterArrows.slice(2)];
     await expect.poll(() => labels(page)).toEqual(afterDrag);
+    // the drop has registered once the save bar says so (a click during the drop animation is swallowed)
+    await expect(saveBar(page)).toContainText('Unsaved changes');
     await saveMenu(page);
     expect((await storefrontUserArea(page)).slice(0, afterDrag.length)).toEqual(afterDrag);
 

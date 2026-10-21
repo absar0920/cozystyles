@@ -45,6 +45,10 @@ export function localDiskStorage(): StorageBackend {
   if (instance) return instance;
   instance = {
     async put(key, data) {
+      // In production the app folder is replaced on every deploy (Hostinger), so uploads must go elsewhere.
+      if (process.env.NODE_ENV === 'production' && !process.env.UPLOADS_DIR) {
+        throw new Error('UPLOADS_DIR is not set: uploaded photos would be lost on the next deploy.');
+      }
       const file = fileFor(key);
       await mkdir(path.dirname(file), { recursive: true });
       const tmp = `${file}.tmp`;

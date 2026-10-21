@@ -44,5 +44,9 @@ export default defineConfig({
       use: { ...devices['Pixel 7'], viewport: { width: 360, height: 740 }, channel: 'chrome', storageState: authFile },
     },
     { name: 'storefront', testMatch: /storefront\/.*\.spec\.ts/ },
+    // A server whose database has only its tables (a new deployment); see tests/fresh-install/.
+    ...(process.env.E2E_FRESH_URL
+      ? [{ name: 'fresh-install', testMatch: /fresh-install\/.*\.spec\.ts/, use: { baseURL: process.env.E2E_FRESH_URL, channel: 'chrome' } }]
+      : []),
   ],
 });

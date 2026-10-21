@@ -6,16 +6,16 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model AdminUser {
   id             Int      @id @default(autoincrement())
   email          String   @unique
-  passwordHash   String
-  name           String
-  role           String   @default("ADMIN") // ADMIN | SUPERADMIN
+  passwordHash   String   @db.Text
+  name           String   @db.Text
+  role           String   @default("ADMIN") @db.Text // ADMIN | SUPERADMIN
   sessionVersion Int      @default(0) // bumped on password change; part of the session token
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -25,13 +25,13 @@ model Product {
   id             Int               @id @default(autoincrement())
   handle         String            @unique
   title          String
-  bodyHtml       String            @default("")
-  vendor         String            @default("Cozy Furnitures")
-  productType    String            @default("")
+  bodyHtml       String            @default("") @db.MediumText
+  vendor         String            @default("Cozy Furnitures") @db.Text
+  productType    String            @default("") @db.Text
   status         String            @default("ACTIVE") // ACTIVE | DRAFT | ARCHIVED
   hot            Boolean           @default(false)
-  tags           String            @default("") // comma separated
-  legacyOptions  String            @default("[]") @map("options") // old JSON options; read only by the easy-mode migration
+  tags           String            @default("") @db.Text // comma separated
+  legacyOptions  String            @default("[]") @map("options") @db.Text // old JSON options; read only by the easy-mode migration
   rating         Float             @default(4.9)
   reviewCount    Int               @default(0)
   createdAt      DateTime          @default(now())
@@ -43,7 +43,7 @@ model Product {
   isNew          Boolean           @default(false) // "New arrival" (red NEW label)
   limitedEdition Boolean           @default(false) // "Limited edition" (yellow bar on cards)
   layout         String            @default("default") // a `ProductLayout.key`
-  deliveryTime   String            @default("") // e.g. "Delivered in 20 to 30 working days"; non-empty → FREE DELIVERY tag + PDP line
+  deliveryTime   String            @default("") @db.Text // e.g. "Delivered in 20 to 30 working days"; non-empty → FREE DELIVERY tag + PDP line
   discountGroup  Int? // 10|20|30|40|50: the mobile "Discount %" filter bucket
   cardImageRatio Float? // product card photo box height/width (live fidelity); null → 700/920
   trackStock     Boolean           @default(false) // show the optional stock count column in admin
@@ -59,17 +59,17 @@ model Variant {
   id              Int     @id @default(autoincrement())
   productId       Int
   product         Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  title           String  @default("Default Title")
-  sku             String?
+  title           String  @default("Default Title") @db.Text
+  sku             String? @db.Text
   price           Int
   compareAtPrice  Int?
-  option1         String?
-  option2         String?
-  option3         String?
+  option1         String? @db.Text
+  option2         String? @db.Text
+  option3         String? @db.Text
   legacyInventory Int     @default(50) @map("inventory") // read only by the easy-mode migration
   position        Int     @default(0)
   weightGrams     Int     @default(0)
-  status          String  @default("READY_TO_SHIP") // READY_TO_SHIP | MADE_TO_ORDER | PRE_ORDER | SOLD_OUT
+  status          String  @default("READY_TO_SHIP") @db.Text // READY_TO_SHIP | MADE_TO_ORDER | PRE_ORDER | SOLD_OUT
   stock           Int? // optional stock count; null = not tracked (admin only, never drives the storefront)
 
   @@index([productId])
@@ -79,8 +79,8 @@ model ProductImage {
   id            Int                 @id @default(autoincrement())
   productId     Int
   product       Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
-  src           String
-  alt           String              @default("")
+  src           String              @db.Text
+  alt           String              @default("") @db.Text
   position      Int                 @default(0)
   optionValueId Int? // "Shows: <value>"
   optionValue   ProductOptionValue? @relation(fields: [optionValueId], references: [id], onDelete: SetNull)
@@ -96,7 +96,7 @@ model ProductOption {
   id        Int                  @id @default(autoincrement())
   productId Int
   product   Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
-  name      String
+  name      String               @db.Text
   position  Int
   values    ProductOptionValue[]
 
@@ -107,10 +107,10 @@ model ProductOptionValue {
   id          Int            @id @default(autoincrement())
   optionId    Int
   option      ProductOption  @relation(fields: [optionId], references: [id], onDelete: Cascade)
-  value       String
+  value       String         @db.Text
   position    Int            @default(0)
-  swatchColor String? // "#rrggbb" (only meaningful for Color/Colour/Finish options)
-  swatchImage String? // photo swatch: /uploads/… or /images/…; wins over swatchColor
+  swatchColor String?        @db.Text // "#rrggbb" (only meaningful for Color/Colour/Finish options)
+  swatchImage String?        @db.Text // photo swatch: /uploads/… or /images/…; wins over swatchColor
   images      ProductImage[]
 
   @@index([optionId])
@@ -119,14 +119,14 @@ model ProductOptionValue {
 model Collection {
   id             Int                    @id @default(autoincrement())
   handle         String                 @unique
-  title          String
-  description    String                 @default("")
-  image          String?
+  title          String                 @db.Text
+  description    String                 @default("") @db.Text
+  image          String?                @db.Text
   parentId       Int?
   parent         Collection?            @relation("CollectionTree", fields: [parentId], references: [id])
   children       Collection[]           @relation("CollectionTree")
   products       Product[]              @relation("ProductCollections")
-  metafield      String                 @default("{}") // JSON free-form (e.g. footer column)
+  metafield      String                 @default("{}") @db.Text // JSON free-form (e.g. footer column)
   indexCard      CollectionIndexCard?
   layoutSections ProductLayoutSection[]
 
@@ -141,22 +141,22 @@ model CollectionIndexCard {
   collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: Cascade)
   /// Cards with no Collection row: the built-in "all products" cards (frontpage | all | all-1).
   systemHandle String?     @unique
-  systemTitle  String?
-  systemImage  String?
+  systemTitle  String?     @db.Text
+  systemImage  String?     @db.Text
   /// 1..6 Shopify line-art placeholder used when the card has no photo (live fidelity).
   placeholder  Int         @default(1)
 }
 
 model MenuItem {
   id          Int        @id @default(autoincrement())
-  label       String
-  href        String
+  label       String     @db.Text
+  href        String     @db.Text
   location    String     @default("MAIN") // MAIN | FOOTER_1 | FOOTER_2 | ... | TOPBAR | MOBILE
   parentId    Int?
   parent      MenuItem?  @relation("MenuTree", fields: [parentId], references: [id], onDelete: Cascade)
   children    MenuItem[] @relation("MenuTree")
   position    Int        @default(0)
-  legacyBadge String?    @map("badge") // old: only "STACK" had meaning (→ newColumn=false); read only by the migration
+  legacyBadge String?    @map("badge") @db.Text // old: only "STACK" had meaning (→ newColumn=false); read only by the migration
   enabled     Boolean    @default(true)
   newColumn   Boolean    @default(true) // MAIN level-2 headings: false = stack under the previous group
 
@@ -165,10 +165,10 @@ model MenuItem {
 
 model Banner {
   id          Int     @id @default(autoincrement())
-  title       String  @default("")
-  href        String?
-  image       String
-  mobileImage String?
+  title       String  @default("") @db.Text
+  href        String? @db.Text
+  image       String  @db.Text
+  mobileImage String? @db.Text
   position    Int     @default(0)
   active      Boolean @default(true)
 }
@@ -176,21 +176,21 @@ model Banner {
 model Page {
   id                  Int       @id @default(autoincrement())
   handle              String    @unique
-  title               String
-  bodyHtml            String    @default("")
+  title               String    @db.Text
+  bodyHtml            String    @default("") @db.MediumText
   published           Boolean   @default(true)
   legacyIsBlogPost    Boolean   @default(false) @map("isBlogPost") // read only by the easy-mode migration
-  seoTitle            String?
-  seoDescription      String?
+  seoTitle            String?   @db.Text
+  seoDescription      String?   @db.Text
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   kind                String    @default("TEXT") // TEXT | BLOG | DESIGNED
   publishedAt         DateTime? // blog date (null → createdAt)
-  author              String    @default("") // blog author
-  featuredImage       String? // blog featured image
+  author              String    @default("") @db.Text // blog author
+  featuredImage       String?   @db.Text // blog featured image
   featuredImageWidth  Int?
   featuredImageHeight Int?
-  tags                String    @default("") // blog tags, comma separated labels
+  tags                String    @default("") @db.Text // blog tags, comma separated labels
 
   @@index([kind, published])
 }
@@ -199,28 +199,28 @@ model Review {
   id        Int      @id @default(autoincrement())
   productId Int
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  author    String
+  author    String   @db.Text
   rating    Int // 1..5
-  title     String   @default("")
-  body      String
+  title     String   @default("") @db.Text
+  body      String   @db.Text
   approved  Boolean  @default(true)
   createdAt DateTime @default(now())
 }
 
 model ContactSubmission {
   id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @default("")
-  phone     String   @default("")
-  subject   String   @default("")
-  message   String
-  status    String   @default("NEW") // NEW | READ | CLOSED
+  name      String   @db.Text
+  email     String   @default("") @db.Text
+  phone     String   @default("") @db.Text
+  subject   String   @default("") @db.Text
+  message   String   @db.Text
+  status    String   @default("NEW") @db.Text // NEW | READ | CLOSED
   createdAt DateTime @default(now())
 }
 
 model SiteSetting {
   key   String @id
-  value String @default("") // scalar strings; JSON for structured values
+  value String @default("") @db.Text // scalar strings; JSON for structured values
 }
 
 /// Every uploaded file (one row per stored object).
@@ -228,12 +228,12 @@ model Upload {
   id           Int      @id @default(autoincrement())
   key          String   @unique // "2026/10/grey-sofa-front-a1b2c3d4.webp"
   url          String   @unique // "/uploads/2026/10/grey-sofa-front-a1b2c3d4.webp"
-  originalName String   @default("")
-  mime         String   @default("image/webp")
+  originalName String   @default("") @db.Text
+  mime         String   @default("image/webp") @db.Text
   width        Int
   height       Int
   bytes        Int
-  purpose      String   @default("") // product | swatch | banner | collection | blog | editor | layout
+  purpose      String   @default("") @db.Text // product | swatch | banner | collection | blog | editor | layout
   createdAt    DateTime @default(now())
 
   @@index([createdAt])
@@ -243,15 +243,15 @@ model Upload {
 model WhatsAppInquiry {
   id             Int      @id @default(autoincrement())
   createdAt      DateTime @default(now())
-  kind           String // ORDER | AVAILABILITY | GENERAL | TRACK
+  kind           String   @db.Text // ORDER | AVAILABILITY | GENERAL | TRACK
   productId      Int?
   product        Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-  productTitle   String   @default("") // snapshot at click time
+  productTitle   String   @default("") @db.Text // snapshot at click time
   variantId      Int? // no FK: variants may be deleted later
-  variantSummary String   @default("") // "Size: 3 Seater · Color: Grey"
+  variantSummary String   @default("") @db.Text // "Size: 3 Seater · Color: Grey"
   quantity       Int      @default(1)
   unitPrice      Int? // PKR snapshot (null for GENERAL/TRACK, 0 = price on request)
-  pagePath       String   @default("") // "/products/alexa-sofa-chair?variant=123"
+  pagePath       String   @default("") @db.Text // "/products/alexa-sofa-chair?variant=123"
 
   @@index([createdAt])
   @@index([productId, createdAt])
@@ -261,7 +261,7 @@ model WhatsAppInquiry {
 model MigrationStep {
   id        String   @id // e.g. "easy-mode:variant-status"
   appliedAt DateTime @default(now())
-  summary   String   @default("")
+  summary   String   @default("") @db.Text
 }
 
 /// A shared "page layout": the sections shown below the description on every product that uses it.
@@ -269,14 +269,14 @@ model MigrationStep {
 model ProductLayout {
   id              Int                    @id @default(autoincrement())
   key             String                 @unique // "default", "office-products", "sofas-copy-2" … (≤ 60 chars)
-  name            String // owner-facing, 1–60 chars
+  name            String                 @db.Text // owner-facing, 1–60 chars
   nameKey         String                 @unique // name.trim().toLowerCase(): DB-enforced case-insensitive uniqueness
-  description     String                 @default("") // optional "What it's for" line (purpose only, never contents)
+  description     String                 @default("") @db.Text // optional "What it's for" line (purpose only, never contents)
   position        Int                    @default(0) // list + dropdown order; new layouts go last; never shown
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt // optimistic concurrency; explicitly bumped on EVERY save
-  previousVersion String? // JSON snapshot of the layout before its last save ("Undo last save")
-  originalVersion String? // JSON snapshot of the migrated design ("Restore the original design"); null when made from scratch
+  previousVersion String?                @db.MediumText // JSON snapshot of the layout before its last save ("Undo last save")
+  originalVersion String?                @db.MediumText // JSON snapshot of the migrated design ("Restore the original design"); null when made from scratch
   sections        ProductLayoutSection[]
   previews        ProductLayoutPreview[]
 }
@@ -288,7 +288,7 @@ model ProductLayoutPreview {
   token     String        @unique // 32 random hex chars
   layoutId  Int
   layout    ProductLayout @relation(fields: [layoutId], references: [id], onDelete: Cascade)
-  sections  String // JSON: the merged, validated section rows (same shape as a snapshot)
+  sections  String        @db.MediumText // JSON: the merged, validated section rows (same shape as a snapshot)
   expiresAt DateTime
 
   @@index([expiresAt])
@@ -300,11 +300,11 @@ model ProductLayoutSection {
   layoutId     Int
   layout       ProductLayout @relation(fields: [layoutId], references: [id], onDelete: Cascade)
   position     Int           @default(0)
-  kind         String // overlay | imageText | icons | testimonials | slideshow | featuredCollection | recommendations | reviews
+  kind         String        @db.Text // overlay | imageText | icons | testimonials | slideshow | featuredCollection | recommendations | reviews
   hidden       Boolean       @default(false) // true = "Show on the store" switch off
-  bodyHtml     String        @default("") // sanitised rich text (overlay, imageText)
-  data         String        @default("{}") // JSON, shape per kind; never shown to the owner
-  refs         String        @default("") // derived: "\n" + lines.join("\n") + "\n" of image URLs and link pathnames; "" when none
+  bodyHtml     String        @default("") @db.MediumText // sanitised rich text (overlay, imageText)
+  data         String        @default("{}") @db.MediumText // JSON, shape per kind; never shown to the owner
+  refs         String        @default("") @db.MediumText // derived: "\n" + lines.join("\n") + "\n" of image URLs and link pathnames; "" when none
   collectionId Int? // featuredCollection only
   collection   Collection?   @relation(fields: [collectionId], references: [id], onDelete: SetNull)
 

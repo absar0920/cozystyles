@@ -3,6 +3,7 @@ import type { Viewport } from 'next';
 import Link from 'next/link';
 import { requireAdmin } from '@/lib/admin-guard';
 import { prisma } from '@/lib/db';
+import { ensureDefaultLayout } from '@/lib/default-layout';
 import { startOfStoreDay } from '@/lib/dates';
 import { getWhatsAppConfig } from '@/lib/whatsapp-server';
 import { Sidebar } from '@/components/admin/shell/Sidebar';
@@ -16,6 +17,7 @@ export const viewport: Viewport = { viewportFit: 'cover' };
 
 export default async function PanelLayout({ children }: { children: ReactNode }) {
   const admin = await requireAdmin();
+  await ensureDefaultLayout();
 
   // Badge counts for the sidebar + the store-wide WhatsApp warning.
   const [inquiriesToday, newMessages, whatsapp] = await Promise.all([

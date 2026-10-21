@@ -4,6 +4,10 @@ import { BackToTop, WhatsappButton } from '@/components/layout/FloatingButtons';
 import { getMenu, getSettingsMap } from '@/lib/queries';
 import { getWhatsAppConfig } from '@/lib/whatsapp-server';
 
+// Menus and settings are edited in the admin, so every storefront page renders per request. This also keeps
+// `next build` from reading the database (Hostinger builds before the app can reach it).
+export const dynamic = 'force-dynamic';
+
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
   const [menu, information, userArea, seo, settings, whatsapp] = await Promise.all([
     getMenu('MAIN'),

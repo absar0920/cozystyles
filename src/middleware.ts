@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { VISITOR_COOKIE, VISITOR_MAX_AGE_S, createVisitorToken, verifyVisitorToken } from '@/lib/visitor';
 
 /**
+ * 0. www → apex: when NEXT_PUBLIC_SITE_URL is e.g. https://cozystyle.pk, pages requested on www.cozystyle.pk are
+ *    permanently redirected there (one host for SEO and the admin cookie). No-op on other hosts (staging, localhost).
  * 1. Lightweight gate for /admin — presence check only.
  *    The signed cookie is cryptographically verified (against the DB) in
  *    `src/app/admin/(panel)/layout.tsx` via getCurrentAdmin().
@@ -12,8 +14,21 @@ const SESSION_COOKIE = 'iw_admin_session';
 /** The admin page being requested, for the login redirect's ?next= (read in src/lib/admin-guard.ts). */
 const ADMIN_PATH_HEADER = 'x-admin-path';
 
+const CANONICAL_HOST = (() => {
+  try {
+    return process.env.NEXT_PUBLIC_SITE_URL ? new URL(process.env.NEXT_PUBLIC_SITE_URL).host : null;
+  } catch {
+    return null;
+  }
+})();
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  const host = (request.headers.get('x-forwarded-host') ?? request.headers.get('host') ?? '').split(',')[0].trim();
+  if (CANONICAL_HOST && host === `www.${CANONICAL_HOST}`) {
+    return NextResponse.redirect(`https://${CANONICAL_HOST}${pathname}${request.nextUrl.search}`, 308);
+  }
 
   if (!pathname.startsWith('/admin')) {
     const res = NextResponse.next();

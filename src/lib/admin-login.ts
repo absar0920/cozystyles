@@ -23,12 +23,28 @@ export async function signInWithPassword(emailInput: unknown, passwordInput: unk
   const throttleKey = `login:${email}`;
   if (!rateLimit(throttleKey, LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_MS).ok) return 'Too many attempts, try again later';
 
-  const admin = await prisma.adminUser.findUnique({ where: { email } });
+  const admin = (await prisma.adminUser.findUnique({ where: { email } })) ?? (await bootstrapFirstAdmin(email, password));
   if (!admin || !(await bcrypt.compare(password, admin.passwordHash))) return 'Invalid email or password';
 
   resetRateLimit(throttleKey);
   await setSessionCookie(admin);
   return null;
+}
+
+/**
+ * First sign-in on an empty database: when no admin exists yet and the credentials match ADMIN_EMAIL /
+ * ADMIN_PASSWORD from the server environment, create that admin. A fresh deployment (Hostinger, no shell) is then
+ * set up from the browser alone. Once any admin exists this never runs again.
+ */
+async function bootstrapFirstAdmin(email: string, password: string) {
+  const envEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const envPassword = process.env.ADMIN_PASSWORD;
+  if (!envEmail || !envPassword || envPassword.length < 8) return null;
+  if (email !== envEmail || password !== envPassword) return null;
+  if ((await prisma.adminUser.count()) > 0) return null;
+  return prisma.adminUser.create({
+    data: { email, passwordHash: await bcrypt.hash(password, 10), name: 'Store Admin', role: 'SUPERADMIN' },
+  });
 }
 
 /**
