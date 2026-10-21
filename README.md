@@ -22,7 +22,7 @@ the password goes back to the one in the `.env` file.
 You stay signed in for 12 hours. If that runs out (or your password is changed on another device) while a page is
 open, pressing **Save** asks for your password first and then saves — nothing you typed is lost.
 
-The left-hand menu (the ☰ button on a phone) has: Dashboard, WhatsApp inquiries, Products, Product page layouts, Collections, Reviews,
+The left-hand menu (the ☰ button on a phone) has: Dashboard, WhatsApp inquiries, Products, Product page layouts, Collections,
 Home banners, Menus, Pages, Blog posts, Messages and Settings. Every edit page has a **See it on the store** link,
 a save bar that stays at the bottom of the screen, and a warning if you try to leave with unsaved changes.
 
@@ -73,8 +73,8 @@ customer picks Grey on the store, the gallery jumps to the Grey photos.
 ### Product page layouts
 
 Under the description, every product page shows a few ready-made **sections**: a big photo with text, photos with
-text beside them, a row of icons, customer quotes, a slideshow, products from a collection, "You may also like"
-and customer reviews. A **page layout** is one set of these sections in a fixed order. Each product uses one
+text beside them, a row of icons, customer quotes, a slideshow, products from a collection and "You may also like".
+A **page layout** is one set of these sections in a fixed order. Each product uses one
 layout (chosen in the product's **Page layout** list), and **many products share the same layout**.
 
 **Product page layouts** in the left-hand menu lists every layout with what it contains and **Used by N products**
@@ -103,12 +103,13 @@ Tap **Edit** on a section to change it:
   With two or more slides they slide by on their own. Put any text inside the photos.
 - **Products from a collection**: type a heading, pick the collection and how many products to show. If that
   collection is deleted, the section disappears from the store and the editor shows ⚠ **Collection was deleted**.
-- **"You may also like"** and **Customer reviews** fill themselves in. You can only move, hide or delete them.
+- **"You may also like"** fills itself in. You can only move, hide or delete it. (This store has no product reviews:
+  a "Customer reviews" section from older layouts is never shown and cannot be added.)
 
 **Moving, hiding, adding and deleting sections.** Drag a section by its handle, or use the ↑ ↓ arrows (easiest on a
 phone). The **Show on the store** switch hides a section without losing what is in it. The **⋯** menu of a section
 has **Copy this section** and **Delete section**. **Add section** at the bottom adds any kind of section. A layout
-can have up to 20 sections, one "You may also like" and one reviews section. Nothing changes on the store until
+can have up to 20 sections and one "You may also like". Nothing changes on the store until
 you press **Save layout**; **Discard changes** goes back to the saved version.
 
 **Giving some products their own version.** Don't edit a shared layout when only some products should change:
@@ -195,7 +196,7 @@ quantity, page and time, no personal data). **WhatsApp inquiries** lists them wi
 the **Dashboard** shows click totals, a catalogue overview and the **most asked-about products** of the last 30 days. Customers' actual
 messages arrive in your WhatsApp, not in the admin.
 
-**Messages** holds the contact-form submissions; **Reviews** lets you approve or delete product reviews.
+**Messages** holds the contact-form submissions. The store has no product reviews.
 
 ---
 
@@ -224,7 +225,7 @@ Product/collection/banner images are already downloaded under `public/images/` (
 - URL: `http://localhost:3000/admin`
 - Credentials (from `.env`): `ADMIN_EMAIL` / `ADMIN_PASSWORD`
   - defaults: `admin@cozyfurnitures.pk` / `CozyAdmin@2026`
-- Controls **everything** in plain language (no typed JSON, HTML or URLs): products (options & combinations, photos tagged by option value, rich-text description, page layout), product page layouts (the sections under the description: photos, text, icons, quotes, slideshows, collection rows; shared-change warning, copies, moving products, preview, undo), collections (+ Arrange Collections page), home banners (desktop + phone photo uploads, link picker), navigation menus, text pages + blog posts (rich-text editor), reviews moderation, WhatsApp inquiries log, contact-message inbox, site settings (WhatsApp number + message lines, announcement, address, social links, store rating), change password.
+- Controls **everything** in plain language (no typed JSON, HTML or URLs): products (options & combinations, photos tagged by option value, rich-text description, page layout), product page layouts (the sections under the description: photos, text, icons, quotes, slideshows, collection rows; shared-change warning, copies, moving products, preview, undo), collections (+ Arrange Collections page), home banners (desktop + phone photo uploads, link picker), navigation menus, text pages + blog posts (rich-text editor), WhatsApp inquiries log, contact-message inbox, site settings (WhatsApp number + message lines, announcement, address, social links, store rating), change password.
 - Orders are taken on WhatsApp: product pages show **ORDER ON WHATSAPP** (or **ASK ABOUT AVAILABILITY** for pre-order / sold-out combinations); every click is logged and shown under *WhatsApp inquiries*. Uploaded photos are processed with `sharp` (≤2000px WebP, EXIF stripped) into `storage/uploads/` and served from `/uploads/…`.
 
 ### Data pipeline (how the seed was produced)
@@ -302,7 +303,7 @@ only run with `E2E_EXCLUSIVE=1`. Login comes from `E2E_ADMIN_EMAIL` / `E2E_ADMIN
 
 #### Behind a reverse proxy
 
-Rate limits (WhatsApp click logging, contact form, reviews) key on the client IP, which is only trusted from
+Rate limits (WhatsApp click logging, contact form) key on the client IP, which is only trusted from
 `X-Forwarded-For` entries added by your own proxies. Set `TRUSTED_PROXY_HOPS` to the number of proxies in front of
 the app (e.g. `TRUSTED_PROXY_HOPS=1` behind one nginx using `proxy_set_header X-Forwarded-For
 $proxy_add_x_forwarded_for`). Unset, the header is ignored and all visitors share one bucket per limit. WhatsApp
@@ -365,7 +366,7 @@ wordmark (artwork that did — some hero banners, the Imagine banner — is left
 
 **Redirects:** `/cart`, `/checkout*` → `/`; `/track` → WhatsApp chat (logged)
 
-**Admin:** `/admin` (dashboard) · `/admin/login` · `/admin/products` · `/admin/collections` (+ Arrange) · `/admin/reviews` · `/admin/banners` · `/admin/menus` · `/admin/pages` · `/admin/blog` · `/admin/inquiries` · `/admin/messages` · `/admin/settings` · `/admin/account/password`
+**Admin:** `/admin` (dashboard) · `/admin/login` · `/admin/products` · `/admin/collections` (+ Arrange) · `/admin/banners` · `/admin/menus` · `/admin/pages` · `/admin/blog` · `/admin/inquiries` · `/admin/messages` · `/admin/settings` · `/admin/account/password`
 
 **Tests:** `npm run test:e2e` (see *Tests* above)
 

@@ -26,6 +26,9 @@ export const SECTION_KINDS = [
 ] as const;
 export type SectionKind = (typeof SECTION_KINDS)[number];
 
+/** Kinds offered by "Add section". Product reviews are not part of this store, so they can't be added. */
+export const ADDABLE_KINDS: readonly SectionKind[] = SECTION_KINDS.filter((k) => k !== 'reviews');
+
 export const AUTOMATIC_KINDS: readonly SectionKind[] = ['recommendations', 'reviews'];
 /** At most one of each per layout. */
 export const SINGLETON_KINDS: readonly SectionKind[] = ['recommendations', 'reviews'];
@@ -359,7 +362,7 @@ export const SECTION_KIND_COPY: Record<SectionKind, { name: string; description:
   slideshow: { name: 'Wide photo slideshow', description: 'One or more full-width photos, with separate phone photos.' },
   featuredCollection: { name: 'Products from a collection', description: 'A row of product cards from a collection you choose.' },
   recommendations: { name: '“You may also like” (automatic)', description: 'Four similar products, chosen automatically.' },
-  reviews: { name: 'Customer reviews (automatic)', description: "The product's reviews and the Write a review button." },
+  reviews: { name: 'Customer reviews (not shown on the store)', description: 'Product reviews are switched off for this store.' },
 };
 
 /* ---------------------------------------------------------------------------------------- snapshots */

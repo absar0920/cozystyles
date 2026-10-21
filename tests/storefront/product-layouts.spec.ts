@@ -58,8 +58,8 @@ for (const [key, handle] of Object.entries(PRODUCTS)) {
       where: { key },
       select: { sections: { where: { hidden: false }, orderBy: [{ position: 'asc' }, { id: 'asc' }], select: { kind: true, data: true, collectionId: true } } },
     });
-    // featured rows whose collection is gone are skipped by the store
-    const rows = layout.sections.filter((r) => r.kind !== 'featuredCollection' || r.collectionId != null);
+    // featured rows whose collection is gone are skipped by the store; reviews sections are never shown (no reviews)
+    const rows = layout.sections.filter((r) => r.kind !== 'reviews' && (r.kind !== 'featuredCollection' || r.collectionId != null));
 
     await page.goto(`/products/${handle}`);
     await expect(page.locator('main')).toBeVisible();

@@ -16,7 +16,7 @@ import { ExternalLinkIcon, PlusIcon } from '@/components/admin/icons';
 import {
   MAX_FEATURED_PER_LAYOUT,
   MAX_SECTIONS,
-  SECTION_KINDS,
+  ADDABLE_KINDS,
   SECTION_KIND_COPY,
   SINGLETON_KINDS,
   newSectionDefaults,
@@ -746,7 +746,7 @@ export function LayoutEditor({
       {/* add section */}
       <Dialog open={addOpen} onClose={() => setAddOpen(false)} title="Add a section" width="max-w-lg" testId="add-section-dialog">
         <ul className="grid gap-2">
-          {SECTION_KINDS.map((kind) => {
+          {ADDABLE_KINDS.map((kind) => {
             const reason =
               draft.sections.length >= MAX_SECTIONS
                 ? `A layout can have up to ${MAX_SECTIONS} sections.`

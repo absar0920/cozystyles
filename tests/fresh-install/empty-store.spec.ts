@@ -34,9 +34,11 @@ test('an empty store works and the owner can set it up from the browser', async 
     expect(res?.status(), path).toBe(200);
   }
   expect((await page.goto('/products/nothing-here'))?.status()).toBe(404);
-  // No reviews yet, so no "customer speaks for us" rating block on the home page.
+  // No reviews, no borrowed certifications and no card logos (orders go through WhatsApp).
   await page.goto('/');
   await expect(page.getByText('Our customer speaks for us')).toHaveCount(0);
+  await expect(page.locator('footer').getByText('Certified by')).toHaveCount(0);
+  await expect(page.locator('footer svg title').filter({ hasText: /visa|mastercard|american express/i })).toHaveCount(0);
 
   // First sign-in creates the admin.
   await page.goto('/admin');
@@ -47,6 +49,7 @@ test('an empty store works and the owner can set it up from the browser', async 
   await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
   // WhatsApp number not set yet: the admin says so.
   await expect(page.getByText('WhatsApp ordering is off')).toBeVisible();
+  await expect(page.getByRole('navigation').getByRole('link', { name: 'Reviews' })).toHaveCount(0);
 
   // Every admin screen opens with no data.
   for (const path of [
@@ -62,7 +65,6 @@ test('an empty store works and the owner can set it up from the browser', async 
     '/admin/pages',
     '/admin/blog',
     '/admin/blog/new',
-    '/admin/reviews',
     '/admin/messages',
     '/admin/settings',
     '/admin/account/password',
@@ -93,6 +95,7 @@ test('an empty store works and the owner can set it up from the browser', async 
   await expect(photo).toBeVisible();
   expect(await photo.evaluate((img: HTMLImageElement) => img.decode().then(() => img.naturalWidth))).toBeGreaterThan(0);
   await expect(page.getByText(/order on whatsapp/i)).toHaveCount(0);
+  await expect(page.getByText(/write a review/i)).toHaveCount(0);
 
   // Turn on WhatsApp ordering in Settings; the product page shows the button.
   await page.goto('/admin/settings');

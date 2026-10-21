@@ -2,11 +2,10 @@ import { Fragment } from 'react';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
-import { getProductByHandle, getReviewsForProduct } from '@/lib/queries';
+import { getProductByHandle } from '@/lib/queries';
 import { SITE } from '@/lib/constants';
 import { Breadcrumbs } from '@/components/catalog/Breadcrumbs';
 import { ProductMain } from '@/components/product/ProductMain';
-import { JudgeReviews } from '@/components/product/JudgeReviews';
 import { CardRow, StaticSection } from '@/components/product/TemplateSections';
 import { ShareFacebookIcon, SharePinterestIcon, ShareTwitterIcon } from '@/components/product/icons';
 import {
@@ -64,8 +63,7 @@ export default async function ProductPage({ params, searchParams }: Params) {
   const previewData = preview ? await getLayoutSectionsForPreview(preview) : null;
   const sections: PdpSection[] = previewData?.sections ?? (await getLayoutSections(product.layout));
   const collectionHandles = product.collections.map((c) => c.handle);
-  const [reviews, recommendations, featured, whatsapp] = await Promise.all([
-    getReviewsForProduct(product.id),
+  const [recommendations, featured, whatsapp] = await Promise.all([
     sections.some((s) => s.kind === 'recommendations') ? getRecommendations(product.id, collectionHandles, 4) : [],
     Promise.all(
       sections
@@ -207,23 +205,8 @@ export default async function ProductPage({ params, searchParams }: Params) {
           const f = featured.find((x) => x.s === s);
           return <CardRow key={s.id} heading={s.heading} cards={f?.cards ?? []} variant="featured" />;
         }
-        if (s.kind === 'reviews') {
-          return (
-            <JudgeReviews
-              key={s.id}
-              productId={product.id}
-              reviews={reviews.map((r) => ({
-                id: r.id,
-                author: r.author,
-                rating: r.rating,
-                title: r.title,
-                body: r.body,
-                // imported reviews whose date the old widget didn't give are stored at 1970-01-01: shown without a date
-                createdAt: r.createdAt.getTime() > 0 ? r.createdAt.toISOString() : '',
-              }))}
-            />
-          );
-        }
+        // The store has no product reviews: a layout's reviews section is never shown.
+        if (s.kind === 'reviews') return null;
         return <StaticSection key={s.id} s={s} />;
       })}
       {/* last, so its sticky-bottom position holds for the whole page (see LayoutPreviewBar) */}

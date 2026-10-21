@@ -3,7 +3,8 @@ export function deleteBullets(c: { combinations: number; photos: number; reviews
   return [
     `The product and its ${c.combinations} combination${c.combinations === 1 ? '' : 's'}`,
     `${c.photos} photo${c.photos === 1 ? '' : 's'} (uploaded photos not used anywhere else are deleted)`,
-    `${c.reviews} customer review${c.reviews === 1 ? '' : 's'}`,
+    // reviews only exist in imported demo data; the store has no review feature
+    ...(c.reviews > 0 ? [`${c.reviews} customer review${c.reviews === 1 ? '' : 's'}`] : []),
     ...c.links,
   ];
 }

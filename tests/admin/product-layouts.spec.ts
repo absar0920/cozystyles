@@ -565,7 +565,7 @@ test('validation: highlighted section, nothing saved; server limits and friendly
   };
   const cushions = (await prisma.collection.findUniqueOrThrow({ where: { handle: 'cushions' } })).id;
   await refused(extra('recommendations', {}), 'A layout can have only one “You may also like” section.');
-  await refused(extra('reviews', {}), /only one “Customer reviews” section/);
+  await refused(extra('reviews', {}), /only one “Customer reviews[^”]*” section/);
   await refused(extra('icons', { blocks: [{ key: 'b', icon: 'warranty', title: 'x', text: 'y' }] }, 20 - before.length + 1), 'A layout can have up to 20 sections.');
   await refused(extra('featuredCollection', { heading: 'x', collectionId: cushions, limit: 8 }, 5), 'A layout can have up to 4 “Products from a collection” sections.');
   await refused(extra('icons', { blocks: Array.from({ length: 9 }, (_, i) => ({ key: `b${i}`, icon: 'warranty', title: 't', text: 'x' })) }), 'An icons row can have up to 8 icons.');

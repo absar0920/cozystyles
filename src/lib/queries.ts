@@ -238,6 +238,3 @@ export async function getPageByHandle(handle: string) {
   return prisma.page.findUnique({ where: { handle } });
 }
 
-export async function getReviewsForProduct(productId: number) {
-  return prisma.review.findMany({ where: { productId, approved: true }, orderBy: { createdAt: 'desc' }, take: 20 });
-}
