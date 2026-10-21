@@ -49,7 +49,7 @@ In the app's **Environment variables** panel:
 
 | Name | Value |
 |---|---|
-| `DATABASE_URL` | `mysql://u123456789_iw:PASSWORD@127.0.0.1:3306/u123456789_interwood` — use **127.0.0.1**, not `localhost` (Node resolves `localhost` to IPv6 and the connection is refused). URL-encode special characters in the password (`@` → `%40`, `#` → `%23`). |
+| `DATABASE_URL` | `mysql://u123456789_iw:PASSWORD@127.0.0.1:3306/u123456789_interwood?connection_limit=5` — keep `connection_limit` low (shared MySQL caps connections per user; Prisma otherwise opens one per CPU core); use **127.0.0.1**, not `localhost` (Node resolves `localhost` to IPv6 and the connection is refused). URL-encode special characters in the password (`@` → `%40`, `#` → `%23`). |
 | `SESSION_SECRET` | output of `openssl rand -base64 48` (a new one — never reuse the dev value) |
 | `ADMIN_EMAIL` | the admin's email |
 | `ADMIN_PASSWORD` | a strong password (8+ characters) |

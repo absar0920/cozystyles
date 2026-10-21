@@ -3,6 +3,10 @@ import { Footer, WhatsappButton } from '@/components/layout/Footer';
 import { getMenu, getSettingsMap } from '@/lib/queries';
 import type { MenuNode } from '@/lib/queries';
 
+// Menus and settings are admin-editable, so every storefront page renders per request. This also
+// keeps `next build` from querying the database (some pages are otherwise prerendered).
+export const dynamic = 'force-dynamic';
+
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
   const [menu, foot1, foot2, foot3, topbar, settings] = await Promise.all([
     getMenu('MAIN'),
