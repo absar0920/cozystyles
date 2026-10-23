@@ -4,6 +4,9 @@ import { prisma } from '@/lib/db';
 import { setSessionCookie } from '@/lib/auth';
 import { rateLimit, resetRateLimit } from '@/lib/ratelimit';
 
+/** Shortest admin password: the same rule for Change password and the first-sign-in ADMIN_PASSWORD. */
+export const ADMIN_PASSWORD_MIN_LENGTH = 10;
+
 /** Max failed login attempts per email before throttling kicks in. */
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
@@ -39,7 +42,7 @@ export async function signInWithPassword(emailInput: unknown, passwordInput: unk
 async function bootstrapFirstAdmin(email: string, password: string) {
   const envEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
   const envPassword = process.env.ADMIN_PASSWORD;
-  if (!envEmail || !envPassword || envPassword.length < 8) return null;
+  if (!envEmail || !envPassword || envPassword.length < ADMIN_PASSWORD_MIN_LENGTH) return null;
   if (email !== envEmail || password !== envPassword) return null;
   if ((await prisma.adminUser.count()) > 0) return null;
   return prisma.adminUser.create({

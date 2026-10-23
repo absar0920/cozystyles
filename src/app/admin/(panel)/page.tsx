@@ -99,7 +99,8 @@ export default async function AdminDashboardPage() {
     prisma.product.count({ where: { images: { none: {} } } }),
     prisma.product.count({ where: { variants: { some: {}, every: { status: 'SOLD_OUT' } } } }),
     prisma.collection.count(),
-    prisma.contactSubmission.count({ where: { status: 'NEW' } }),
+    // newsletter sign-ups have their own list in Messages and are not waiting for a reply
+    prisma.contactSubmission.count({ where: { status: 'NEW', NOT: { subject: 'Newsletter' } } }),
     topProducts({ createdAt: { gte: since30 } }, 10),
     prisma.whatsAppInquiry.findMany({ orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], take: 8, select: INQUIRY_SELECT }),
   ]);
@@ -203,7 +204,7 @@ export default async function AdminDashboardPage() {
             label="New messages"
             value={n(newMessages)}
             sub={newMessages > 0 ? 'Unread contact messages' : 'All read'}
-            href="/admin/messages?status=NEW"
+            href="/admin/messages?status=NEW&type=messages"
             icon={MailIcon}
             iconClass="bg-rose-50 text-rose-500"
           />

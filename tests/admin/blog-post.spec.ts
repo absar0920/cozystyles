@@ -89,6 +89,9 @@ test.describe('blog posts and pages', () => {
     // delete → the tag page is gone
     await page.goto('/admin/blog?q=' + encodeURIComponent(postTitle));
     await page.getByTestId('blog-row').filter({ hasText: postTitle }).getByRole('link', { name: `Edit ${postTitle}` }).click();
+    // the list rows have delete buttons too: wait until the post's editor has really opened
+    await expect(page).toHaveURL(/\/admin\/blog\/\d+/);
+    await expect(page.getByTestId('blog-row')).toHaveCount(0);
     await page.getByTestId('confirm-delete').click();
     const dialog = page.getByTestId('confirm-dialog');
     await expect(dialog).toContainText('The post, its text and its featured photo');

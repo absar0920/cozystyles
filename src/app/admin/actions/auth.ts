@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { clearSessionCookie, getCurrentAdmin, setSessionCookie } from '@/lib/auth';
-import { safeAdminNext, signInWithPassword } from '@/lib/admin-login';
+import { ADMIN_PASSWORD_MIN_LENGTH, safeAdminNext, signInWithPassword } from '@/lib/admin-login';
 import { rateLimit, resetRateLimit } from '@/lib/ratelimit';
 import { requireAdmin } from '@/lib/admin-guard';
 
@@ -32,7 +32,7 @@ export type ChangePasswordState = {
   field?: 'current' | 'next' | 'confirm';
 };
 
-const PASSWORD_MIN_LENGTH = 10;
+const PASSWORD_MIN_LENGTH = ADMIN_PASSWORD_MIN_LENGTH;
 const PASSWORD_MAX_LENGTH = 200; // bcrypt only uses the first 72 bytes; this just bounds the work
 const PASSWORD_MAX_ATTEMPTS = 5;
 const PASSWORD_WINDOW_MS = 10 * 60 * 1000;

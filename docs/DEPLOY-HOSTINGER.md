@@ -68,7 +68,7 @@ In the app's **Environment variables** panel:
 | `DATABASE_URL` | `mysql://u123456789_cozyprod:PASSWORD@127.0.0.1:3306/u123456789_cozyprod?connection_limit=5` — keep `connection_limit` low (shared MySQL caps connections per user; Prisma otherwise opens one per CPU core); use **127.0.0.1**, not `localhost` (Node resolves `localhost` to IPv6 and the connection is refused). URL-encode special characters in the password (`@` → `%40`, `#` → `%23`). |
 | `SESSION_SECRET` | output of `openssl rand -base64 48` (a new one — never reuse the dev value) |
 | `ADMIN_EMAIL` | the admin's email |
-| `ADMIN_PASSWORD` | a strong password (8+ characters) |
+| `ADMIN_PASSWORD` | a strong password (10+ characters) |
 | `UPLOADS_DIR` | `/home/u123456789/cozystyles-prod-uploads` — one folder per site (e.g. `cozystyles-staging-uploads`, `cozystyles-prod-uploads`) |
 | `NEXT_PUBLIC_SITE_NAME` | `Cozy Furnitures` |
 | `NEXT_PUBLIC_SITE_URL` | `https://cozystyle.pk` (production; `www.` then redirects here) or `https://staging.cozystyle.pk` |
@@ -107,5 +107,5 @@ against the local database, commit the new folder in `prisma/migrations/`, deplo
 | Build fails at `prisma migrate deploy` | `DATABASE_URL` host is `127.0.0.1`, user has all privileges on the database, password URL-encoded |
 | Photo uploads fail | Runtime logs show `UPLOADS_DIR is not set` → add the variable and redeploy; otherwise check the folder is in your home directory |
 | Images disappear after a deploy | `UPLOADS_DIR` points inside `domains/…/public_html` or the app folder — move it to the home directory |
-| Can't sign in on a fresh database | `ADMIN_PASSWORD` is at least 8 characters and matches exactly; the bootstrap only runs while no admin exists |
+| Can't sign in on a fresh database | `ADMIN_PASSWORD` is at least 10 characters and matches exactly; the bootstrap only runs while no admin exists |
 | Runtime logs show `failed to get redirect response TypeError: fetch failed` | Expected on Hostinger, nothing to fix. After a server action calls `redirect()`, Next.js fetches the target page from its own server to send it along; on Hostinger that fetch fails, and the browser then does a normal page load instead. It is harmless for sign-in and deletes. The admin editors therefore never `redirect()` from an action whose result they read (creating a collection, page, blog post or product): the action returns the new row's id and the editor opens it in the browser. Keep it that way when adding a form. |

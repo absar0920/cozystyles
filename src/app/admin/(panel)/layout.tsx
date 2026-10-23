@@ -22,7 +22,8 @@ export default async function PanelLayout({ children }: { children: ReactNode })
   // Badge counts for the sidebar + the store-wide WhatsApp warning.
   const [inquiriesToday, newMessages, whatsapp] = await Promise.all([
     prisma.whatsAppInquiry.count({ where: { createdAt: { gte: startOfStoreDay() } } }),
-    prisma.contactSubmission.count({ where: { status: 'NEW' } }),
+    // newsletter sign-ups have their own list in Messages and are not waiting for a reply
+    prisma.contactSubmission.count({ where: { status: 'NEW', NOT: { subject: 'Newsletter' } } }),
     getWhatsAppConfig(),
   ]);
 

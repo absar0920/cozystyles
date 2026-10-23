@@ -416,7 +416,7 @@ const section: Section = {
     const statusTab = (label: string) => a.getByRole('link', { name: new RegExp(`^${label} \\d+$`) });
     const statusCount = async (label: string) => num(await statusTab(label).innerText());
     const allMessages = await statusCount('All');
-    expect(await statusCount('New')).toBe(newMessages);
+    const newEverything = await statusCount('New');
     for (const h of ['Name', 'Subject', 'Contact', 'Status', 'Date']) await expect(a.getByRole('columnheader', { name: h, exact: true })).toBeVisible();
     const summaryRows = a.getByRole('row').filter({ has: a.getByRole('link', { name: /^(Expand|Collapse) message$/ }) });
     await expect(summaryRows).toHaveCount(Math.min(allMessages, 20));
@@ -436,7 +436,7 @@ const section: Section = {
     await expect(signupCells.nth(2)).toContainText(SHOPPER.newsletterEmail);
     await expect(signupCells.nth(3)).toHaveText('NEW');
     g.expect(
-      `Above the list are three tabs: **Everything** (selected), **Messages** and **Newsletter sign-ups (${signups})**. Under them, the counters **All ${allMessages}** and **New ${newMessages}** (the same number as **New messages** on the Dashboard). Each line shows the sender, the subject, the phone/email, the status and the date. The list has:`,
+      `Above the list are three tabs: **Everything** (selected), **Messages** and **Newsletter sign-ups (${signups})**. Under them, the counters **All ${allMessages}** and **New ${newEverything}**. Each line shows the sender, the subject, the phone/email, the status and the date. The list has:`,
     );
     g.table(
       ['Name', 'Subject', 'Contact', 'Status', 'Where it comes from'],
@@ -486,8 +486,10 @@ const section: Section = {
     await expect(signupRow).toHaveCount(0);
     const messagesOnly = await statusCount('All');
     expect(messagesOnly).toBe(allMessages - signups);
+    // sign-ups are not waiting for a reply: the Dashboard "New messages" card and the left-menu badge count only these
+    expect(await statusCount('New')).toBe(newMessages);
     g.expect(
-      `Only the messages customers wrote are listed (**All ${messagesOnly}**), without the sign-ups. The line under the tabs says “Sent with the forms on the store, such as the Contact us page.”`,
+      `Only the messages customers wrote are listed (**All ${messagesOnly}**), without the sign-ups. The line under the tabs says “Sent with the forms on the store, such as the Contact us page.” Its **New ${newMessages}** is the same number as **New messages** on the Dashboard and the badge next to **Messages** in the left menu: newsletter sign-ups are not counted as unread messages.`,
     );
 
     const row = contactRow.first();
@@ -530,18 +532,15 @@ const section: Section = {
     await expect(statusTab('Read')).toHaveAccessibleName(`Read ${readBefore}`);
     await expect(detail.getByRole('button', { name: 'Mark as Read' })).toBeVisible();
     g.expect(`The status changes to **CLOSED** and the message moves to the **Closed** counter (**Closed ${closedBefore + 1}**). **Mark as Read** is back, in case you want to reopen it.`);
-    // The sign-up is stored as NEW like a message, so the left-menu badge and the Dashboard card keep counting it.
+    // newsletter sign-ups are not counted as unread messages, so the badge only follows real messages
     const stillNew = newMessages - 1;
     await expect(menuLink(a, 'Messages')).toHaveAccessibleName(stillNew > 0 ? `Messages ${stillNew}` : 'Messages');
-    if (stillNew > 0) {
-      g.step('Look at **Messages** in the left menu.');
-      g.expect(`The red badge next to **Messages** now shows **${stillNew}**: the newsletter sign-up, which still has the status **NEW**.`);
-      g.finding(
-        'note',
-        'Newsletter sign-ups count as new messages',
-        `Each sign-up is stored with the status **NEW**, like a customer message. So the red badge next to **Messages** in the left menu and the Dashboard card **New messages** (“Unread contact messages”) count it: in this test they showed **${newMessages}** for one message and one sign-up. After the only real message was answered and closed, the badge still showed **${stillNew}**. To clear it, the owner has to open every sign-up and click **Mark as Read**. Suggestion: count only real messages (not the subject Newsletter) in the badge and on the Dashboard card, or save sign-ups as already read.`,
-      );
-    }
+    g.step('Look at **Messages** in the left menu.');
+    g.expect(
+      stillNew > 0
+        ? `The red badge next to **Messages** now shows **${stillNew}**: the other unread customer messages.`
+        : 'The red badge next to **Messages** is gone: the only customer message has been answered, and newsletter sign-ups are not counted as unread messages.',
+    );
 
     /* ================================================================ price change */
     g.part('10.4 Change a price and see it on the store', `${ALEXA.title} goes from ${rs(ALEXA.sale!)} to ${rs(NEW_SALE_PRICE)} (the regular price ${rs(ALEXA.regular!)} stays).`);
