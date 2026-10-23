@@ -14,6 +14,11 @@ export const STORE = {
   address: 'Plot 12, Main Boulevard\nGulberg III, Lahore',
   facebook: 'https://facebook.com/cozystyle.pk',
   instagram: 'https://instagram.com/cozystyle.pk',
+  /** Settings → Home page: the yellow scrolling strip (one message per line) and the text block at the bottom. */
+  homeStrip: ['Free delivery & installation in Lahore, Karachi and Islamabad', 'Order on WhatsApp — we reply within an hour'],
+  homeTextHeading: 'Furniture made in our Lahore workshop',
+  homeText:
+    'Every sofa, bed and table is built by our own craftsmen from kiln-dried hardwood. Order on WhatsApp and we confirm the price, the delivery date and any custom size with you.',
 };
 
 export type CollectionData = { title: string; handle: string; parent?: string; description: string; cover: string };
@@ -46,6 +51,8 @@ export type ProductData = {
   /** "Shows" tag per photo index (e.g. { 0: 'Color: Grey' }). */
   photoTags?: Record<number, string>;
   delivery?: string;
+  /** Visibility → Best seller: the product is in Hot Selling Products on the home page (section 8 checks it). */
+  bestSeller?: boolean;
   newArrival?: boolean;
   limitedEdition?: boolean;
   draft?: boolean;
@@ -71,6 +78,7 @@ export const PRODUCTS: ProductData[] = [
     ],
     photoTags: { 0: 'Color: Grey', 1: 'Color: Beige' },
     delivery: 'Delivered in 20 to 30 working days',
+    bestSeller: true,
     newArrival: true,
   },
   {
@@ -82,6 +90,7 @@ export const PRODUCTS: ProductData[] = [
     regular: '45000',
     sale: '39000',
     status: 'Ready to ship',
+    bestSeller: true,
     limitedEdition: true,
   },
   {
@@ -188,6 +197,8 @@ export const MENUS = {
   ],
   footerAbout: [{ label: 'About Us', link: 'About Us' }, { label: 'Terms & Conditions', link: 'Terms & Conditions' }],
   footerSupport: [{ label: 'Shipping & Delivery', link: 'Shipping & Delivery' }, { label: 'Returns & Exchanges', link: 'Returns & Exchanges' }, { label: 'Privacy Policy', link: 'Privacy Policy' }],
+  /** The built-in Contact us page (/pages/contact, every shop has it): section 6 puts it first in Footer “Customer Support”, section 7 adds the policy pages after it. */
+  footerContact: { label: 'Contact us', link: 'Contact us', href: '/pages/contact' },
   popular: [{ label: 'Sofas', link: 'Sofas' }, { label: 'Beds', link: 'Beds' }, { label: 'Office chairs', link: 'Office Chairs' }],
 };
 

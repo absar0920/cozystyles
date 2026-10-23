@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
 
 /**
@@ -17,11 +17,81 @@ const hexToRgb = (hex: string) => {
   return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
 };
 
+/** Most products / tiles a home row shows (HOME_ROW_LIMIT in src/lib/home-data.ts, which is server-only). */
+const HOME_ROW_LIMIT = 24;
+
+/** The product handles of the home Hot Selling cards, in order. */
+async function hotSellingHandles(page: Page): Promise<string[]> {
+  const links = page.getByRole('region', { name: 'Hot Selling Products' }).locator('.product-card a[href^="/products/"]');
+  const paths = await links.evaluateAll((els) => els.map((e) => new URL((e as HTMLAnchorElement).href).pathname));
+  return [...new Set(paths.map((p) => p.split('/')[2]))];
+}
+
 test('home: slider, Hot Selling Products and Shop by Category', async ({ page }) => {
   await page.goto('/');
   expect(await page.locator('[aria-roledescription="slide"]').count()).toBeGreaterThanOrEqual(1);
   await expect(page.getByText('Hot Selling Products', { exact: true }).first()).toBeVisible();
   await expect(page.getByText('Shop by Category', { exact: true }).first()).toBeAttached();
+});
+
+test('home Hot Selling Products: the published best sellers, most recently changed first', async ({ page }) => {
+  const best = await prisma.product.findMany({
+    where: { hot: true, status: 'ACTIVE' },
+    orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+    take: HOME_ROW_LIMIT,
+    select: { handle: true },
+  });
+  await page.goto('/');
+  if (best.length === 0) {
+    await expect(page.getByRole('heading', { name: 'Hot Selling Products' })).toHaveCount(0);
+    return;
+  }
+  expect(await hotSellingHandles(page)).toEqual(best.map((p) => p.handle));
+});
+
+test('home Shop by Category: the Collections page cards with a photo, in the same order, each once', async ({ page }) => {
+  const cards = await prisma.collectionIndexCard.findMany({
+    orderBy: [{ position: 'asc' }, { id: 'asc' }],
+    select: { systemHandle: true, systemImage: true, collection: { select: { handle: true, image: true } } },
+  });
+  const expected = [
+    ...new Set(
+      cards.flatMap((c) => {
+        const handle = c.collection?.handle ?? c.systemHandle;
+        return handle && (c.collection?.image ?? c.systemImage) ? [`/collections/${handle}`] : [];
+      }),
+    ),
+  ].slice(0, HOME_ROW_LIMIT);
+  await page.goto('/');
+  if (expected.length === 0) {
+    await expect(page.getByRole('heading', { name: 'Shop by Category' })).toHaveCount(0);
+    return;
+  }
+  // the wrap-around copies of the carousel are not focusable; every tile shows once among the focusable ones
+  const tiles = page.getByRole('region', { name: 'Shop by Category' }).locator('a[href^="/collections/"]:not([tabindex="-1"])');
+  expect(await tiles.evaluateAll((els) => els.map((e) => new URL((e as HTMLAnchorElement).href).pathname))).toEqual(expected);
+});
+
+test('home: the strip and the text block come from Settings, the heading is the shop name, no review cards', async ({ page }) => {
+  const rows = await prisma.siteSetting.findMany({ where: { key: { in: ['homeStrip', 'homeTextHeading', 'homeText'] } } });
+  const setting = (key: string) => rows.find((r) => r.key === key)?.value.trim() ?? '';
+  await page.goto('/');
+  // the home page's tab title is the shop name (NEXT_PUBLIC_SITE_NAME)
+  const siteName = await page.title();
+  await expect(page.locator('h1')).toHaveText(siteName);
+  const description = (await page.locator('meta[name="description"]').getAttribute('content')) ?? '';
+  expect(description).toContain(siteName);
+  expect(description).not.toMatch(/largest|manufacturer|kitchen|door|wardrobe|flooring|checkout|card|track|augmented/i);
+  await expect(page.getByText('Our customer speaks for us')).toHaveCount(0);
+
+  const messages = setting('homeStrip').split('\n').map((l) => l.trim()).filter(Boolean);
+  await expect(page.getByTestId('home-strip')).toHaveCount(messages.length ? 1 : 0);
+  for (const m of messages) await expect(page.getByTestId('home-strip').getByText(m).first()).toBeAttached();
+
+  const heading = setting('homeTextHeading');
+  const text = setting('homeText');
+  await expect(page.getByTestId('home-text-block')).toHaveCount(heading || text ? 1 : 0);
+  if (heading) await expect(page.getByTestId('home-text-block').getByRole('heading', { name: heading })).toBeVisible();
 });
 
 test('collections index follows the saved order', async ({ page }) => {
@@ -94,14 +164,23 @@ for (const path of ['/pages/privacy-policy', '/pages/review']) {
 }
 
 test('home Hot Selling card swatches use the colours saved in the admin', async ({ page }) => {
-  const values = await prisma.productOptionValue.findMany({
-    where: { option: { product: { handle: 'alexa-sofa-chair' } }, swatchColor: { not: null } },
-    orderBy: { position: 'asc' },
-    select: { value: true, swatchColor: true },
-  });
-  expect(values.length).toBeGreaterThan(0);
   await page.goto('/');
-  const card = page.locator('.product-card', { hasText: 'Alexa Sofa Chair' }).first();
+  // the first card in the row whose product has colours saved in the admin
+  let handle = '';
+  let values: { value: string; swatchColor: string | null }[] = [];
+  for (const h of await hotSellingHandles(page)) {
+    values = await prisma.productOptionValue.findMany({
+      where: { option: { product: { handle: h } }, swatchColor: { not: null } },
+      orderBy: { position: 'asc' },
+      select: { value: true, swatchColor: true },
+    });
+    if (values.length) {
+      handle = h;
+      break;
+    }
+  }
+  test.skip(!handle, 'no Hot Selling product has swatch colours');
+  const card = page.locator('.product-card', { has: page.locator(`a[href="/products/${handle}"]`) }).first();
   await card.scrollIntoViewIfNeeded();
   const swatches = await card.locator('[aria-label="Colours"] > span').evaluateAll((els) =>
     els.map((e) => ({ name: e.getAttribute('title') ?? '', color: getComputedStyle(e.firstElementChild as Element).backgroundColor })),

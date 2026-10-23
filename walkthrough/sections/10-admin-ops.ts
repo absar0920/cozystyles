@@ -1,17 +1,21 @@
+import { readFileSync } from 'node:fs';
 import { expect, type Locator, type Page, type Response } from '@playwright/test';
 import type { Ctx, Section } from '../context';
 import { BANNERS, MENUS, PRODUCTS, SHOPPER, TEMP_ADMIN_PASSWORD } from '../data';
 import { gotoPage, type Guide } from '../guide';
 
 /**
- * 10. Day-to-day admin work after the shopper sections (8, 9) have clicked WhatsApp buttons and sent messages:
- * the Dashboard and WhatsApp inquiries (with filters), Messages (open, mark read / closed), a price change and a
+ * 10. Day-to-day admin work after the shopper sections (8, 9) have clicked WhatsApp buttons, sent the Contact us form
+ * and signed up for the newsletter: the Dashboard and WhatsApp inquiries (with filters), Messages (the contact
+ * message, the newsletter sign-ups tab with its CSV download, mark read / closed), a price change and a
  * draft/publish round trip checked on the store, the unsaved-changes warning (a native confirm box, see
  * tests/admin/unsaved-guard.spec.ts), deleting the hidden banner and one Popular searches link, and changing the
  * admin password to TEMP_ADMIN_PASSWORD and back, so the documented credentials stay valid.
  */
 
 const SAVED = 'Saved. The store is updated.';
+/** Product editor message after saving a draft (Unpublish / Save as draft). */
+const SAVED_DRAFT = 'Saved as a draft. It is not on the store.';
 const NEW_SALE_PRICE = '37000';
 /** Group title of the Popular searches footer menu (section 6; data.ts has only its links). */
 const POPULAR_GROUP = 'Popular searches';
@@ -56,6 +60,7 @@ const menuLink = (page: Page, name: string) =>
   sidebar(page).getByRole('navigation').getByRole('link', { name: new RegExp(`^${escapeRe(name)}( [\\d,]+)?$`) });
 const saveBar = (page: Page) => page.getByTestId('save-bar');
 const savedNotice = (page: Page) => page.getByText(SAVED);
+const draftNotice = (page: Page) => page.getByText(SAVED_DRAFT);
 
 /** The number on a Dashboard card ("Today 3 Since midnight" → 3). */
 async function cardValue(card: Locator): Promise<number> {
@@ -214,7 +219,7 @@ const section: Section = {
   id: '10',
   title: '10. Running the shop: inquiries, messages, edits, password',
   intro:
-    'The everyday work in the admin once customers are using the shop: reading the WhatsApp clicks and messages made by the shopper in sections 8 and 9, changing a price, hiding a product and showing it again, the unsaved-changes warning, deleting a banner and a menu link, and changing the admin password (and back again).',
+    'The everyday work in the admin once customers are using the shop: reading the WhatsApp clicks, the contact message and the newsletter sign-up made by the shopper in sections 8 and 9, changing a price, hiding a product and showing it again, the unsaved-changes warning, deleting a banner and a menu link, and changing the admin password (and back again).',
   async run(ctx: Ctx) {
     const { guide: g, admin: a, shopper: s, creds } = ctx;
 
@@ -364,111 +369,178 @@ const section: Section = {
     await expect(a.getByTestId('inquiries-total')).toHaveText(total.toLocaleString('en-PK'));
     await expect(rows).toHaveCount(Math.min(total, 50));
     await expect(clear).toHaveCount(0);
-    g.expect(`All **${total}** inquiries are listed again, the box on the left is headed **Last 30 days** again, and the **Clear** button is gone.`);
-    // The filter boxes are uncontrolled selects (defaultValue): after Clear (a link, no full page load) they keep the old choice.
-    await a.waitForTimeout(500);
-    const staleBoxes = (await period.inputValue()) !== '30' || (await type.inputValue()) !== 'all';
-    if (staleBoxes) {
-      await expect(period).toHaveValue(periodValue);
-      await expect(type).toHaveValue('ORDER');
-      g.finding(
-        'bug',
-        'After “Clear”, the WhatsApp inquiries filter boxes still show the old choice',
-        `After **Clear**, the list and the summary go back to all inquiries of the last 30 days, but the **Period** and **Type** boxes still say **${periodLabel}** and **Order**. The page looks filtered when it is not, and clicking **Show** now would filter the list again. The boxes only reset when the page is reloaded (F5). Expected: **Clear** resets the boxes to **Last 30 days** / **All types**.`,
-      );
-      await g.shot(a, `After Clear: all ${total} inquiries listed, but the boxes still say ${periodLabel} / Order`, {
-        highlight: a.locator('form[action="/admin/inquiries"]'),
-      });
-      g.step('Reload the page (press **F5**) to reset the boxes.');
-      await a.reload();
-      await a.waitForLoadState('networkidle').catch(() => {});
-    }
+    // F10-1 of the previous run is fixed: Clear also puts the filter boxes back (the form is redrawn for the new filters).
+    const filterForm = a.locator('form[action="/admin/inquiries"]');
+    const productBox = filterForm.getByRole('searchbox', { name: 'Product name', exact: true });
+    await expect(period).toHaveValue('30');
+    await expect(type).toHaveValue('all');
+    await expect(productBox).toHaveValue('');
+    g.expect(
+      `All **${total}** inquiries are listed again, the box on the left is headed **Last 30 days** again and the **Clear** button is gone. The filter boxes are back to **Last 30 days** and **All types**, so the page no longer looks filtered.`,
+    );
+    await g.shot(a, `After Clear: all ${total} inquiries, the filters back to Last 30 days / All types`, { highlight: filterForm });
+
+    g.text('The **WhatsApp inquiries** link in the left menu also starts again from the full list:');
+    await g.form([{ label: 'Type', kind: 'select', value: 'Order', locator: type }], 'Choose again:');
+    await g.click(a.getByRole('button', { name: 'Show', exact: true }), 'Click **Show**.');
+    await expect(a).toHaveURL(/kind=ORDER/);
+    await expect(type).toHaveValue('ORDER');
+    await expect(clear).toBeVisible();
+    await g.click(menuLink(a, 'WhatsApp inquiries'), 'In the left menu, click **WhatsApp inquiries**.');
+    await expect(a).toHaveURL(/\/admin\/inquiries$/);
+    await expect(clear).toHaveCount(0);
     await expect(period).toHaveValue('30');
     await expect(type).toHaveValue('all');
     await expect(a.getByTestId('inquiries-total')).toHaveText(total.toLocaleString('en-PK'));
-    g.expect(`The boxes show **Last 30 days** and **All types**, and all **${total}** inquiries are listed.`);
+    g.expect(`The boxes show **Last 30 days** and **All types** again, and all **${total}** inquiries are listed.`);
 
     /* ================================================================ Messages */
-    g.part('10.3 Messages', 'Messages holds what customers send through the shop’s forms.');
+    // F08-7 / F10-2 of the previous run are fixed: newsletter sign-ups are kept with the subject "Newsletter", have their
+    // own tab (with a CSV download), and the admin says plainly that there is no mailing list.
+    g.part(
+      '10.3 Messages and newsletter sign-ups',
+      'Messages holds what customers send with the **Contact us** form (section 8 sent one) and the email addresses typed into **Join our mailing list** at the bottom of the store.',
+    );
     await g.click(menuLink(a, 'Messages'), 'In the left menu, click **Messages**.');
     await expect(a).toHaveURL(/\/admin\/messages$/);
     await expect(a.getByRole('heading', { level: 1, name: 'Messages' })).toBeVisible();
-    const tab = (label: string) => a.getByRole('link', { name: new RegExp(`^${label} \\d+$`) });
-    const tabCount = async (label: string) => num(await tab(label).innerText());
-    const allMessages = await tabCount('All');
-    expect(await tabCount('New')).toBe(newMessages);
-    if (allMessages === 0) {
-      await expect(a.getByRole('cell', { name: 'No messages yet.' })).toBeVisible();
-      g.expect('The list says **No messages yet.**: nobody sent a form from the shop during this test, so there is nothing to read.');
-      await g.shot(a, 'Messages: no messages yet', { highlight: a.getByRole('cell', { name: 'No messages yet.' }) });
-    } else {
-      const summaryRows = a.getByRole('row').filter({ has: a.getByRole('link', { name: /^(Expand|Collapse) message$/ }) });
-      await expect(summaryRows).toHaveCount(Math.min(allMessages, 20));
-      const contactRow = summaryRows.filter({ hasText: SHOPPER.contact.name });
-      const newsletterRow = summaryRows.filter({ hasText: SHOPPER.newsletterEmail });
-      const hasContact = (await contactRow.count()) > 0;
-      const hasNewsletter = (await newsletterRow.count()) > 0;
-      for (const h of ['Name', 'Subject', 'Contact', 'Status', 'Date']) await expect(a.getByRole('columnheader', { name: h, exact: true })).toBeVisible();
-      g.expect(
-        `The tabs at the top count the messages: **All ${allMessages}**, **New ${newMessages}** (the same number as **New messages** on the Dashboard). Each line shows the sender, the subject, the phone/email, the status and the date.`,
-      );
-      if (hasNewsletter) {
-        const nlCells = newsletterRow.first().getByRole('cell');
-        await expect(nlCells.nth(0)).toHaveText('Newsletter Subscriber');
-        await expect(nlCells.nth(2)).toContainText(SHOPPER.newsletterEmail);
-        const nlSubject = (await nlCells.nth(1).innerText()).trim();
-        expect(nlSubject).not.toBe('');
-        g.expect(
-          `The newsletter sign-up from the footer (section 8) is listed as a message from **Newsletter Subscriber** with the email **${SHOPPER.newsletterEmail}** and the subject **${nlSubject}**.`,
-        );
-        if (nlSubject !== 'Newsletter') {
-          g.finding(
-            'bug',
-            `Newsletter sign-ups arrive with the subject “${nlSubject}”`,
-            `The footer newsletter box sends each sign-up with the subject “Newsletter”, but the shop only keeps the subjects of the contact form (General, Sales, Complaint, Corporate, Careers) and silently changes it to **${nlSubject}**. In **Messages** a sign-up therefore looks like a general customer question; only the sender name “Newsletter Subscriber” and the text “Newsletter signup: …” give it away. Expected: the subject **Newsletter**. (That sign-ups land in Messages at all, with no subscriber list, is reported in section 8.7.)`,
-          );
-        }
-      }
-      const row = hasContact ? contactRow.first() : hasNewsletter ? newsletterRow.first() : summaryRows.first();
-      const name = (await row.getByRole('cell').first().innerText()).trim();
-      const status = row.getByRole('cell').nth(3);
-      await expect(status).toHaveText('NEW');
-      g.expect(`The message from **${name}** has the status **NEW**.`);
-      const [newBefore, readBefore, closedBefore] = [await tabCount('New'), await tabCount('Read'), await tabCount('Closed')];
+    await expect(a.getByText('Messages customers send from the store, and newsletter sign-ups', { exact: true })).toBeVisible();
+    const kindTabs = a.getByRole('navigation', { name: 'Kind of message', exact: true });
+    const everythingTab = kindTabs.getByRole('tab', { name: 'Everything', exact: true });
+    const messagesTab = kindTabs.getByRole('tab', { name: 'Messages', exact: true });
+    const signupsTab = kindTabs.getByRole('tab', { name: /^Newsletter sign-ups \(\d+\)$/ });
+    await expect(everythingTab).toHaveAttribute('aria-selected', 'true');
+    const signups = num(await signupsTab.innerText());
+    expect(signups, 'the newsletter sign-up from section 8').toBeGreaterThan(0);
+    // the status counters (All / New / Read / Closed) are links with the number in a badge
+    const statusTab = (label: string) => a.getByRole('link', { name: new RegExp(`^${label} \\d+$`) });
+    const statusCount = async (label: string) => num(await statusTab(label).innerText());
+    const allMessages = await statusCount('All');
+    expect(await statusCount('New')).toBe(newMessages);
+    for (const h of ['Name', 'Subject', 'Contact', 'Status', 'Date']) await expect(a.getByRole('columnheader', { name: h, exact: true })).toBeVisible();
+    const summaryRows = a.getByRole('row').filter({ has: a.getByRole('link', { name: /^(Expand|Collapse) message$/ }) });
+    await expect(summaryRows).toHaveCount(Math.min(allMessages, 20));
+    const contactRow = summaryRows.filter({ hasText: SHOPPER.contact.name });
+    const signupRow = summaryRows.filter({ hasText: SHOPPER.newsletterEmail });
+    await expect(contactRow, 'the Contact us message sent in section 8').toHaveCount(1);
+    await expect(signupRow, 'the newsletter sign-up made in section 8').toHaveCount(1);
+    const contactCells = contactRow.getByRole('cell');
+    await expect(contactCells.nth(0)).toHaveText(SHOPPER.contact.name);
+    await expect(contactCells.nth(1)).toHaveText('General');
+    await expect(contactCells.nth(2)).toContainText(SHOPPER.contact.phone);
+    await expect(contactCells.nth(2)).toContainText(SHOPPER.contact.email);
+    await expect(contactCells.nth(3)).toHaveText('NEW');
+    const signupCells = signupRow.getByRole('cell');
+    await expect(signupCells.nth(0)).toHaveText('Newsletter Subscriber');
+    await expect(signupCells.nth(1)).toHaveText('Newsletter');
+    await expect(signupCells.nth(2)).toContainText(SHOPPER.newsletterEmail);
+    await expect(signupCells.nth(3)).toHaveText('NEW');
+    g.expect(
+      `Above the list are three tabs: **Everything** (selected), **Messages** and **Newsletter sign-ups (${signups})**. Under them, the counters **All ${allMessages}** and **New ${newMessages}** (the same number as **New messages** on the Dashboard). Each line shows the sender, the subject, the phone/email, the status and the date. The list has:`,
+    );
+    g.table(
+      ['Name', 'Subject', 'Contact', 'Status', 'Where it comes from'],
+      [
+        [SHOPPER.contact.name, 'General', `${SHOPPER.contact.phone}\n${SHOPPER.contact.email}`, 'NEW', 'the **Contact us** page (section 8.8)'],
+        ['Newsletter Subscriber', 'Newsletter', SHOPPER.newsletterEmail, 'NEW', '**Join our mailing list** in the footer (section 8.7)'],
+      ],
+    );
+    await g.shot(a, 'Messages: the contact message and the newsletter sign-up', { highlight: a.locator('table').first().locator('xpath=..') });
 
-      await g.click(row.getByRole('link', { name: 'Expand message' }), `On the line from **${name}**, click **View** (on the right).`);
-      await expect(a).toHaveURL(/[?&]open=\d+/);
-      const detail = a.getByRole('row').filter({ hasText: `From ${name}` });
-      await expect(detail).toBeVisible();
-      if (hasContact) await expect(detail).toContainText(SHOPPER.contact.message);
-      else if (hasNewsletter) await expect(detail).toContainText(`Newsletter signup: ${SHOPPER.newsletterEmail}`);
-      const markRead = detail.getByRole('button', { name: 'Mark as Read' });
-      const markClosed = detail.getByRole('button', { name: 'Mark as Closed' });
-      await expect(markRead).toBeVisible();
-      await expect(markClosed).toBeVisible();
-      await expect(detail.getByRole('button', { name: 'Delete', exact: true })).toBeVisible();
-      await expect(row.getByRole('link', { name: 'Collapse message' })).toBeVisible();
-      g.expect(
-        `The message opens under its line: who sent it and when, the full text${hasContact ? ` (“${SHOPPER.contact.message}”)` : ''}, and the buttons **Mark as Read**, **Mark as Closed** and **Delete**.` +
-          ((await detail.getByRole('link', { name: 'Reply by email →' }).count()) ? ' **Reply by email →** opens your email program with a reply ready.' : '') +
-          ' **View** has become **Close**.',
-      );
-      g.note('Opening a message does not mark it as read by itself: use the buttons.');
-      await g.shot(a, `Message from ${name} opened`, { highlight: detail });
+    await g.click(signupsTab, `Click the tab **Newsletter sign-ups (${signups})**.`);
+    await expect(a).toHaveURL(/[?&]type=newsletter/);
+    await expect(signupsTab).toHaveAttribute('aria-selected', 'true');
+    const noMailingList = a.getByRole('status').filter({ hasText: 'There is no mailing list' });
+    await expect(noMailingList).toBeVisible();
+    await expect(noMailingList).toContainText('The shop has no mailing service, so nothing is ever sent to them. Sign-ups are only collected here.');
+    await expect(summaryRows).toHaveCount(Math.min(signups, 20));
+    await expect(signupRow).toHaveCount(1);
+    await expect(contactRow).toHaveCount(0);
+    const signupSubjects = await summaryRows.evaluateAll((trs) => trs.map((tr) => (tr.querySelectorAll('td')[1] as HTMLElement).innerText.trim()));
+    expect(new Set(signupSubjects)).toEqual(new Set(['Newsletter']));
+    const csvButton = noMailingList.getByRole('link', { name: 'Download sign-ups (CSV)', exact: true });
+    await expect(csvButton).toBeVisible();
+    g.expect(
+      `Only the sign-ups are listed (here **${SHOPPER.newsletterEmail}**). A blue box says **There is no mailing list**: “These are the email addresses typed into “Join our mailing list” at the bottom of the store. The shop has no mailing service, so nothing is ever sent to them. Sign-ups are only collected here. To send news, download the list and use your own email or a mailing service.” It has a **Download sign-ups (CSV)** button.`,
+    );
+    await g.shot(a, 'Newsletter sign-ups: “There is no mailing list” and the download button', { highlight: noMailingList });
+    const [download] = await Promise.all([a.waitForEvent('download'), g.click(csvButton, 'Click **Download sign-ups (CSV)**.')]);
+    expect(download.suggestedFilename()).toBe('newsletter-signups.csv');
+    const csvLines = readFileSync(await download.path(), 'utf8').trim().split(/\r?\n/);
+    expect(csvLines[0]).toBe('Email,Signed up');
+    const csvRows = csvLines.slice(1).map((l) => l.split(','));
+    expect(csvRows.map(([email]) => email)).toContain(SHOPPER.newsletterEmail);
+    expect(csvRows.length).toBe(new Set(csvRows.map(([email]) => email.toLowerCase())).size);
+    for (const [, date] of csvRows) expect(date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    g.expect(
+      'The browser saves the file **newsletter-signups.csv**, which opens in Excel or Google Sheets: one line per email address (an address that signed up twice is listed once) with the date it signed up. In this test it held:',
+    );
+    g.table(['Email', 'Signed up'], csvRows);
 
-      await g.click(markRead, 'Click **Mark as Read**.');
-      await expect(status).toHaveText('READ');
-      await expect(markRead).toHaveCount(0);
-      await expect(tab('New')).toHaveAccessibleName(`New ${newBefore - 1}`);
-      await expect(tab('Read')).toHaveAccessibleName(`Read ${readBefore + 1}`);
-      g.expect(`The status changes to **READ**, the **Mark as Read** button disappears, and the tabs now count **New ${newBefore - 1}** and **Read ${readBefore + 1}**.`);
-      await g.click(markClosed, 'When the customer has been answered, click **Mark as Closed**.');
-      await expect(status).toHaveText('CLOSED');
-      await expect(markClosed).toHaveCount(0);
-      await expect(tab('Closed')).toHaveAccessibleName(`Closed ${closedBefore + 1}`);
-      await expect(tab('Read')).toHaveAccessibleName(`Read ${readBefore}`);
-      g.expect(`The status changes to **CLOSED** and the message moves to the **Closed** tab (**Closed ${closedBefore + 1}**). **Mark as Read** is back, in case you want to reopen it.`);
-      await expect(detail.getByRole('button', { name: 'Mark as Read' })).toBeVisible();
+    await g.click(messagesTab, 'Click the tab **Messages**.');
+    await expect(a).toHaveURL(/[?&]type=messages/);
+    await expect(messagesTab).toHaveAttribute('aria-selected', 'true');
+    await expect(a.getByText('Sent with the forms on the store, such as the Contact us page.', { exact: true })).toBeVisible();
+    await expect(noMailingList).toHaveCount(0);
+    await expect(contactRow).toHaveCount(1);
+    await expect(signupRow).toHaveCount(0);
+    const messagesOnly = await statusCount('All');
+    expect(messagesOnly).toBe(allMessages - signups);
+    g.expect(
+      `Only the messages customers wrote are listed (**All ${messagesOnly}**), without the sign-ups. The line under the tabs says “Sent with the forms on the store, such as the Contact us page.”`,
+    );
+
+    const row = contactRow.first();
+    const name = SHOPPER.contact.name;
+    const status = row.getByRole('cell').nth(3);
+    await expect(status).toHaveText('NEW');
+    const [newBefore, readBefore, closedBefore] = [await statusCount('New'), await statusCount('Read'), await statusCount('Closed')];
+    await g.click(row.getByRole('link', { name: 'Expand message' }), `On the line from **${name}**, click **View** (on the right).`);
+    await expect(a).toHaveURL(/[?&]open=\d+/);
+    await expect(a).toHaveURL(/[?&]type=messages/);
+    const detail = a.getByRole('row').filter({ hasText: `From ${name}` });
+    await expect(detail).toBeVisible();
+    await expect(detail).toContainText(`From ${name} · ${SHOPPER.contact.email} · ${SHOPPER.contact.phone} · `);
+    await expect(detail).toContainText(SHOPPER.contact.message);
+    const reply = detail.getByRole('link', { name: 'Reply by email →' });
+    await expect(reply).toHaveAttribute('href', `mailto:${SHOPPER.contact.email}?subject=${encodeURIComponent('Re: General')}`);
+    const markRead = detail.getByRole('button', { name: 'Mark as Read' });
+    const markClosed = detail.getByRole('button', { name: 'Mark as Closed' });
+    await expect(markRead).toBeVisible();
+    await expect(markClosed).toBeVisible();
+    await expect(detail.getByRole('button', { name: 'Delete', exact: true })).toBeVisible();
+    await expect(row.getByRole('link', { name: 'Collapse message' })).toBeVisible();
+    g.expect(
+      `The message opens under its line: who sent it, with email, phone and date, the full text (“${SHOPPER.contact.message}”), and the buttons **Mark as Read**, **Mark as Closed** and **Delete**. **Reply by email →** opens your email program with a reply to ${SHOPPER.contact.email} ready. **View** has become **Close**.`,
+    );
+    g.note('Opening a message does not mark it as read by itself: use the buttons.');
+    // the table's scrolling frame clips an outline drawn around a row, so outline the message text inside it
+    await g.shot(a, `Message from ${name} opened`, { highlight: detail.getByText(SHOPPER.contact.message, { exact: true }).locator('xpath=..') });
+
+    await g.click(markRead, 'Click **Mark as Read**.');
+    await expect(status).toHaveText('READ');
+    await expect(markRead).toHaveCount(0);
+    await expect(statusTab('New')).toHaveAccessibleName(`New ${newBefore - 1}`);
+    await expect(statusTab('Read')).toHaveAccessibleName(`Read ${readBefore + 1}`);
+    g.expect(`The status changes to **READ**, the **Mark as Read** button disappears, and the counters now show **New ${newBefore - 1}** and **Read ${readBefore + 1}**.`);
+    await g.click(markClosed, 'When the customer has been answered, click **Mark as Closed**.');
+    await expect(status).toHaveText('CLOSED');
+    await expect(markClosed).toHaveCount(0);
+    await expect(statusTab('Closed')).toHaveAccessibleName(`Closed ${closedBefore + 1}`);
+    await expect(statusTab('Read')).toHaveAccessibleName(`Read ${readBefore}`);
+    await expect(detail.getByRole('button', { name: 'Mark as Read' })).toBeVisible();
+    g.expect(`The status changes to **CLOSED** and the message moves to the **Closed** counter (**Closed ${closedBefore + 1}**). **Mark as Read** is back, in case you want to reopen it.`);
+    // The sign-up is stored as NEW like a message, so the left-menu badge and the Dashboard card keep counting it.
+    const stillNew = newMessages - 1;
+    await expect(menuLink(a, 'Messages')).toHaveAccessibleName(stillNew > 0 ? `Messages ${stillNew}` : 'Messages');
+    if (stillNew > 0) {
+      g.step('Look at **Messages** in the left menu.');
+      g.expect(`The red badge next to **Messages** now shows **${stillNew}**: the newsletter sign-up, which still has the status **NEW**.`);
+      g.finding(
+        'note',
+        'Newsletter sign-ups count as new messages',
+        `Each sign-up is stored with the status **NEW**, like a customer message. So the red badge next to **Messages** in the left menu and the Dashboard card **New messages** (“Unread contact messages”) count it: in this test they showed **${newMessages}** for one message and one sign-up. After the only real message was answered and closed, the badge still showed **${stillNew}**. To clear it, the owner has to open every sign-up and click **Mark as Read**. Suggestion: count only real messages (not the subject Newsletter) in the badge and on the Dashboard card, or save sign-ups as already read.`,
+      );
     }
 
     /* ================================================================ price change */
@@ -532,14 +604,16 @@ const section: Section = {
       'In the bar at the bottom, click **Unpublish (save as draft)**.',
     );
     await expect(pill).toHaveText('Draft', { timeout: 30_000 });
-    await expect(savedNotice(a)).toBeVisible();
+    // F03-2 of the previous run is fixed: a draft save no longer says "The store is updated".
+    await expect(draftNotice(a)).toBeVisible();
+    await expect(savedNotice(a)).toHaveCount(0);
     await expect(saveBar(a)).toContainText('Draft — not visible on the store');
     await expect(saveBar(a).getByRole('button', { name: 'Publish', exact: true })).toBeVisible();
     await expect(saveBar(a).getByRole('button', { name: 'Save as draft' })).toBeVisible();
     await expect(a.getByText('Publish to see it on the store')).toBeVisible();
     await expect(a.getByRole('link', { name: 'View on store' })).toHaveCount(0);
     g.expect(
-      `**${SAVED}** appears, the label changes to **Draft**, the bottom bar says **Draft — not visible on the store** and now offers **Save as draft** and **Publish**. The **View on store** button at the top is replaced by a grey **Publish to see it on the store**.`,
+      `**${SAVED_DRAFT}** appears, the label changes to **Draft**, the bottom bar says **Draft — not visible on the store** and now offers **Save as draft** and **Publish**. The **View on store** button at the top is replaced by a grey **Publish to see it on the store**.`,
     );
 
     g.step(`In the **shopper** window, open **${ctx.baseURL.replace(/\/+$/, '')}${arbourPath}**.`);
@@ -553,9 +627,11 @@ const section: Section = {
 
     await g.click(saveBar(a).getByRole('button', { name: 'Publish', exact: true }), 'Back in the **admin** window, click **Publish** in the bar at the bottom.');
     await expect(pill).toHaveText('Published', { timeout: 30_000 });
+    await expect(savedNotice(a)).toBeVisible();
+    await expect(draftNotice(a)).toHaveCount(0);
     await expect(saveBar(a)).toContainText('Published — visible on the store');
     await expect(a.getByRole('link', { name: 'View on store' })).toHaveAttribute('href', arbourPath);
-    g.expect('The label is **Published** again and the **View on store** button is back.');
+    g.expect(`**${SAVED}** appears, the label is **Published** again and the **View on store** button is back.`);
     g.step('In the **shopper** window, reload the page (press **F5**).');
     await expect(async () => {
       expect(await openOnStore(s, arbourPath)).toBe(200);
@@ -687,11 +763,13 @@ const section: Section = {
       await gotoPage(s, '/');
       await expect(seo.getByRole('link')).toHaveCount(KEPT_LINKS.length, { timeout: 5_000 });
     }).toPass({ timeout: 60_000 });
-    for (const l of KEPT_LINKS) await expect(seo.getByRole('link', { name: new RegExp(`^(, )?${escapeRe(l.label)}$`) })).toBeVisible();
+    // F06-1 of the previous run is fixed: the commas sit between the links, not at the start of the next one.
+    for (const l of KEPT_LINKS) await expect(seo.getByRole('link', { name: l.label, exact: true })).toBeVisible();
+    await expect(seo.getByRole('list')).toHaveText(KEPT_LINKS.map((l) => l.label).join(', '));
     await expect(seo.getByRole('link', { name: new RegExp(escapeRe(REMOVED_LINK.label), 'i') })).toHaveCount(0);
     await seo.scrollIntoViewIfNeeded();
     await s.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    g.expect(`**${POPULAR_GROUP}** now lists only ${KEPT_LINKS.map((l) => `**${l.label}**`).join(' and ')}; **${REMOVED_LINK.label}** is gone.`);
+    g.expect(`**${POPULAR_GROUP}** now reads only “${KEPT_LINKS.map((l) => l.label).join(', ')}”; **${REMOVED_LINK.label}** is gone.`);
     await g.shot(s, `Store footer: Popular searches without "${REMOVED_LINK.label}"`, { highlight: seo });
 
     /* ================================================================ password */

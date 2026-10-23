@@ -10,7 +10,7 @@
  */
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { displayPrice, type ProductCardData } from '@/lib/queries';
+import { cardPrice, displayPrice, type ProductCardData } from '@/lib/queries';
 import { cardStatusLabel, isAvailable } from '@/lib/variant-status';
 import { CARD_SWATCH_SELECT, buildCardSwatches } from '@/lib/card-swatches';
 import type { CardSwatch, ProductCardExtras } from './ProductCard';
@@ -165,17 +165,8 @@ export type CatalogSwatch = CardSwatch & { active: boolean; image: string | null
 
 export function toCatalogCard(p: CardRow): CatalogCard {
   const vs = p.variants;
-  const price = displayPrice(vs.map((v) => v.price)) ?? 0;
-  const priceOnRequest = price === 0;
-  // Shopify `product.compare_at_price` = the lowest compare-at among variants that have one
-  // (Concordia Triton: 46,200/66,000 + 68,950/98,500 → "Rs.46,200 Rs.66,000"); shown only above the price.
-  const compares = vs.map((v) => v.compareAtPrice).filter((c): c is number => c != null && c > 0);
-  const minCompare = compares.length ? Math.min(...compares) : null;
-  const compareAtPrice = priceOnRequest || minCompare == null || minCompare <= price ? null : minCompare;
-  // Live sale circle = the biggest per-variant discount, not min price vs max compare-at.
-  const pcts = vs
-    .filter((v) => v.compareAtPrice != null && v.compareAtPrice > v.price && v.price > 0)
-    .map((v) => Math.round((((v.compareAtPrice as number) - v.price) / (v.compareAtPrice as number)) * 100));
+  // price, struck price and sale circle all come from the cheapest variant (see cardPrice)
+  const { price, priceOnRequest, compareAtPrice, salePercent } = cardPrice(vs);
   const statuses = vs.map((v) => v.status);
   return {
     id: p.id,
@@ -191,7 +182,7 @@ export function toCatalogCard(p: CardRow): CatalogCard {
     reviewCount: p.reviewCount,
     productType: p.productType,
     available: statuses.some(isAvailable),
-    salePercent: pcts.length ? Math.max(...pcts) : null,
+    salePercent,
     statusLabel: cardStatusLabel(statuses),
     isNew: p.isNew,
     limitedEdition: p.limitedEdition,

@@ -25,14 +25,14 @@ export const MENU_TABS = [
     location: 'FOOTER_1',
     label: 'Footer “About”',
     maxDepth: 1,
-    hint: 'Shown in the website footer under the “Information” heading.',
+    hint: 'Shown in the website footer under the “About” heading.',
   },
   {
     tab: 'support',
     location: 'FOOTER_2',
     label: 'Footer “Customer Support”',
     maxDepth: 1,
-    hint: 'Shown in the website footer under the “User Area” heading.',
+    hint: 'Shown in the website footer under the “Customer Support” heading.',
   },
   {
     tab: 'popular',

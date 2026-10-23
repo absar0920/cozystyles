@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Logo } from '@/components/brand/Logo';
 import type { MenuNode } from '@/lib/queries';
-import { AngleDownIcon, ThemeAccountIcon, ThemeSearchIcon } from '@/components/icons';
+import { AngleDownIcon, ThemeSearchIcon } from '@/components/icons';
 import { SearchPanel } from '@/components/layout/SearchPanel';
 import { MobileMenu } from '@/components/layout/MobileMenu';
 import { megaColumns, isSpacer } from '@/components/layout/menu';
@@ -115,11 +115,6 @@ export function Header({ menu, hasAnnouncement = true }: { menu: MenuNode[]; has
                   <ThemeSearchIcon className="h-4 w-4 md:h-5 md:w-[19px]" />
                 </a>
               </li>
-              <li>
-                <Link href="/account/login" title="My Account" aria-label="My Account" className="flex px-1 text-accent hover:text-accent2 md:px-[5px]">
-                  <ThemeAccountIcon className="h-4 w-4 md:h-[21px] md:w-[19px]" />
-                </Link>
-              </li>
             </ul>
           </div>
         </div>
@@ -137,19 +132,14 @@ function DesktopNav({ menu }: { menu: MenuNode[] }) {
   const [suppressed, setSuppressed] = useState<number | null>(null);
   return (
     <ul className="flex h-[50px] justify-center gap-px bg-white font-nav" onMouseLeave={() => setSuppressed(null)}>
-      {menu.map((item, i) => {
-        const highlight = i === 0; // live: first item "Wedding Packages" is a maroon block
+      {menu.map((item) => {
         const hasDrop = item.children.length > 0;
         return (
           <li key={item.id} className="group/nav static">
             <MaybeLink
               href={item.href}
               onClick={() => setSuppressed(item.id)}
-              className={`flex h-[50px] items-center whitespace-nowrap px-1.5 py-[15px] text-[16px] font-medium leading-5 xl:px-5 ${
-                highlight
-                  ? 'bg-maroon text-white hover:bg-white hover:text-black'
-                  : 'bg-white text-black hover:bg-white hover:text-black'
-              }`}
+              className="flex h-[50px] items-center whitespace-nowrap bg-white px-1.5 py-[15px] text-[16px] font-medium leading-5 text-black hover:bg-white hover:text-black xl:px-5"
             >
               {item.label}
               {hasDrop && (
@@ -237,7 +227,16 @@ function MaybeLink({
 }) {
   if (!href) return <span className={className}>{children}</span>;
   return (
-    <Link href={href} onClick={onClick} className={className}>
+    <Link
+      href={href}
+      onClick={(e) => {
+        onClick?.();
+        // A mouse click leaves the focus on the link, and focus inside a menu item keeps its drop-down open
+        // (group-focus-within) once the pointer leaves the menu. Drop it; keyboard activation (detail 0) keeps it.
+        if (e.detail > 0) e.currentTarget.blur();
+      }}
+      className={className}
+    >
       {children}
     </Link>
   );

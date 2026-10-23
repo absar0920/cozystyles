@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { MenuNode } from '@/lib/queries';
-import { ChevronDown, ThemeAccountIcon } from '@/components/icons';
+import { ChevronDown } from '@/components/icons';
 import { isSpacer, megaColumns } from '@/components/layout/menu';
 
 /** A menu link; an item without a link renders as plain text with the same look (SPEC R27). */
@@ -18,15 +18,15 @@ function MenuLink({ href, className, onClick, tabIndex, children }: { href: stri
 
 /**
  * Live mobile menu (<1068px): a full-width white panel that opens in place directly under the
- * header (no side drawer). 51px Work Sans rows with #eee rules, maroon first row, chevron
- * accordions, and a pinned "Login" footer.
+ * header (no side drawer). 51px Work Sans rows with #eee rules and chevron accordions. Every row looks
+ * the same (no item is highlighted) and there is no account link: the shop has no customer accounts.
  */
 export function MobileMenu({ menu, open, onClose }: { menu: MenuNode[]; open: boolean; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | undefined>(undefined);
   const [expanded, setExpanded] = useState<number | null>(null);
 
-  // The floating WhatsApp / back-to-top buttons hide while the menu is open: they would sit on the "Login" row.
+  // The floating WhatsApp / back-to-top buttons hide while the menu is open: they would cover the menu rows.
   useLayoutEffect(() => {
     if (!open) return;
     document.documentElement.dataset.mobileMenu = 'open';
@@ -55,7 +55,7 @@ export function MobileMenu({ menu, open, onClose }: { menu: MenuNode[]; open: bo
     >
       <nav aria-label="Mobile navigation" className="min-h-0 flex-1 overflow-y-auto font-nav">
         <ul>
-          {menu.map((item, i) => {
+          {menu.map((item) => {
             const hasDrop = item.children.length > 0;
             const isOpen = expanded === item.id;
             return (
@@ -65,9 +65,7 @@ export function MobileMenu({ menu, open, onClose }: { menu: MenuNode[]; open: bo
                     href={item.href}
                     onClick={onClose}
                     tabIndex={open ? 0 : -1}
-                    className={`flex border-b border-line px-5 py-[15px] text-[16px] font-medium leading-[21px] ${
-                      i === 0 ? 'bg-maroon text-white hover:text-white' : 'text-black hover:text-black'
-                    }`}
+                    className="flex border-b border-line px-5 py-[15px] text-[16px] font-medium leading-[21px] text-black hover:text-black"
                   >
                     {item.label}
                   </MenuLink>
@@ -91,18 +89,6 @@ export function MobileMenu({ menu, open, onClose }: { menu: MenuNode[]; open: bo
         </ul>
         <ul className="px-[12.5px] py-[30px]" aria-hidden />
       </nav>
-      <div className="flex h-[50px] shrink-0 items-center justify-between border-t border-line px-[19px]">
-        <div />
-        <Link
-          href="/account/login"
-          onClick={onClose}
-          tabIndex={open ? 0 : -1}
-          className="flex h-full items-center gap-2 border-l border-line pl-[19px] text-[13px] text-accent"
-        >
-          <ThemeAccountIcon className="h-3.5 w-[13px]" />
-          Login
-        </Link>
-      </div>
     </div>
   );
 }

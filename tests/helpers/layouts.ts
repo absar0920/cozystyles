@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { expect, type APIRequestContext, type Locator, type Page } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
@@ -23,12 +24,32 @@ const BASE = () => process.env.E2E_BASE_URL ?? 'http://localhost:3100';
  * The action must have been compiled, i.e. a page that uses it has been opened once.
  */
 export function actionId(exportedName: string, filename = 'app/admin/actions/product-layouts.ts'): string {
+  const id = findActionId(exportedName, filename);
+  if (id) return id;
+  throw new Error(`Server action ${filename}#${exportedName} not compiled yet: open a page that uses it first`);
+}
+
+/**
+ * Turbopack (`next dev --turbopack`) only registers the actions a page imports, so an exported action no page
+ * uses cannot be called at all. True when the manifest comes from Turbopack and does not list the action.
+ */
+export function actionNotExposed(exportedName: string, filename = 'app/admin/actions/product-layouts.ts'): boolean {
+  if (findActionId(exportedName, filename)) return false;
+  const manifest = JSON.parse(readFileSync(path.join(ROOT, '.next/server/server-reference-manifest.json'), 'utf8')) as {
+    node: Record<string, { filename?: string }>;
+  };
+  return Object.values(manifest.node).some((e) => e.filename?.startsWith('src/'));
+}
+
+function findActionId(exportedName: string, filename: string): string | null {
   const file = path.join(ROOT, '.next/server/server-reference-manifest.json');
   const manifest = JSON.parse(readFileSync(file, 'utf8')) as { node: Record<string, { filename?: string; exportedName?: string }> };
+  // webpack names the file "app/…", Turbopack (`next dev --turbopack`) "src/app/…"
+  const names = new Set([filename, `src/${filename}`]);
   for (const [id, entry] of Object.entries(manifest.node)) {
-    if (entry.exportedName === exportedName && entry.filename === filename) return id;
+    if (entry.exportedName === exportedName && entry.filename && names.has(entry.filename)) return id;
   }
-  throw new Error(`Server action ${filename}#${exportedName} not compiled yet: open a page that uses it first`);
+  return null;
 }
 
 export type ActionResponse<T = unknown> = { status: number; redirect: string | null; result: T | undefined };
@@ -61,11 +82,30 @@ export async function callAction<T = unknown>(request: APIRequestContext, export
   return { status: res.status(), redirect: res.headers()['x-action-redirect'] ?? null, result };
 }
 
-/** Calls a `(formData) => …` server action the way a form without JavaScript posts it. Returns the redirect target. */
+/** React's own encoder for server action arguments (the one the browser bundle uses). */
+const { encodeReply } = createRequire(__filename)('next/dist/compiled/react-server-dom-webpack/client.node') as {
+  encodeReply: (value: unknown) => Promise<string | FormData>;
+};
+
+/**
+ * Calls a `(formData) => …` server action the way a `<form action={…}>` posts it from the browser (`Next-Action`
+ * header, the FormData argument encoded by React), bypassing every client-side check. Returns the redirect target.
+ * (The no-JavaScript `$ACTION_ID_…` post is not used: the Turbopack dev server answers it with a 500.)
+ */
 export async function callFormAction(request: APIRequestContext, exportedName: string, fields: Record<string, string>, opts: { path?: string; filename?: string } = {}): Promise<{ status: number; location: string | null }> {
+  const fd = new FormData();
+  for (const [k, v] of Object.entries(fields)) fd.append(k, v);
+  const body = await encodeReply([fd]);
+  // a FormData keeps React's part order (the root part "0" last); a plain object would send "0" first, and the
+  // server would decode the root before the fields it refers to had arrived
+  let multipart: FormData;
+  if (typeof body === 'string') {
+    multipart = new FormData();
+    multipart.append('0', body);
+  } else multipart = body;
   const res = await request.post(opts.path ?? '/admin/product-layouts', {
-    headers: { Origin: BASE() },
-    multipart: { [`$ACTION_ID_${actionId(exportedName, opts.filename)}`]: '', ...fields },
+    headers: { Origin: BASE(), 'Next-Action': actionId(exportedName, opts.filename), Accept: 'text/x-component' },
+    multipart,
     maxRedirects: 0,
   });
   return { status: res.status(), location: res.headers()['location'] ?? res.headers()['x-action-redirect'] ?? null };

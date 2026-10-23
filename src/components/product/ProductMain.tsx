@@ -40,10 +40,13 @@ const GENERIC_OPTION_NAME = /^option \d+$/i;
 export function ProductMain({
   product,
   whatsapp,
+  phone = '',
   children,
 }: {
   product: ProductMainData;
   whatsapp: WhatsAppConfig | null;
+  /** Admin → Settings → Contact details phone (the pre-order popup's help line) */
+  phone?: string;
   children?: React.ReactNode;
 }) {
   const groups = useMemo<OptionGroup[]>(() => {
@@ -203,7 +206,8 @@ export function ProductMain({
                 )}
               </div>
             )}
-            {product.deliveryLine && (
+            {/* like the delivery line under the button: nothing to deliver while sold out */}
+            {product.deliveryLine && !soldOut && (
               <span className="mt-[5px] block w-fit bg-[#ff0000] px-[10px] text-[11px] font-bold uppercase leading-[19.25px] text-white md:text-[15px] md:leading-[26.25px]">
                 Free Delivery!
               </span>
@@ -285,7 +289,7 @@ export function ProductMain({
         </div>
       </div>
 
-      {preOrderOpen && <PreOrderModal onClose={() => setPreOrderOpen(false)} />}
+      {preOrderOpen && <PreOrderModal phone={phone} hasWhatsApp={whatsapp != null} onClose={() => setPreOrderOpen(false)} />}
     </div>
   );
 }

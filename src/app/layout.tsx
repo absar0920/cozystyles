@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Poppins, Work_Sans } from 'next/font/google';
 import localFont from 'next/font/local';
+import { siteName } from '@/lib/site-url';
 import './globals.css';
 
 // Live theme font: Poppins everywhere (body, headings, buttons, prices, footer). Live loads only the
@@ -32,14 +33,17 @@ const workSans = Work_Sans({
   display: 'swap',
 });
 
+const SITE_NAME = siteName();
+
 export const metadata: Metadata = {
   title: {
     // live: "<page> - Interwood", home page just the store name
-    default: 'Cozy Furnitures',
-    template: '%s - Cozy Furnitures',
+    default: SITE_NAME,
+    template: `%s - ${SITE_NAME}`,
   },
-  description:
-    'Cozy Furnitures offers an exciting and affordable range of bedroom, living and office furniture, sofa sets, dining sets, kitchen designs, doors, wardrobes, flooring, home décor accessories and more to suit every style & space.',
+  // The home page's (and any page without its own) description for search engines: plain and true for any shop
+  // built on this site — no product ranges, payment methods or services it might not offer.
+  description: `Browse ${SITE_NAME} online: our furniture collections, with photos, prices and details for every product.`,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

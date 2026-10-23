@@ -22,7 +22,7 @@ const section: Section = {
   title: '1. Sign in and store settings',
   intro:
     'The shop starts brand new: the database has only its empty tables, so there are no products, collections, banners, menus or settings yet. ' +
-    'In this section you look at the empty shop, sign in to the admin for the first time, fill in the store settings (WhatsApp number, announcement bar, contact details, social links) and check them on the shop.',
+    'In this section you look at the empty shop, sign in to the admin for the first time, fill in the store settings (WhatsApp number, announcement bar, home page texts, contact details, social links) and check them on the shop.',
   async run(ctx: Ctx) {
     const { guide: g, admin: a, shopper: s, creds } = ctx;
     const site = ctx.baseURL.replace(/\/+$/, '');
@@ -57,55 +57,51 @@ const section: Section = {
     const header = s.getByRole('banner');
     await expect(header.getByRole('link', { name: 'Cozy Furnitures home' })).toBeVisible();
     await expect(header.getByRole('link', { name: 'Search' })).toBeVisible();
-    await expect(header.getByRole('link', { name: 'My Account' })).toBeVisible();
-    await expect(s.getByRole('region', { name: 'Announcement' })).toContainText('FREE Nationwide Delivery!');
-    const seoHeading = s.getByRole('heading', { name: 'The Same Experience & Quality You Trust Online' });
-    await expect(seoHeading).toBeVisible();
+    await expect(header.getByRole('link', { name: /account|log ?in|sign ?in/i })).toHaveCount(0);
+    await expect(s.locator('a[href^="/account"]')).toHaveCount(0);
     await expect(s.getByRole('navigation', { name: 'Main navigation' }).getByRole('link')).toHaveCount(0);
     await expect(s.locator('main img')).toHaveCount(0);
+    // Settings → Home page is still empty, so neither the scrolling strip nor the text block is shown.
+    await expect(s.getByTestId('home-strip')).toHaveCount(0);
+    await expect(s.getByTestId('home-text-block')).toHaveCount(0);
+    await expect(s.getByText('FREE Nationwide Delivery!')).toHaveCount(0);
+    await expect(s.getByText('The Same Experience & Quality You Trust Online')).toHaveCount(0);
     await expect(s.getByRole('heading', { name: 'Hot Selling Products' })).toHaveCount(0);
     await expect(s.getByRole('heading', { name: 'Shop by Category' })).toHaveCount(0);
     await expect(s.getByText('Our customer speaks for us')).toHaveCount(0);
     await expect(s.getByText(STORE.announcement)).toHaveCount(0);
     await expect(s.getByTestId('whatsapp-bubble')).toHaveCount(0);
     const footer = s.getByRole('contentinfo');
-    await expect(footer.getByRole('heading', { name: 'Contact Info' })).toBeVisible();
+    for (const heading of ['About', 'Customer Support', 'Contact Info']) {
+      await expect(footer.getByRole('heading', { name: heading, exact: true })).toBeVisible();
+    }
     await expect(footer.getByText('Follow Us', { exact: true })).toBeVisible();
-    await expect(footer.getByRole('navigation', { name: 'Information' }).getByRole('link')).toHaveCount(0);
-    await expect(footer.getByRole('navigation', { name: 'User Area' }).getByRole('link')).toHaveCount(0);
+    await expect(footer.getByRole('navigation', { name: 'About' }).getByRole('link')).toHaveCount(0);
+    await expect(footer.getByRole('navigation', { name: 'Customer Support' }).getByRole('link')).toHaveCount(0);
+    await expect(footer.getByText(/^(Information|User Area)$/i)).toHaveCount(0);
     await expect(footer.locator('a[href^="tel:"], a[href^="mailto:"]')).toHaveCount(0);
     await expect(footer.getByRole('link', { name: /^(Facebook|Instagram|YouTube|LinkedIn)$/ })).toHaveCount(0);
     g.expect(
-      'The home page opens but is nearly empty: the logo with the **Search** and **My Account** icons, a yellow scrolling strip **FREE Nationwide Delivery!** and a block of text. ' +
-        'There is no menu, no banner picture, no products, no announcement and no WhatsApp button. The footer has the headings **Information**, **User Area**, **Contact Info** and **Follow Us** with nothing under them.',
+      'The home page opens but is nearly empty: only the logo and the **Search** icon at the top (there is no account icon: this shop has no customer accounts). ' +
+        'There is no menu, no banner picture, no yellow scrolling strip, no text block, no products, no announcement and no WhatsApp button. ' +
+        'The footer has the headings **About**, **Customer Support**, **Contact Info** and **Follow Us**, with no links, contact details or social icons under them yet.',
     );
     await g.shot(s, 'The empty shop home page before any setup', { fullPage: true });
-    g.note('Menus, banners, collections and products are added in the next sections of this guide.');
-
-    await g.click(
-      s.getByRole('switch', { name: 'Show more' }),
-      'Scroll down to the text **The Same Experience & Quality You Trust Online** and click **Show more** under it.',
+    g.note(
+      'The yellow scrolling strip and the text block at the bottom of the home page come from **Settings → Home page** (filled in below). Menus, banners, collections and products are added in the next sections of this guide.',
     );
-    const seo = s.locator('section').filter({ has: seoHeading }).last();
-    await expect(seo).toContainText('credit/debit cards and bank transfers');
-    await expect(seo).toContainText('track your orders in real-time');
-    await expect(seo).toContainText('augmented reality');
-    await expect(s.getByRole('heading', { level: 1 })).toContainText('Largest Furniture Manufacturer');
-    g.expect('The full text opens. It talks about a checkout with credit/debit cards and bank transfers, real-time order tracking and augmented-reality (AR) previews.');
-    // Scroll the text to just below the sticky header, so the picture is not cut by it.
-    await seo.evaluate((el) => {
-      const headerBottom = document.querySelector('header')?.getBoundingClientRect().bottom ?? 0;
-      window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - headerBottom);
-    });
-    await g.shot(s, 'Built-in home page text after Show more', { clip: seoHeading.locator('xpath=..') });
-    g.finding(
-      'issue',
-      'Home page text that cannot be changed in the admin',
-      'Some home page content is built into the website and has no setting anywhere in the admin: ' +
-        '(1) the yellow scrolling strip **FREE Nationwide Delivery!** (this is not the Announcement bar from Settings); ' +
-        '(2) the text **The Same Experience & Quality You Trust Online**, which after **Show more** promises a checkout with credit/debit cards and bank transfers, real-time order tracking and augmented-reality previews. This shop takes orders on WhatsApp and offers none of these; ' +
-        '(3) a hidden page title read by Google and screen readers: “Cozy Furnitures — Pakistan’s Largest Furniture Manufacturer. Bedroom, living, dining, office furniture, kitchens & wardrobes.” ' +
-        'Ask the developer to rewrite or remove this text, or to make it editable.',
+
+    // Not visible on the page: the main heading read by screen readers and the description given to Google.
+    await expect(s.getByRole('heading', { level: 1 })).toHaveText('Cozy Furnitures');
+    const description = (await s.locator('head meta[name="description"]').getAttribute('content')) ?? '';
+    expect(description).toContain('Cozy Furnitures');
+    expect(description).not.toMatch(/largest|manufacturer|kitchen|wardrobe|doors|flooring|décor|decor|checkout|credit|debit|track|augmented|\bAR\b/i);
+    g.step(
+      '_(Optional)_ Right-click an empty part of the page, choose **View page source**, and search (**Ctrl+F**) for `<h1` and then for `name="description"`.',
+    );
+    g.expect(
+      `The page's main heading, which is hidden on screen but read by screen readers and Google, is just the shop name **Cozy Furnitures**. ` +
+        `The description given to Google is a plain sentence: “${description}”${/[.!?]$/.test(description) ? '' : '.'} It names no furniture the shop does not sell and promises no checkout, card payments, order tracking or AR previews.`,
     );
 
     /* ------------------------------------------------------------ first sign-in */
@@ -203,10 +199,14 @@ const section: Section = {
     for (const shortcut of ['Home', 'All products', 'Collections page', 'Blog']) {
       await expect(dialog.getByTestId('link-result').filter({ hasText: shortcut }).first()).toBeVisible();
     }
-    await expect(dialog.getByTestId('link-result')).toHaveCount(4);
+    const contactUs = dialog.getByTestId('link-result').filter({ hasText: 'Contact us' });
+    await expect(contactUs).toHaveCount(1);
+    await expect(contactUs).toContainText('Built-in');
+    await expect(dialog.getByTestId('link-result')).toHaveCount(5);
     g.expect(
-      'A **Choose a link** box opens. The **This store** tab only offers four shortcuts (**Home**, **All products**, **Collections page**, **Blog**), because the shop has no collections, products or pages yet.',
+      'A **Choose a link** box opens. Because the shop has no collections, products or pages of its own yet, the **This store** tab only offers the built-in **Contact us** page (marked **Built-in**, under **Pages**) and four shortcuts: **Home**, **All products**, **Collections page** and **Blog**.',
     );
+    g.note('**Contact us** is a contact form every shop has at **/pages/contact**, with the contact details from Settings. A later section of this guide puts it in the footer menu.');
     await g.click(dialog.getByRole('tab', { name: 'Custom web address' }), 'Click the **Custom web address** tab.');
     await g.form([{ label: 'Web address', value: SOFAS_PATH, locator: dialog.getByLabel('Web address') }], 'Type the address of the future Sofas collection:');
     await g.shot(a, 'Button link: the future Sofas collection address', { highlight: dialog });
@@ -232,8 +232,36 @@ const section: Section = {
     await ann.evaluate((el) => window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 16));
     await g.shot(a, 'Announcement bar filled in, with its preview', { clip: ann });
 
-    /* ------------------------------------------------------------ contact, social, rating */
-    g.part('Contact details, social links and store rating', 'These are shown in the footer at the bottom of every page.');
+    /* ------------------------------------------------------------ home page texts */
+    g.part(
+      'Home page texts',
+      'The yellow strip that scrolls under the banners and the text block at the bottom of the home page. Each one stays hidden while its boxes are empty, which is why the empty shop showed neither.',
+    );
+    const home = card(a, 'Home page');
+    await expect(home.getByText('The strip is hidden.', { exact: true })).toBeVisible();
+    await g.form(
+      [
+        {
+          label: 'Scrolling strip (one message per line: press **Enter** after the first message)',
+          value: STORE.homeStrip.join('\n'),
+          locator: a.getByLabel('Scrolling strip'),
+        },
+        { label: 'Text block heading', value: STORE.homeTextHeading, locator: a.getByLabel('Text block heading') },
+        { label: 'Text block', value: STORE.homeText, locator: a.getByLabel('Text block', { exact: true }) },
+      ],
+      'Scroll down to the **Home page** box and fill in:',
+    );
+    const stripPreview = home.locator('div').filter({ hasText: STORE.homeStrip[0] }).filter({ hasText: STORE.homeStrip[1] }).last();
+    await expect(stripPreview).toBeVisible();
+    await expect(home.getByText('The strip is hidden.', { exact: true })).toHaveCount(0);
+    g.expect(
+      'Under **Scrolling strip**, the grey “The strip is hidden.” turns into a yellow **Preview** strip with both messages. The text block has no preview: you see it on the shop after saving.',
+    );
+    await home.evaluate((el) => window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 16));
+    await g.shot(a, 'Home page box filled in, with the strip preview', { clip: home });
+
+    /* ------------------------------------------------------------ contact, social */
+    g.part('Contact details and social links', 'These are shown in the footer at the bottom of every page.');
     await g.form(
       [
         { label: 'Phone', value: STORE.phone, locator: a.getByLabel('Phone', { exact: true }) },
@@ -243,7 +271,10 @@ const section: Section = {
       ],
       'In the **Contact details** box, fill in:',
     );
-    g.note('The footer shows the **Complaints email** when there is one, otherwise the **Customer care email**. Complaints email stays empty here, so customers see the customer care email.');
+    g.note(
+      'The footer shows the **Complaints email** when there is one, otherwise the **Customer care email**. Complaints email stays empty here, so customers see the customer care email. ' +
+        'The grey address inside the **Complaints email** box is only an example: the box is empty.',
+    );
     await g.form(
       [
         { label: 'Facebook', value: STORE.facebook, locator: a.getByLabel('Facebook', { exact: true }) },
@@ -253,26 +284,11 @@ const section: Section = {
       ],
       'In the **Social links** box, type the full web addresses (starting with https://):',
     );
-    await g.form(
-      [
-        { label: 'Store rating (out of 5)', value: '' },
-        { label: 'Reviews text', value: '' },
-      ],
-      'Leave the **Store rating** box empty:',
-    );
-    await expect(a.getByLabel('Store rating (out of 5)')).toHaveValue('');
-    await expect(a.getByLabel('Reviews text')).toHaveValue('');
-    g.note(
-      'The store rating stays empty because this shop has no customer reviews yet. Filling it in would switch on an **Our customer speaks for us** block on the home page. ' +
-        'The grey **4.9** and **2,500+ verified reviews** inside the boxes (and the grey address in **Complaints email**) are only examples: those boxes are empty.',
-    );
-    g.finding(
-      'issue',
-      'Store rating switches on review cards that are not this shop\'s',
-      'Settings → **Store rating** says it is “the score shown above the customer reviews on the home page”. This shop has no reviews, but filling in a rating switches on the **Our customer speaks for us** block, ' +
-        'which shows a fixed set of 22 review cards built into the website: quotes about products such as the Callisto Computer Table and the Faith Sofa Cum Bed, which this shop does not sell. ' +
-        'Each card links to that product\'s page (for example /products/callisto-computer-table), which does not exist in this shop, so a customer clicking it gets **Page not found**. ' +
-        'Found in the website\'s code; the block was not switched on during this test. Leave the rating empty, or ask the developer to remove the block or connect it to real reviews.',
+    await expect(a.getByRole('heading', { level: 2, name: 'Social links', exact: true })).toBeVisible();
+    await expect(a.getByRole('heading', { name: /store rating/i })).toHaveCount(0);
+    await expect(a.getByText(/store rating|reviews text/i)).toHaveCount(0);
+    g.expect(
+      'The **Social links** box is the last one on the Settings page. There is no **Store rating** box: this shop has no customer reviews, so the home page has no review block either.',
     );
     await expect(card(a, 'Contact details').locator('.text-red-600')).toHaveCount(0);
     await expect(card(a, 'Social links').locator('.text-red-600')).toHaveCount(0);
@@ -281,7 +297,7 @@ const section: Section = {
     g.expect('No box shows a red error, and the **Save settings** button at the bottom of the screen can be clicked.');
     // Viewport shot from the Contact details box down (a full-page shot would paint the fixed Save bar mid-page).
     await card(a, 'Contact details').evaluate((el) => window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 8));
-    await g.shot(a, 'Contact details, social links and empty store rating, before saving', { highlight: save });
+    await g.shot(a, 'Contact details and social links, before saving', { highlight: save });
 
     /* ------------------------------------------------------------ save and check */
     g.part('Save and check what was stored');
@@ -297,6 +313,9 @@ const section: Section = {
     await expect(a.getByLabel('WhatsApp number')).toHaveValue(STORE.whatsapp);
     await expect(a.getByRole('textbox', { name: 'Text', exact: true })).toHaveValue(STORE.announcement);
     await expect(a.getByLabel('Button text (optional)')).toHaveValue(STORE.announcementButton);
+    await expect(a.getByLabel('Scrolling strip')).toHaveValue(STORE.homeStrip.join('\n'));
+    await expect(a.getByLabel('Text block heading')).toHaveValue(STORE.homeTextHeading);
+    await expect(a.getByLabel('Text block', { exact: true })).toHaveValue(STORE.homeText);
     await expect(a.getByLabel('Phone', { exact: true })).toHaveValue(STORE.phone);
     await expect(a.getByLabel('Customer care email')).toHaveValue(STORE.email);
     await expect(a.getByLabel('Address', { exact: true })).toHaveValue(STORE.address);
@@ -341,12 +360,24 @@ const section: Section = {
     await expect(cta).toHaveAttribute('href', SOFAS_PATH);
     const bubble = s.getByTestId('whatsapp-bubble');
     await expect(bubble).toBeVisible();
+    const strip = s.getByTestId('home-strip');
+    await expect(strip).toBeVisible();
+    for (const message of STORE.homeStrip) await expect(strip).toContainText(message);
+    const textBlock = s.getByTestId('home-text-block');
+    await expect(textBlock.getByRole('heading', { name: STORE.homeTextHeading, exact: true })).toBeVisible();
+    await expect(textBlock).toContainText(STORE.homeText);
+    await expect(textBlock.getByRole('switch', { name: 'Show more' })).toHaveCount(0);
     await expect(s.getByText('Our customer speaks for us')).toHaveCount(0);
     g.expect(
       `A dark announcement bar now runs across the very top: “${STORE.announcement}” with a red **${STORE.announcementButton}** button. ` +
-        'A round WhatsApp button floats in the bottom-right corner. There is still no “Our customer speaks for us” block.',
+        `Under the header (once there are banners: under the banner pictures) a yellow strip scrolls your two messages from right to left: “${STORE.homeStrip[0]}” and “${STORE.homeStrip[1]}”. ` +
+        `At the bottom, just above the footer, a beige block shows the heading **${STORE.homeTextHeading}** with your text under it (the text is short, so there is no **Show more** link). ` +
+        'A round WhatsApp button floats in the bottom-right corner.',
     );
-    await g.shot(s, 'Home page with the announcement bar and WhatsApp button', { fullPage: true, highlight: annText.locator('..') });
+    await g.shot(s, 'Home page with the announcement bar, scrolling strip, text block and WhatsApp button', { fullPage: true, highlight: annText.locator('..') });
+    await g.shot(s, 'The scrolling strip with the two messages', { clip: strip });
+    await textBlock.scrollIntoViewIfNeeded();
+    await g.shot(s, 'The text block at the bottom of the home page', { clip: textBlock });
 
     await expect(footer.getByRole('link', { name: STORE.phone, exact: true })).toHaveAttribute('href', `tel:${STORE.phone.replace(/[^\d+]/g, '')}`);
     await expect(footer.getByRole('link', { name: STORE.email, exact: true })).toHaveAttribute('href', `mailto:${STORE.email}`);
@@ -375,10 +406,16 @@ const section: Section = {
       await g.click(cta, `Click the red **${STORE.announcementButton}** button in the announcement bar.`);
       await expect(s).toHaveURL(new RegExp(`${SOFAS_PATH}$`));
       await expect(s.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
-      await expect(s.getByText('The page you were looking for doesnt exist.')).toBeVisible();
-      g.expect('For now it opens **Page not found**, because the Sofas collection does not exist yet.');
+      await expect(s.getByText('The page you were looking for doesn’t exist.', { exact: false })).toBeVisible();
+      await expect(s.getByRole('link', { name: 'Continue shopping' })).toHaveAttribute('href', '/');
+      await expect(s.getByRole('banner').getByRole('link', { name: 'Cozy Furnitures home' })).toBeVisible();
+      await expect(s.getByRole('contentinfo').getByRole('heading', { name: 'Contact Info' })).toBeVisible();
+      g.expect(
+        'For now it opens the shop’s own **Page not found** page, with the usual header and footer: “The page you were looking for doesn’t exist. You may have mistyped the address or the page may have moved.” and a **Continue shopping** button. ' +
+          'That is right at this point, because the Sofas collection does not exist yet.',
+      );
+      await g.shot(s, 'Page not found while the Sofas collection does not exist yet');
       g.note('This changes by itself once section 2 creates the **Sofas** collection.');
-      g.finding('note', 'Typo on the “Page not found” page', 'The page reads “The page you were looking for **doesnt** exist.”: the apostrophe is missing (“doesn’t”).');
     }
   },
 };

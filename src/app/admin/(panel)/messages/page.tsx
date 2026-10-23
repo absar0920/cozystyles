@@ -3,7 +3,7 @@ import Link from 'next/link';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { markMessageAction, deleteMessageAction } from '@/app/admin/actions/messages';
-import { AdminPageHeader, AdminTable, Badge, EmptyRow } from '@/components/admin/ui';
+import { AdminPageHeader, AdminTable, Badge, EmptyRow, Notice, Tabs } from '@/components/admin/ui';
 import { ConfirmDelete } from '@/components/admin/ConfirmDelete';
 import { ChevronDown, ChevronLeft, ChevronRight, SearchIcon } from '@/components/icons';
 
@@ -16,6 +16,10 @@ export const metadata: Metadata = {
 
 const PER_PAGE = 20;
 const STATUS_FILTERS = ['NEW', 'READ', 'CLOSED'] as const;
+/** Subject the footer "Join our mailing list" box stores its sign-ups under (src/app/api/contact/route.ts). */
+const NEWSLETTER = 'Newsletter';
+/** ?type=: '' everything, 'messages' = all but newsletter sign-ups, 'newsletter' = only sign-ups. */
+const TYPE_FILTERS = ['messages', 'newsletter'] as const;
 
 const fmtDate = (d: Date) =>
   new Date(d).toLocaleDateString('en-PK', {
@@ -37,10 +41,13 @@ export default async function MessagesPage({
   const status =
     typeof sp.status === 'string' && (STATUS_FILTERS as readonly string[]).includes(sp.status) ? sp.status : '';
   const page = Math.max(1, Number.parseInt(typeof sp.page === 'string' ? sp.page : '1', 10) || 1);
+  const type = typeof sp.type === 'string' && (TYPE_FILTERS as readonly string[]).includes(sp.type) ? sp.type : '';
   const openRaw = Number.parseInt(typeof sp.open === 'string' ? sp.open : '', 10);
   const openId = Number.isFinite(openRaw) ? openRaw : null;
 
-  const where: Prisma.ContactSubmissionWhereInput = {};
+  const typeWhere: Prisma.ContactSubmissionWhereInput =
+    type === 'newsletter' ? { subject: NEWSLETTER } : type === 'messages' ? { NOT: { subject: NEWSLETTER } } : {};
+  const where: Prisma.ContactSubmissionWhereInput = { ...typeWhere };
   if (status) where.status = status;
   if (q) {
     where.OR = [
@@ -51,10 +58,11 @@ export default async function MessagesPage({
     ];
   }
 
-  const [total, grouped, items] = await Promise.all([
+  const [total, grouped, items, signups] = await Promise.all([
     prisma.contactSubmission.count({ where }),
     prisma.contactSubmission.groupBy({
       by: ['status'],
+      where: typeWhere,
       _count: { _all: true },
     }),
     prisma.contactSubmission.findMany({
@@ -63,6 +71,7 @@ export default async function MessagesPage({
       skip: (page - 1) * PER_PAGE,
       take: PER_PAGE,
     }),
+    prisma.contactSubmission.count({ where: { subject: NEWSLETTER } }),
   ]);
 
   const countFor = (s: string) => grouped.find((g) => g.status === s)?._count._all ?? 0;
@@ -74,6 +83,7 @@ export default async function MessagesPage({
     const p = new URLSearchParams();
     const merged: Record<string, string | number | null> = {
       q,
+      type,
       status,
       page,
       open: openId,
@@ -95,13 +105,20 @@ export default async function MessagesPage({
     { label: 'Closed', value: 'CLOSED', count: countFor('CLOSED') },
   ];
 
+  const typeTabs = [
+    { label: 'Everything', value: '', hint: '' },
+    { label: 'Messages', value: 'messages', hint: 'Sent with the forms on the store, such as the Contact us page.' },
+    { label: `Newsletter sign-ups (${signups.toLocaleString('en-PK')})`, value: 'newsletter', hint: '' },
+  ];
+
   return (
     <div>
       <AdminPageHeader
         title="Messages"
-        subtitle="Contact form submissions from the storefront"
+        subtitle="Messages customers send from the store, and newsletter sign-ups"
         actions={
           <form action="/admin/messages" method="get" className="flex w-full items-center gap-2 sm:w-auto">
+            {type && <input type="hidden" name="type" value={type} />}
             {status && <input type="hidden" name="status" value={status} />}
             <div className="relative min-w-0 flex-1">
               <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -122,6 +139,36 @@ export default async function MessagesPage({
           </form>
         }
       />
+
+      <Tabs
+        ariaLabel="Kind of message"
+        items={typeTabs.map((t) => ({
+          label: t.label,
+          href: href({ type: t.value || null, status: null, page: null, open: null }),
+          active: type === t.value,
+          hint: t.hint,
+        }))}
+      />
+
+      {type === 'newsletter' && (
+        <div className="mb-4">
+          <Notice
+            tone="info"
+            title="There is no mailing list"
+            action={
+              signups > 0 ? (
+                <a href="/admin/messages/newsletter-signups" download className={`${ghostBtn} min-h-10`}>
+                  Download sign-ups (CSV)
+                </a>
+              ) : undefined
+            }
+          >
+            These are the email addresses typed into “Join our mailing list” at the bottom of the store. The shop has no
+            mailing service, so nothing is ever sent to them. Sign-ups are only collected here. To send news, download
+            the list and use your own email or a mailing service.
+          </Notice>
+        </div>
+      )}
 
       {/* ---------- Status filter tabs ---------- */}
       <div className="mb-4 flex flex-wrap gap-2">
@@ -151,7 +198,7 @@ export default async function MessagesPage({
       <ul className="space-y-3 sm:hidden">
         {items.length === 0 ? (
           <li className="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center text-sm text-gray-400">
-            {q || status ? 'No messages match your filters.' : 'No messages yet.'}
+            {emptyText(q, status, type)}
           </li>
         ) : (
           items.map((m) => <MessageCard key={m.id} m={m} isOpen={openId === m.id} href={href} />)
@@ -161,7 +208,7 @@ export default async function MessagesPage({
       <div className="hidden sm:block">
         <AdminTable head={['Name', 'Subject', 'Contact', 'Status', 'Date', '']}>
           {items.length === 0 ? (
-            <EmptyRow colSpan={6} message={q || status ? 'No messages match your filters.' : 'No messages yet.'} />
+            <EmptyRow colSpan={6} message={emptyText(q, status, type)} />
           ) : (
             items.map((m) => {
               const isOpen = openId === m.id;
@@ -202,6 +249,11 @@ export default async function MessagesPage({
       )}
     </div>
   );
+}
+
+function emptyText(q: string, status: string, type: string): string {
+  if (q || status) return 'No messages match your filters.';
+  return type === 'newsletter' ? 'No newsletter sign-ups yet.' : 'No messages yet.';
 }
 
 /** "The message from Ali (ali@x.pk), received 3 Oct 2026, and its text" */

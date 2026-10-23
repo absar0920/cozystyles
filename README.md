@@ -28,8 +28,10 @@ a save bar that stays at the bottom of the screen, and a warning if you try to l
 
 ### Adding a product
 
-1. **Products → Add product.**
-2. **Basics**: type the title. The web address is made from the title for you.
+1. **Products → + New product.**
+2. **Basics**: type the title. The web address is made from the title for you. **Delivery time** (optional, for
+   example *Delivered in 20 to 30 working days*) is shown under the order button and also adds a red
+   **FREE DELIVERY!** tag under the price (not while the product is sold out), so leave it empty if delivery is not free.
 3. **Photos**: tap **Upload** and choose one or more photos (JPG, PNG, WebP or iPhone HEIC, up to 20 MB each).
    They are resized and cleaned automatically. Drag photos to change the order (or use the ↑ ↓ arrows on a
    phone); the first photo is the main one.
@@ -38,11 +40,14 @@ a save bar that stays at the bottom of the screen, and a warning if you try to l
 5. **Options & prices**: see below. A product without options just has one Regular price, an optional Sale price
    (leave it empty when it is not on sale) and a Status.
 6. **Collections**: search and tick the collections the product belongs to.
-7. **Visibility**: tick **New arrival** or **Limited edition** to show those labels, and pick a **Page layout**
+7. **Visibility**: tick **Best seller** to put the product in **Hot Selling Products** on the home page (see
+   [Home page](#home-page); the ☆ star in the Products list does the same), tick **New arrival** or **Limited
+   edition** to show those labels, and pick a **Page layout**
    (the sections shown below the description, such as big photos, icons and customer quotes). Under the list you
    see what the layout contains and how many products use it, with a link to edit it. See
    [Product page layouts](#product-page-layouts) below.
-8. Press **Publish** to put it on the store, or **Save as draft** to keep it hidden while you work on it.
+8. Press **Publish** to put it on the store, or **Save as draft** to keep it hidden while you work on it (the
+   message then reads *Saved as a draft. It is not on the store.*).
 
 **Advanced** (closed by default) holds the web address, SKU (left empty, one is made for you), weight, brand,
 product type and search keywords. You rarely need it.
@@ -108,7 +113,8 @@ Tap **Edit** on a section to change it:
 
 **Moving, hiding, adding and deleting sections.** Drag a section by its handle, or use the ↑ ↓ arrows (easiest on a
 phone). The **Show on the store** switch hides a section without losing what is in it. The **⋯** menu of a section
-has **Copy this section** and **Delete section**. **Add section** at the bottom adds any kind of section. A layout
+has **Copy this section** and **Delete section**. **Add section** at the bottom adds any kind of section; a new
+section goes above "You may also like", which stays at the end. A layout
 can have up to 20 sections and one "You may also like". Nothing changes on the store until
 you press **Save layout**; **Discard changes** goes back to the saved version.
 
@@ -135,8 +141,9 @@ preview it if you like, then press **Save layout** to keep it.
 ### Collections
 
 **Collections** lists every collection. Open one to change its name, cover photo, description, parent collection and products.
-**Arrange Collections page** sets which cards appear on the store's "Shop by Category" page and in what order
-(drag, or the arrows on a phone).
+**Arrange Collections page** sets which cards appear on the store's Collections page ("Shop by Category") and in what
+order (drag, or the arrows on a phone). The same cards, in the same order, make the home page's **Shop by Category**
+row (see [Home page](#home-page)).
 
 ### Home banners
 
@@ -147,18 +154,44 @@ preview it if you like, then press **Save layout** to keep it.
 - a **Link**: tap it and search for a collection, product or page, or choose "Custom web address",
 - a **Show on the store** switch, and drag handles to change the order.
 
+### Home page
+
+From top to bottom, the home page shows:
+
+- **Home banners** (above).
+- The yellow **scrolling strip**: **Settings → Home page → Scrolling strip**, one message per line (up to 10). Empty
+  hides the strip.
+- **Shop by Category**: the cards of the Collections page (**Collections → Arrange Collections page**), in the same
+  order, that have a cover photo, each collection once, the first 24. Hidden while no card has a photo.
+- **Hot Selling Products**: the published products ticked **Best seller** (or starred in the Products list), the 24
+  most recently changed first, so a product you have just starred leads the row. Hidden while there are none.
+- The **text block** at the bottom: **Settings → Home page → Text block heading** and **Text block**. Leave an empty
+  line between paragraphs; long text shows its first lines with **Show more**. Empty hides the block.
+
+A new shop shows only what has been filled in. There are no customer reviews on the home page (the shop has no reviews).
+
 ### Menus
 
 **Menus** has four tabs: **Main menu** (top of the site), **Footer “About”**, **Footer “Customer Support”** and
-**Footer “Popular searches”**. Add links with the link picker, drag to reorder (arrows on a phone), and use
+**Footer “Popular searches”**. The two footer menus appear under the headings **About** and **Customer Support** in
+the website footer. Add links with the link picker, drag to reorder (arrows on a phone), and use
 **Start a new column in the dropdown** to begin a new column in the main menu's drop-down. Press **Save menu**.
+The link picker lists the built-in **Contact us** page under **Pages** (marked *Built-in*; when Admin → Pages has its
+own "Contact" page, that one is listed instead). Old links to customer-account pages show as *Customer account page
+(removed)*: replace them, the shop has no customer accounts.
 
 ### Pages and blog posts
 
-- **Pages**: policy pages and other text pages are edited in the same editor as product descriptions.
+- **Pages**: policy pages and other text pages are edited in the same editor as product descriptions. A text
+  page's **Title** is shown as its heading on the store, so don't repeat it at the top of the text. The web address
+  is made from the title; if another page (or the built-in Contact us page) already uses it, saving says so and you
+  choose another one under **Advanced**. Saving a hidden page reads *Saved as a draft. It is not on the store.*
   Pages marked **This page has a custom design** (About us, Contact, Store locator, city pages, the wedding
   package builder and similar) keep their built-in design; you can only change their search-engine title and
   description, and show or hide them.
+- **Contact us** (`/pages/contact`) is built in: every shop has it, with the contact form and the phone, email and
+  address from **Settings → Contact details** (anything not filled in is left out). Messages sent with it arrive in
+  **Messages**. Put it in a menu with the link picker (see [Menus](#menus)).
 - **Blog posts**: title, content, **Date**, **Author**, **Featured photo** and **Tags**. Turn **Visible on the store**
   off to hide a post without deleting it.
 
@@ -185,9 +218,10 @@ In **Settings → WhatsApp ordering**:
 - **Greeting (order button)**, **Greeting (availability button)** and **Closing line**: the first and last lines of
   the message. Product details are always added automatically.
 
-Settings also has the **Announcement bar** (text, button text and link), **Contact details** (address, phone,
-emails, shown in the footer), **Social links** (shown as icons in the footer; empty ones are hidden) and the
-**Store rating** shown on the home page.
+Settings also has the **Announcement bar** (text, button text and link), **Home page** (the scrolling strip and the
+text block, see [Home page](#home-page)), **Contact details** (address, phone, emails; shown in the footer, on the
+Contact us page and, for the phone, in the *What is Pre-Order?* popup) and **Social links** (shown as icons in the
+footer; empty ones are hidden).
 
 ### WhatsApp inquiries
 
@@ -196,7 +230,17 @@ quantity, page and time, no personal data). **WhatsApp inquiries** lists them wi
 the **Dashboard** shows click totals, a catalogue overview and the **most asked-about products** of the last 30 days. Customers' actual
 messages arrive in your WhatsApp, not in the admin.
 
-**Messages** holds the contact-form submissions. The store has no product reviews.
+**Messages** holds what customers send from the store, in three tabs:
+
+- **Messages**: the Contact us page and the other forms on the store.
+- **Newsletter sign-ups**: the email addresses typed into **Join our mailing list** at the bottom of the store (an
+  address signed up twice is kept once). **There is no mailing list**: the shop has no mailing service and nothing is
+  ever sent to them, the sign-ups are only collected here. **Download sign-ups (CSV)** gives the list for your own
+  email or a mailing service.
+- **Everything**: both.
+
+The store has no product reviews and no customer accounts (no *My Account* link; old `/account` addresses open the
+home page). A mistyped or removed address shows the shop's own **Page not found** page.
 
 ---
 
@@ -225,7 +269,11 @@ Product/collection/banner images are already downloaded under `public/images/` (
 - URL: `http://localhost:3000/admin`
 - Credentials (from `.env`): `ADMIN_EMAIL` / `ADMIN_PASSWORD`
   - defaults: `admin@cozyfurnitures.pk` / `CozyAdmin@2026`
-- Controls **everything** in plain language (no typed JSON, HTML or URLs): products (options & combinations, photos tagged by option value, rich-text description, page layout), product page layouts (the sections under the description: photos, text, icons, quotes, slideshows, collection rows; shared-change warning, copies, moving products, preview, undo), collections (+ Arrange Collections page), home banners (desktop + phone photo uploads, link picker), navigation menus, text pages + blog posts (rich-text editor), WhatsApp inquiries log, contact-message inbox, site settings (WhatsApp number + message lines, announcement, address, social links, store rating), change password.
+- Controls **everything** in plain language (no typed JSON, HTML or URLs): products (options & combinations, photos tagged by option value, rich-text description, page layout), product page layouts (the sections under the description: photos, text, icons, quotes, slideshows, collection rows; shared-change warning, copies, moving products, preview, undo), collections (+ Arrange Collections page, which also orders the home Shop by Category row), home banners (desktop + phone photo uploads, link picker), navigation menus, text pages + blog posts (rich-text editor), WhatsApp inquiries log, messages inbox (contact forms + newsletter sign-ups, CSV download), site settings (WhatsApp number + message lines, announcement, home page strip + text block, contact details, social links), change password.
+- What the store shows without data: the built-in Contact us page (`src/app/(store)/pages/contact/page.tsx`), the shop's own Page not found for any unknown address (`src/app/(store)/[...slug]/page.tsx` → `not-found.tsx`; there is deliberately no root `src/app/not-found.tsx`, which Next would pre-render at build time and which needs the database for the header and footer). The home rows come from `src/lib/home-data.ts`: Hot Selling = published `hot` products (`updatedAt` desc, max 24), Shop by Category = `CollectionIndexCard` order with a photo (max 24); each row, the strip and the text block are hidden when empty. No customer accounts (`/account*` redirects to `/`, `next.config.mjs`) and no reviews.
+- The shop's name and public address come from `NEXT_PUBLIC_SITE_NAME` / `NEXT_PUBLIC_SITE_URL` (`src/lib/site-url.ts`): the home page h1 and descriptions, and the web-address prefixes in the admin forms. They are inlined at build time, so rebuild after changing them.
+- Admin create forms (collections, pages, blog posts, products) never `redirect()` from the server action: it returns the new id and the editor opens it with `router.replace`, because on Hostinger Next.js cannot fetch an action's redirect target from its own server (see the checklist in docs/DEPLOY-HOSTINGER.md).
+- A `'use server'` module (`src/app/admin/actions/*`) exports only async functions: no `export type { … }` re-exports. The dev server runs with Turbopack (`npm run dev` / Playwright's `webServer`), which turns such a re-export into a runtime reference and breaks every action of the module ("ReferenceError: … is not defined"). Import the types from the module that defines them.
 - Orders are taken on WhatsApp: product pages show **ORDER ON WHATSAPP** (or **ASK ABOUT AVAILABILITY** for pre-order / sold-out combinations); every click is logged and shown under *WhatsApp inquiries*. Uploaded photos are processed with `sharp` (≤2000px WebP, EXIF stripped) into `storage/uploads/` and served from `/uploads/…`.
 
 ### Data pipeline (how the seed was produced)
@@ -279,17 +327,26 @@ database. Everything reads the database from `DATABASE_URL`.
 npm run test:e2e                 # = npx playwright test; reuses the dev server on :3100 (starts one if none answers)
 E2E_EXCLUSIVE=1 npx playwright test tests/integration   # also runs the store-wide settings scenarios
 BASE_URL=https://staging.example npx playwright test   # against another server
-E2E_FRESH_URL=http://localhost:3200 npx playwright test --project=fresh-install   # a server on an EMPTY database
+BASE_URL=http://localhost:3200 E2E_FRESH_URL=http://localhost:3200 npx playwright test --project=fresh-install   # a server on an EMPTY database
 ```
 
 The main suite expects the seeded demo database (`npm run db:seed`). `tests/fresh-install/` checks a new deployment
 instead: run a second server on a database that only has its tables (`DATABASE_URL=…/cozy_fresh npx prisma migrate
 deploy`, then `DATABASE_URL=…/cozy_fresh UPLOADS_DIR=/tmp/fresh-uploads npx next start -p 3200`) and point
-`E2E_FRESH_URL` at it: the store and every admin screen work with no data, the first sign-in creates the admin, a
-first product with a photo is published and WhatsApp ordering is switched on.
+`E2E_FRESH_URL` at it (setting `BASE_URL` as well stops Playwright from starting a dev server on :3100, which would
+write into the production build's `.next`): the store and every admin screen work with no data, the home page shows no strip, rows, text
+block or reviews, there is no account link, an unknown address shows the shop's Page not found, the built-in Contact
+us page and the footer sign-up land in Messages, the link picker offers Contact us for the footer menu, the first
+sign-in creates the admin, a first product with a photo is published as a best seller and shows in Hot Selling
+Products, and WhatsApp ordering and the home strip are switched on in Settings.
 
 Playwright (`@playwright/test`, installed Chrome via `channel: 'chrome'`) covers: creating a sofa with Size × Color,
-uploading and tagging photos, writing the description, publishing and editing in place (ids kept); banners with
+uploading and tagging photos, writing the description, publishing and editing in place (ids kept); creating a
+collection opens it without the error screen (`collection-create`); the web-address prefixes show the shop's own host
+(`web-address-prefix`); draft-save and inquiries-filter notices (`admin-notices`); newsletter sign-ups in Messages and
+the CSV download (`messages-newsletter`); Settings → Home page (`tests/integration/home-settings.spec.ts`,
+`E2E_EXCLUSIVE=1`); the home rows, strip, text block and descriptions against the database, no accounts, the Contact
+us page, card prices, Page not found, footer headings and text page titles (`tests/storefront/{regression,customer,store-content,collections-index}.spec.ts`); banners with
 uploads and the link picker; menu reordering; Order on WhatsApp (exact message text, click logging, availability
 variant); uploads (resize, EXIF strip, path safety, orphan deletion); the unsaved-changes guard; product page layouts
 (copy and edit every kind of section, the store reflecting it, the shared-change warning, save as new, undo/restore,
@@ -320,7 +377,7 @@ reports "skipped"), so nothing has to be run afterwards. Each script can still b
 
 ```bash
 npx tsx scripts/fidelity/global.ts             # header mega menu, footer menus + SEO link groups, announcement bar
-npx tsx scripts/fidelity/home.ts               # hero slides (logo-free ones only, live links), reviews summary "4.92 ★ (102)"
+npx tsx scripts/fidelity/home.ts               # hero slides (logo-free ones only, live links), home strip + text block settings, Hot Selling order
 npx tsx scripts/fidelity/catalog.ts --offline  # collection descriptions, featured order, index images, card swatch/sold-out data
 npx tsx scripts/fidelity/product.ts --offline  # replace invented seed reviews with the live Judge.me reviews
 npx tsx scripts/fidelity/content.ts            # clean rich-text pages + blog posts from data/raw
@@ -329,7 +386,7 @@ npx tsx scripts/fidelity/content.ts            # clean rich-text pages + blog po
 | Script | Writes | Notes |
 |---|---|---|
 | `global.ts` | DB: `Menu`, `Setting` | `prisma/seed.ts` imports the same menu data |
-| `home.ts` | DB: `Banner`, `Setting` | banners matched by image file, so ids may change |
+| `home.ts` | DB: `Banner`, `Setting`, `Product.hot/updatedAt` | banners matched by image file, so ids may change; Settings → Home page gets the live strip and text block; `applyHomeHotSellingOrder` (the seed's last step) makes the live 9 Hot Selling products the most recently changed best sellers, in live order |
 | `catalog.ts` | DB: `Collection`; `public/images/collections/`; `src/components/catalog/live-search-order.json` (only with `--refresh-search`) | drop `--offline` to download missing images |
 | `product.ts` | DB: `Review`, `Product.rating/reviewCount` | drop `--offline` to fetch uncached live review widgets |
 | `content.ts` | DB: `Page` | blog featured images live in `public/images/blog/` |
@@ -356,22 +413,24 @@ wordmark (artwork that did — some hero banners, the Imagine banner — is left
 - **47 pages**: 6 text pages (policies), 14 blog posts, 27 custom-design pages (About, Store Locator, city pages, wedding package builder…)
 - **843 variants** (517 ready to ship, 130 pre-order, 58 made to order, 138 sold out), 97 options with 220 values, 121 swatch colours, 199 tagged photos
 - **7 hero banners** (computer + phone photos), **222 menu items** (124 main, 11 + 8 footer, 79 popular searches)
-- **62 reviews** (the real reviews from the live product pages; 14 of them had no date there and are shown without one), site settings (WhatsApp number 923092050463)
+- **62 reviews** in the `Review` table (from the live product pages; the store no longer shows reviews), site settings (WhatsApp number 923092050463, the live home strip and text block)
+- The dev database must be re-seeded (`npm run db:seed`) after pulling these changes to get the home strip, text block and Hot Selling order back; until then the strip and text block are hidden (empty settings) and Hot Selling shows the 24 most recently changed best sellers.
 
 ### Routes
 
-**Storefront:** `/` · `/collections` · `/collections/[handle]` · `/products/[handle]` · `/search` · `/pages/[handle]` · `/blogs` · `/blogs/news/[slug]`
+**Storefront:** `/` · `/collections` · `/collections/[handle]` · `/products/[handle]` · `/search` · `/pages/[handle]` · `/pages/contact` (built-in Contact us) · `/blogs` · `/blogs/news/[slug]` · any other address → the shop's Page not found (404)
 
 **API:** `POST /api/whatsapp-click` (click log) · `POST /api/contact` · `/api/admin/uploads` (photo uploads) · `/api/admin/session` (session check + signing in again without leaving an editor) · `GET /uploads/…` (uploaded files)
 
-**Redirects:** `/cart`, `/checkout*` → `/`; `/track` → WhatsApp chat (logged)
+**Redirects:** `/cart`, `/checkout*`, `/account`, `/account/*` → `/`; `/track` → WhatsApp chat (logged)
 
-**Admin:** `/admin` (dashboard) · `/admin/login` · `/admin/products` · `/admin/collections` (+ Arrange) · `/admin/banners` · `/admin/menus` · `/admin/pages` · `/admin/blog` · `/admin/inquiries` · `/admin/messages` · `/admin/settings` · `/admin/account/password`
+**Admin:** `/admin` (dashboard) · `/admin/login` · `/admin/products` · `/admin/collections` (+ Arrange) · `/admin/banners` · `/admin/menus` · `/admin/pages` · `/admin/blog` · `/admin/inquiries` · `/admin/messages` (+ `/admin/messages/newsletter-signups` CSV) · `/admin/settings` · `/admin/account/password`
 
 **Tests:** `npm run test:e2e` (see *Tests* above)
 
 ### Notes
 
 - There is no cart or checkout: the WhatsApp message (greeting, product, options, quantity, price, link, closing line) is built from the DB; greeting/closing lines are editable in Settings.
+- There are no customer accounts and no product reviews (the home reviews block, the Store rating setting and the My Account link are gone). The footer sign-up has no mailing service behind it: sign-ups are stored as Messages with subject `Newsletter`.
 - The storefront replicates the live site's layout, typography, spacing, section order and navigation at desktop (1440) and mobile (390); only the brand name/logo differ.
 - Scraped content is seed/demo data for this local clone.

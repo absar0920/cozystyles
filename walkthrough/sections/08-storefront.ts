@@ -1,33 +1,20 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import type { Section } from '../context';
-import type { Guide } from '../guide';
+import { gotoPage, type Guide } from '../guide';
 import { BANNERS, BLOG_POSTS, COLLECTIONS, MENUS, PRODUCTS, SHOPPER, STORE, type ProductData } from '../data';
 
 /**
  * Section 08 — a customer shopping on a computer (the separate, signed-out "shopper" browser):
- * home page, banners, mega menu, collection cards / sort / filters, search, ordering on WhatsApp
- * (order + availability messages), newsletter, WhatsApp chat bubble, My Account, contact form and 404 pages.
- * Admin-side results (inquiries, messages) are checked in section 10.
+ * home page (strip, Hot Selling Products, Shop by Category, text block), banners, mega menu, collection cards / sort /
+ * filters, search, ordering on WhatsApp (order + availability messages), newsletter, WhatsApp chat bubble, no customer
+ * accounts, the built-in Contact us form and wrong addresses. Admin-side results (inquiries, messages) are checked in
+ * section 10.
  */
 
-/** Fixed in code (src/components/home/hotSelling.ts): the only products the home "Hot Selling Products" row can show. */
-const HOT_SELLING_HANDLES = [
-  'crf-2-door-sliding-wardrobe',
-  'alexa-sofa-chair',
-  'linea-wardrobe-3-door',
-  'cooper-sofa',
-  'sofa-majestic-2-seater-velvet-winter-green',
-  'antonin-sofa',
-  'sydney-trysil-wardrobe-3-doors-light-oak-grey-color',
-  'marcus-visitor-chair-waffle-black',
-  'visitor-chair-jxn-500m',
-];
-/** Fixed in code (CATEGORY_TILE_HANDLES in src/app/(store)/page.tsx): the only collections the home "Shop by Category" row can show. */
-const HOME_TILE_HANDLES = ['coalesce-bedroom', 'sofas-all', 'office-chairs', 'beds', 'dining-table-sets', 'kids', 'decor-acc'];
-/** Fixed in code (SITE.phone, shown by the "What is Pre-Order?" popup). */
-const PREORDER_POPUP_PHONE = '042 111 269 926';
 /** Fixed in code (GENERAL_QUESTION_TEXT): the floating chat button's message. */
 const CHAT_TEXT = 'Hello Cozy Furnitures! I have a question.';
+/** The shop's name (NEXT_PUBLIC_SITE_NAME; the logo link is "<name> home"). */
+const SHOP_NAME = 'Cozy Furnitures';
 
 const rs = (n: number | string) => `Rs.${Number(n).toLocaleString('en-US')}`;
 const reEsc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -44,13 +31,18 @@ function collectionData(title: string) {
   return c;
 }
 
-/** What a product card shows for a product (same rules as the store: lowest price, lowest struck price, biggest discount). */
+/**
+ * What a product card shows for a product: the lowest price of any option; the struck-through price and the “% off”
+ * circle only when that cheapest option itself is on sale (taken from that same option, never from another one).
+ */
 function cardFacts(p: ProductData) {
   const vs = p.variants ?? [{ values: [], regular: p.regular ?? '0', sale: p.sale, status: p.status ?? 'Ready to ship' }];
-  const price = Math.min(...vs.map((v) => Number(v.sale ?? v.regular)));
-  const compares = vs.filter((v) => v.sale).map((v) => Number(v.regular));
-  const compare = compares.length && Math.min(...compares) > price ? Math.min(...compares) : null;
-  const pcts = vs.filter((v) => v.sale).map((v) => Math.round(((Number(v.regular) - Number(v.sale)) / Number(v.regular)) * 100));
+  const selling = (v: (typeof vs)[number]) => Number(v.sale ?? v.regular);
+  const price = Math.min(...vs.map(selling));
+  const cheapest = vs.filter((v) => selling(v) === price);
+  const was = Math.max(0, ...cheapest.map((v) => (v.sale && Number(v.regular) > Number(v.sale) ? Number(v.regular) : 0)));
+  const compare = was || null;
+  const pct = compare ? Math.round(((compare - price) / compare) * 100) : null;
   const statuses = vs.map((v) => v.status);
   const bar = statuses.includes('Ready to ship')
     ? 'Ready to ship'
@@ -59,8 +51,21 @@ function cardFacts(p: ProductData) {
       : statuses.includes('Made to order')
         ? null
         : 'Sold Out';
-  return { price, compare, pct: pcts.length ? Math.max(...pcts) : null, bar };
+  return { price, compare, pct, bar, cheapest };
 }
+
+/** Checks a product card's price, struck-through price and “% off” circle against cardFacts. */
+async function expectCardPrice(card: Locator, p: ProductData) {
+  const f = cardFacts(p);
+  await expect(card.locator('.price ins')).toHaveText(rs(f.price));
+  if (f.compare) await expect(card.locator('.price del')).toHaveText(rs(f.compare));
+  else await expect(card.locator('.price del')).toHaveCount(0);
+  if (f.pct) await expect(card.getByText(new RegExp(`^${f.pct}%\\s*off$`, 'i'))).toBeVisible();
+  else await expect(card.getByText(/%\s*off$/i)).toHaveCount(0);
+  return f;
+}
+
+const priceCell = (f: ReturnType<typeof cardFacts>) => (f.compare ? `${rs(f.price)} (and ${rs(f.compare)} struck through)` : rs(f.price));
 
 /** The product card in a grid/row, found by its title link. */
 function cardIn(scope: Locator, title: string): Locator {
@@ -80,6 +85,11 @@ async function openWhatsApp(page: Page, trigger: Locator): Promise<{ url: URL; l
   return { url, lines: (url.searchParams.get('text') ?? '').split('\n') };
 }
 
+/** The home slider pauses while the mouse is over it: keeps a photo from being caught in the middle of a cross-fade. */
+async function holdSlider(page: Page) {
+  await page.getByRole('region', { name: 'Featured' }).hover();
+}
+
 /** The reader scrolls back up to the top of the page. */
 async function scrollToTop(page: Page) {
   await page.evaluate(() => window.scrollTo(0, 0));
@@ -97,7 +107,7 @@ const section: Section = {
   id: '08',
   title: '8. Shopping on the store (desktop)',
   intro:
-    'Here we use the shop the way a customer does on a computer: the home page, the menu, collections, search, choosing options and ordering on WhatsApp, the newsletter and what happens with wrong addresses. Use a separate browser window that is **not** signed in to the admin (for example a private / incognito window).',
+    'Here we use the shop the way a customer does on a computer: the home page, the menu, collections, search, choosing options and ordering on WhatsApp, the newsletter, sending the shop a message and what happens with wrong addresses. Use a separate browser window that is **not** signed in to the admin (for example a private / incognito window).',
 
   async run(ctx) {
     const g = ctx.guide;
@@ -139,83 +149,82 @@ const section: Section = {
       }`,
     );
 
+    // F01-1 of the previous run (fixed texts of the old website) is fixed: the strip and the text block come from
+    // Settings → Home page (filled in section 1) and are hidden while empty.
+    const strip = page.getByRole('region', { name: 'Announcement', exact: true });
+    await expect(strip).toBeVisible();
+    for (const m of STORE.homeStrip) await expect(strip).toContainText(m);
+    await expect(page.getByText('FREE Nationwide Delivery!')).toHaveCount(0);
+    g.expect(
+      `Under the slider, a yellow strip scrolls the messages typed in **Settings → Home page** (section 1): ${STORE.homeStrip.map((m) => `“${m}”`).join(' and ')}.`,
+    );
+
+    // F08-1 of the previous run (a fixed list of the old shop's products) is fixed: the row = published Best sellers.
     const hot = page.getByRole('region', { name: 'Hot Selling Products' });
-    const hotProducts = HOT_SELLING_HANDLES.map((h) => PRODUCTS.find((p) => p.handle === h && !p.draft)).filter((p): p is ProductData => !!p);
-    const notHot = PRODUCTS.filter((p) => !p.draft && !HOT_SELLING_HANDLES.includes(p.handle));
-    if (hotProducts.length) {
-      await expect(page.getByRole('heading', { name: 'Hot Selling Products' })).toBeVisible();
-      for (const p of hotProducts) await expect(hot.getByRole('link', { name: p.title, exact: true })).toBeVisible();
+    const bestSellers = PRODUCTS.filter((p) => p.bestSeller && !p.draft);
+    const notHot = PRODUCTS.filter((p) => !p.draft && !p.bestSeller);
+    const hotRows: string[][] = [];
+    let hotOrder: string[] = [];
+    if (bestSellers.length) {
+      await expect(page.getByRole('heading', { level: 2, name: 'Hot Selling Products' })).toBeVisible();
+      await expect(hot.locator('.product-card')).toHaveCount(bestSellers.length);
+      for (const p of bestSellers) await expect(hot.getByRole('link', { name: p.title, exact: true })).toBeVisible();
       for (const p of notHot) await expect(hot.getByRole('link', { name: p.title, exact: true })).toHaveCount(0);
+      hotOrder = (await hot.locator('.product-card .product-card-info a').allTextContents()).map((t) => t.trim());
+      for (const title of hotOrder) {
+        const p = bestSellers.find((x) => x.title === title)!;
+        const f = await expectCardPrice(cardIn(hot, p.title), p);
+        hotRows.push([`**${p.title}**`, priceCell(f), f.pct ? `${f.pct}% off` : '—']);
+      }
       g.expect(
-        `Under the slider and the yellow “FREE Nationwide Delivery!” strip, **Hot Selling Products** shows ${hotProducts.map((p) => `**${p.title}**`).join(' and ')} — and no other product.`,
+        `Next comes **Hot Selling Products** with exactly the products ticked **Best seller** in section 3 — ${hotOrder.map((t) => `**${t}**`).join(', ')} (the most recently changed first) — and no other product. Their cards show:`,
       );
+      g.table(['Card', 'Price', 'Red circle'], hotRows);
     } else {
       await expect(page.getByRole('heading', { name: 'Hot Selling Products' })).toHaveCount(0);
-      g.expect('There is no **Hot Selling Products** row.');
+      g.expect('There is no **Hot Selling Products** row: no product is ticked **Best seller**.');
     }
 
+    // F02-5 of the previous run is fixed: the row = the Collections page cards with a cover photo, in the saved order.
     const tiles = page.getByRole('region', { name: 'Shop by Category' });
-    const tileCollections = HOME_TILE_HANDLES.map((h) => COLLECTIONS.find((c) => c.handle === h)).filter((c): c is (typeof COLLECTIONS)[number] => !!c);
-    // titles of the tiles actually on screen (the row is a looping slider, 3 tiles at a time)
-    const tilesOnScreen = () =>
-      tiles.evaluate((region) => {
-        const box = region.getBoundingClientRect();
-        return Array.from(region.querySelectorAll('h2'))
-          .filter((h) => {
-            const b = h.getBoundingClientRect();
-            return b.width > 0 && b.left >= box.left - 1 && b.right <= box.right + 1;
-          })
-          .map((h) => h.textContent?.trim() ?? '');
-      });
-    const shownTiles = tileCollections.length ? [0, 1, 2].map((i) => tileCollections[i % tileCollections.length].title) : [];
-    if (tileCollections.length) {
-      await expect(page.getByRole('heading', { name: 'Shop by Category' })).toBeVisible();
-      await expect(tiles.getByRole('heading', { level: 2 })).toHaveText(tileCollections.map((c) => c.title));
-      await expect.poll(tilesOnScreen).toEqual(shownTiles);
-      g.expect(
-        `**Shop by Category** shows only ${tileCollections.map((c) => `**${c.title}**`).join(' and ')} (${tileCollections.length} of the ${COLLECTIONS.length} collections)${
-          tileCollections.length < 3 ? `; because the row always shows three tiles, it reads ${shownTiles.map((t) => `“${t}”`).join(', ')}` : ''
-        }.`,
-      );
-    }
-
-    const hasReviews = (await page.getByText('Our customer speaks for us').count()) > 0;
-    g.note(
-      hasReviews
-        ? 'The “Our customer speaks for us” block is shown because a **Store rating** is set in Settings.'
-        : 'There is no “Our customer speaks for us” reviews block: it only appears once a **Store rating** is entered in Settings.',
-    );
-    await g.shot(page, 'Home page with banners, Hot Selling Products and Shop by Category', { fullPage: true });
-
-    g.finding(
-      'issue',
-      'The owner cannot choose the “Hot Selling Products” on the home page',
-      `This row is a fixed list of product web addresses copied from the old shop and written into the program. ${hotProducts.map((p) => p.title).join(' and ')} appear only because their addresses (${hotProducts.map((p) => '`' + p.handle + '`').join(', ')}) happen to be on that list; ${notHot.slice(0, 3).map((p) => p.title).join(', ')} and every other new product can never appear there. The **Best seller** tick in the product editor does not add a product to this row, and a shop whose products have other addresses gets no row at all.`,
-    );
-    if (tileCollections.length < COLLECTIONS.length) {
-      g.note(
-        `Same problem as finding **F02-1** (Collections): the “Shop by Category” tiles come from a fixed list of the old shop’s collection addresses, so only ${tileCollections.map((c) => c.title).join(' and ')} appear.${
-          tileCollections.length < 3 ? ` With fewer than three matching collections the row repeats them (${shownTiles.join(', ')}).` : ''
-        }`,
-      );
-    }
-
-    await g.click(
-      page.getByRole('switch', { name: 'Show more' }),
-      'Scroll down to **The Same Experience & Quality You Trust Online** (just above the footer) and click **Show more**.',
-    );
-    const seo = page.getByText(/augmented reality \(AR\)/);
-    await expect(seo).toBeVisible();
-    await expect(seo).toContainText('the checkout process is simple and secure');
-    await expect(seo).toContainText('credit/debit cards and bank transfers');
-    await expect(seo).toContainText('track your orders in real-time');
-    await expect(seo).toContainText('not available in physical outlets');
-    await expect(page.getByRole('switch', { name: 'Show less' })).toBeVisible();
-    await expect(page.getByRole('region', { name: 'Announcement' })).toContainText('FREE Nationwide Delivery!');
+    const withCover = COLLECTIONS.filter((c) => c.cover);
+    // the slider keeps copies of its tiles on both sides for the wrap-around; only the real ones can be tabbed to
+    const realTiles = tiles.locator('a[tabindex="0"]');
+    await expect(page.getByRole('heading', { level: 2, name: 'Shop by Category' })).toBeVisible();
+    await expect(realTiles).toHaveCount(Math.min(withCover.length, 24));
+    const tileOrder = (await realTiles.locator('h2').allTextContents()).map((t) => t.trim());
+    expect([...tileOrder].sort(), 'home tiles = the collections with a cover photo').toEqual(withCover.map((c) => c.title).sort());
+    // same order as the cards of the store's Collections page (read in a second tab; section 2 documents that page)
+    const collectionsTab = await page.context().newPage();
+    await gotoPage(collectionsTab, '/collections');
+    const pageOrder = (
+      await collectionsTab
+        .locator('main section')
+        .filter({ has: collectionsTab.getByRole('heading', { level: 1, name: 'Shop by Category' }) })
+        .getByRole('heading', { level: 2 })
+        .allTextContents()
+    ).map((t) => t.trim());
+    await collectionsTab.close();
+    await page.bringToFront();
+    expect(tileOrder, 'home tiles in the Collections page order').toEqual(pageOrder.filter((t) => withCover.some((c) => c.title === t)).slice(0, 24));
     g.expect(
-      'The full text opens (the link now reads **Show less**). It talks about augmented reality (AR) previews, “the checkout process is simple and secure”, payment “including credit/debit cards and bank transfers”, tracking “your orders in real-time” and online discounts “not available in physical outlets”.',
+      `**Shop by Category** shows all ${tileOrder.length} collections, each once with its cover photo, in the order of the store’s Collections page (set in section 2 under **Arrange Collections page**): ${tileOrder.join(', ')}.`,
     );
-    g.note('These fixed texts are finding **F01-1** (section 1): they cannot be changed or hidden in the admin.');
+
+    // F01-2 of the previous run is fixed: no review cards and no Store rating setting.
+    await expect(page.getByText('Our customer speaks for us')).toHaveCount(0);
+    g.expect('There is no customer-reviews block (“Our customer speaks for us”): the shop has no product reviews.');
+
+    const textBlock = page.getByTestId('home-text-block');
+    await expect(textBlock.getByRole('heading', { name: STORE.homeTextHeading, exact: true })).toBeVisible();
+    await expect(textBlock).toContainText(STORE.homeText);
+    await expect(textBlock.getByRole('switch')).toHaveCount(0);
+    await expect(page.getByText('The Same Experience & Quality You Trust Online')).toHaveCount(0);
+    g.expect(
+      `Just above the footer, the text block from **Settings → Home page** (section 1): the heading **${STORE.homeTextHeading}** and the text “${STORE.homeText}” — in full, without a **Show more** link, because it is short.`,
+    );
+    await holdSlider(page);
+    await g.shot(page, 'Home page: banners, yellow strip, Hot Selling Products, Shop by Category and the text block', { fullPage: true });
 
     /* ------------------------------------------------------------------ 8.2 banners + menu */
     g.part('8.2 Banners and the main menu');
@@ -251,12 +260,19 @@ const section: Section = {
     await g.click(sofasLink, 'Click **Sofas** in the panel.');
     await expect(page).toHaveURL(new RegExp(`/collections/${reEsc(sofas.handle)}(\\?|$)`));
     g.expect(`The **Sofas** collection opens (address ends in \`/collections/${sofas.handle}\`).`);
-    await expect(nav.getByRole('link', { name: firstItem.label, exact: true })).toHaveClass(/bg-maroon/);
-    g.finding(
-      'note',
-      'The first main-menu item is always a dark red block',
-      `“${firstItem.label}”, the first item of the main menu, is always drawn as a dark red button (on the old site it was “Wedding Packages”). Whatever the owner puts first in **Menus → Main menu** gets this look; there is no setting for it.`,
-    );
+    // F08-2 of the previous run is fixed: the first main-menu item is drawn like the others.
+    const menuLook = (label: string) =>
+      nav.getByRole('link', { name: label, exact: true }).evaluate((el) => {
+        const cs = getComputedStyle(el);
+        return `${cs.backgroundColor} ${cs.color} ${cs.fontWeight}`;
+      });
+    g.step('Move the mouse away from the menu, down onto the page.');
+    await page.mouse.move(0, 600);
+    for (const child of withDropdown.children) await expect(nav.getByRole('link', { name: child, exact: true })).toBeHidden();
+    g.expect(`The drop-down panel closes.`);
+    await expect(nav.getByRole('link', { name: firstItem.label, exact: true })).not.toHaveClass(/bg-maroon/);
+    for (const m of MENUS.main.slice(1)) expect(await menuLook(firstItem.label), `menu item ${m.label} looks like the first`).toBe(await menuLook(m.label));
+    g.expect(`In the menu, **${firstItem.label}** (the first item) looks like all the others: black text on white, no coloured block.`);
 
     /* ------------------------------------------------------------------ 8.3 collection page */
     g.part('8.3 A collection page: product cards, sorting and filters');
@@ -267,12 +283,8 @@ const section: Section = {
 
     const cardRows: string[][] = [];
     for (const p of sofaProducts) {
-      const f = cardFacts(p);
       const card = cardIn(grid, p.title);
-      await expect(card.locator('.price ins')).toHaveText(rs(f.price));
-      if (f.compare) await expect(card.locator('.price del')).toHaveText(rs(f.compare));
-      else await expect(card.locator('.price del')).toHaveCount(0);
-      if (f.pct) await expect(card.getByText(new RegExp(`^${f.pct}%\\s*off$`, 'i'))).toBeVisible();
+      const f = await expectCardPrice(card, p);
       if (f.bar) await expect(card.getByText(f.bar, { exact: true })).toBeVisible();
       if (p.newArrival) await expect(card.getByText('NEW', { exact: true })).toBeVisible();
       else await expect(card.getByText('NEW', { exact: true })).toBeHidden();
@@ -282,7 +294,7 @@ const section: Section = {
       cardRows.push([
         `**${p.title}**`,
         [p.newArrival ? 'red **NEW** above the title' : '', p.limitedEdition ? 'yellow **LIMITED EDITION** bar' : ''].filter(Boolean).join(', ') || '—',
-        f.compare ? `${rs(f.price)} (and ${rs(f.compare)} struck through)` : rs(f.price),
+        priceCell(f),
         f.pct ? `${f.pct}% off` : '—',
         f.bar ? f.bar.toUpperCase() : '—',
         colour ? `${colour.values.length} colour dots (${colour.values.join(', ')})` : '—',
@@ -292,14 +304,14 @@ const section: Section = {
     g.expect('Each card shows exactly what the table above says.');
     await g.shot(page, 'Sofas collection: product cards with NEW, Limited Edition, sale price and status bars', { highlight: grid });
 
+    // F08-3 of the previous run is fixed: price, struck-through price and "% off" all come from the cheapest option.
     const af = cardFacts(antonin);
-    const cheapest = antonin.variants?.find((v) => Number(v.sale ?? v.regular) === af.price);
-    const struck = antonin.variants?.find((v) => v.sale && Number(v.regular) === af.compare);
-    if (af.compare && cheapest && struck && !cheapest.sale) {
-      g.finding(
-        'issue',
-        'A product card can show a “discount” that no option really has',
-        `The ${antonin.title} card shows **${rs(af.price)}** next to a struck-through **${rs(af.compare)}** and “${af.pct}% off”. But ${rs(af.price)} is the normal price of the ${cheapest.values.join(' / ')} (not on sale), and ${rs(af.compare)} is the old price of the ${struck.values.join(' / ')}. A customer reads it as ${rs(af.compare)} reduced to ${rs(af.price)}. The card takes the lowest price and the lowest struck price from different options (as the old Shopify theme did).`,
+    const onSale = antonin.variants?.find((v) => v.sale);
+    const cheapestOpt = af.cheapest[0];
+    if (onSale && cheapestOpt && !cheapestOpt.sale) {
+      expect(af.compare).toBeNull();
+      g.expect(
+        `The ${antonin.title} card shows **${rs(af.price)}**, the price of its cheapest option (${cheapestOpt.values.join(' / ')}), with no struck-through price and no “% off” circle: that option is not on sale. The sale of the ${onSale.values.join(' / ')} (${rs(onSale.sale!)} instead of ${rs(onSale.regular)}) shows on the product page once that option is chosen. A card never mixes the price of one option with the old price of another.`,
       );
     }
 
@@ -402,17 +414,14 @@ const section: Section = {
     await expect(page.locator('#sort-by-d')).toBeVisible();
     const resultsCount = page.getByText(`${searchHits.length} result${searchHits.length === 1 ? '' : 's'}`, { exact: true }).filter({ visible: true });
     await expect(resultsCount).toBeVisible();
+    // F08-4 of the previous run is fixed: the sentence is always shown (no "Show more" link).
+    const summary = page.getByText(`${searchHits.length} result${searchHits.length === 1 ? '' : 's'} found for “${SHOPPER.search}”`, { exact: true });
+    await expect(summary).toBeVisible();
+    await expect(page.getByRole('main').getByRole('button', { name: 'Show more' })).toHaveCount(0);
     g.expect(
-      `The **Search Results** page lists ${searchHits.map((p) => `**${p.title}**`).join(' and ')} as product cards, with the same Filter / Sort by toolbar as a collection and **${searchHits.length} results** at its right end.`,
+      `The **Search Results** page says **${searchHits.length} results found for “${SHOPPER.search}”** under the search box, and lists ${searchHits.map((p) => `**${p.title}**`).join(' and ')} as product cards, with the same Filter / Sort by toolbar as a collection and **${searchHits.length} results** at its right end.`,
     );
-    await g.click(page.getByRole('main').getByRole('button', { name: 'Show more' }), 'Click **Show more** next to the search box.');
-    await expect(page.getByText(new RegExp(`\\d+ results? found for “${reEsc(SHOPPER.search)}”`))).toBeVisible();
-    g.expect(`The sentence “… results found for “${SHOPPER.search}”” appears.`);
-    g.finding(
-      'note',
-      'The number of search results is hidden behind “Show more”',
-      'On the Search Results page the sentence “… results found for …” only appears after clicking a green **Show more** link next to the search box (copied from the old theme). Most customers will not click it; the count is also shown at the right end of the toolbar.',
-    );
+    await g.shot(page, `Search Results for “${SHOPPER.search}”`, { highlight: summary });
 
     /* ------------------------------------------------------------------ 8.5 order on WhatsApp */
     g.part('8.5 Choosing options and ordering on WhatsApp');
@@ -507,25 +516,24 @@ const section: Section = {
     );
     await g.shot(page, `${arbour.title} (pre-order): Ask about availability`, { highlight: askBtn });
     if (antonin.delivery && !arbour.delivery) {
-      g.finding(
-        'note',
-        'Filling in a delivery time also promises free delivery',
-        `The ${antonin.title} page (delivery time “${antonin.delivery}”) shows a red **FREE DELIVERY!** tag; the ${arbour.title} page (no delivery time) does not. The tag comes only from the **Delivery time** box (the product editor’s hint says so); there is no separate switch, so a product cannot show its delivery time without also promising free delivery.`,
+      // F08-5 of the previous run: kept as designed, now explained in the editor (and never shown while sold out).
+      g.note(
+        `The red **FREE DELIVERY!** tag comes from the product’s **Delivery time** box: the ${antonin.title} page (delivery time “${antonin.delivery}”) shows it, the ${arbour.title} page (no delivery time) does not. The hint under **Delivery time** in the product editor says so (“Filling this in also shows a red FREE DELIVERY! tag under the price, so leave it empty if delivery is not free”), and the tag is not shown while the chosen option is sold out.`,
       );
     }
 
+    // F08-6 of the previous run is fixed: the popup's phone is the Phone from Settings → Contact details.
     await g.click(whatIs, 'Click **WHAT IS PRE-ORDER?**.');
     const preDialog = page.getByRole('dialog', { name: 'What is Pre-Order' });
     await expect(preDialog).toContainText('What is Pre-Order');
-    await expect(preDialog).toContainText(`For any help, message us on WhatsApp or call ${PREORDER_POPUP_PHONE}.`);
-    g.expect(`A popup explains pre-orders and ends with “For any help, message us on WhatsApp or call ${PREORDER_POPUP_PHONE}.”`);
-    if (PREORDER_POPUP_PHONE.replace(/\D/g, '') !== STORE.phone.replace(/\D/g, '')) {
-      g.finding(
-        'bug',
-        'The “What is Pre-Order?” popup shows the wrong phone number',
-        `It always says “call ${PREORDER_POPUP_PHONE}”, a number written into the program, not the shop’s phone from **Settings → Contact details** (${STORE.phone}, shown in the footer). Customers of a pre-order product are told to call a different number.`,
-      );
-    }
+    const helpLine = /For any help, message us on WhatsApp or call ([\d +()-]+?)\./;
+    await expect(preDialog).toContainText(helpLine);
+    const popupPhone = ((await preDialog.innerText()).match(helpLine)?.[1] ?? '').trim();
+    expect(popupPhone.replace(/\D/g, ''), 'pre-order popup phone = Settings phone').toBe(STORE.phone.replace(/\D/g, ''));
+    g.expect(
+      `A popup explains pre-orders and ends with “For any help, message us on WhatsApp or call **${popupPhone}**.” — the shop’s phone from **Settings → Contact details** (${STORE.phone}, section 1), the same number as in the footer.`,
+    );
+    await g.shot(page, 'What is Pre-Order? popup with the shop’s phone number', { highlight: preDialog });
     await g.click(preDialog.getByRole('button', { name: 'Close' }), 'Close the popup with the **X** at its top right.');
     await expect(preDialog).toHaveCount(0);
 
@@ -586,16 +594,17 @@ const section: Section = {
 
     /* ------------------------------------------------------------------ 8.7 footer */
     g.part('8.7 Footer: contact details, newsletter and WhatsApp chat');
-    await g.click(banner.getByRole('link', { name: 'Cozy Furnitures home' }), 'Click the **Cozy Furnitures** logo to go back to the home page.');
+    await g.click(banner.getByRole('link', { name: `${SHOP_NAME} home` }), `Click the **${SHOP_NAME}** logo to go back to the home page.`);
     await expect(page).toHaveURL(new RegExp(`^${reEsc(origin)}/?$`));
     const footer = page.getByRole('contentinfo');
     g.step('Scroll down to the footer at the bottom of the page.');
     await footer.scrollIntoViewIfNeeded();
     await expect(footer.getByRole('link', { name: STORE.phone, exact: true })).toBeVisible();
+    await expect(footer.getByRole('link', { name: STORE.email, exact: true })).toBeVisible();
     await expect(footer.getByText(STORE.address.split('\n')[0], { exact: true })).toBeVisible();
     await expect(footer.getByRole('link', { name: 'Facebook' })).toHaveAttribute('href', STORE.facebook);
     await expect(footer.getByRole('link', { name: 'Instagram' })).toHaveAttribute('href', STORE.instagram);
-    g.expect(`**Contact Info** shows the phone **${STORE.phone}** and the address (${STORE.address.replace(/\n/g, ', ')}); **Follow Us** has Facebook and Instagram icons linking to the shop’s pages (all from Settings, section 1).`);
+    g.expect(`**Contact Info** shows the phone **${STORE.phone}**, the email **${STORE.email}** and the address (${STORE.address.replace(/\n/g, ', ')}); **Follow Us** has Facebook and Instagram icons linking to the shop’s pages (all from Settings, section 1).`);
 
     const newsletterEmail = footer.getByRole('textbox', { name: 'Email' });
     await g.form(
@@ -609,10 +618,10 @@ const section: Section = {
     await expect(thanks).toHaveText('Thanks for subscribing!');
     g.expect('The email box is replaced by **Thanks for subscribing!**');
     await g.shot(page, 'Footer after signing up for the newsletter', { highlight: thanks });
-    g.finding(
-      'note',
-      'The newsletter has no mailing list behind it',
-      `A sign-up is sent to the same inbox as contact messages (**Admin → Messages**, see section 10). The shop gets no list of subscribers, no export and no way to send a newsletter; the owner has to copy the addresses by hand.`,
+    // F08-7 / F10-2 of the previous run are fixed: sign-ups are kept under the subject "Newsletter", and the admin
+    // says plainly that there is no mailing list.
+    g.note(
+      'There is no mailing service behind this box: nothing is ever emailed to the customer. Each address is kept in **Admin → Messages** with the subject **Newsletter** (section 10 finds it there); the admin explains this and offers a **Download sign-ups (CSV)** button.',
     );
 
     const bubble = page.getByTestId('whatsapp-bubble');
@@ -623,106 +632,89 @@ const section: Section = {
     expect(chat.lines).toEqual([CHAT_TEXT]);
     g.expect(`WhatsApp opens for **${STORE.whatsappStored}** with the message “**${CHAT_TEXT}**”.`);
 
-    /* ------------------------------------------------------------------ 8.8 my account + contact */
-    g.part('8.8 “My Account” and contacting the shop');
-    await g.click(banner.getByRole('link', { name: 'My Account' }), 'Click the **person icon** (My Account) at the top right, next to the magnifying glass.');
-    await expect(page).toHaveURL(/\/account\/login/);
-    await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Continue with Shop' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Sign in with Google' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Sign in with Facebook' })).toBeVisible();
-    await expect(page.getByRole('textbox', { name: 'Email' })).toBeVisible();
-    await expect(page.getByRole('checkbox', { name: 'Email me with news and offers' })).toBeChecked();
-    await expect(nav).toBeHidden();
-    await expect(page.getByRole('link', { name: STORE.phone, exact: true })).toBeHidden(); // the footer's phone link
+    /* ------------------------------------------------------------------ 8.8 no accounts + contact */
+    // F08-8 of the previous run is fixed: no My Account icon, old /account addresses lead to the home page.
+    g.part('8.8 No customer accounts; sending the shop a message');
+    await scrollToTop(page);
+    const searchIcon = banner.getByRole('link', { name: 'Search', exact: true });
+    await expect(searchIcon).toBeVisible();
+    await expect(banner.getByRole('link', { name: /account|sign in|log ?in/i })).toHaveCount(0);
+    await expect(banner.getByRole('list').filter({ has: page.getByRole('link', { name: 'Search', exact: true }) }).getByRole('listitem')).toHaveCount(1); // the icons next to the menu
+    g.step('Look at the top right corner of the page, next to the menu.');
     g.expect(
-      'A **Sign in** page opens without the shop’s menu and footer: a purple **Continue with Shop** button, Google and Facebook buttons, an **Email** box and a ticked “Email me with news and offers”.',
+      'There is only the **magnifying glass** (Search): no person icon and no “My Account” link. The shop has no customer accounts — customers order on WhatsApp without signing in.',
     );
-    await g.click(page.getByRole('button', { name: 'Continue with Shop' }), 'Click **Continue with Shop**.');
-    await expect(page.getByText('Customer accounts are coming soon.')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Track your order' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Contact us' })).toBeVisible();
-    g.expect('Nothing is signed in: the page only says **Customer accounts are coming soon.** and offers **Track your order** or **Contact us**.');
-    await g.shot(page, 'My Account: “Customer accounts are coming soon”');
+    await holdSlider(page);
+    await g.shot(page, 'Header: only the search icon at the top right, no My Account', { highlight: searchIcon });
 
-    await g.click(page.getByRole('link', { name: 'Contact us' }), 'Click **Contact us**.');
-    await expect(page).toHaveURL(/\/pages\/contact$/);
-    const notFound = page.getByRole('heading', { level: 1, name: 'Page not found' });
-    const contactForm = page.getByRole('main').locator('form');
-    await expect(notFound.or(contactForm)).toBeVisible();
-    if (await notFound.isVisible()) {
-      g.expect('The shop’s **Page not found** page opens: a new shop has no Contact page.');
-      await g.click(banner.getByRole('link', { name: 'My Account' }), 'Click the **person icon** (My Account) again, then **Continue with Shop**, then **Track your order**.');
-      await page.getByRole('button', { name: 'Continue with Shop' }).click();
-      await page.getByRole('link', { name: 'Track your order' }).click();
-      await expect(page).toHaveURL(/\/pages\/track-your-order$/);
-      await expect(notFound).toBeVisible();
-      g.expect('**Page not found** again.');
-      const shopTermsHref = await page.getByRole('contentinfo').getByRole('link', { name: 'Terms & Conditions', exact: true }).getAttribute('href');
-      await g.click(banner.getByRole('link', { name: 'My Account' }), 'Click the **person icon** once more and, under the email box, click **Terms of service**.');
-      await page.getByRole('link', { name: 'Terms of service' }).click();
-      await expect(page).toHaveURL(/\/pages\/terms-of-use$/);
-      await expect(notFound).toBeVisible();
-      g.expect(
-        `**Page not found**: the link goes to /pages/terms-of-use, while the shop’s own terms page (footer link **Terms & Conditions**, section 7) is at ${shopTermsHref ? `\`${shopTermsHref}\`` : 'another address'}.`,
-      );
-      expect(shopTermsHref).not.toBe('/pages/terms-of-use');
-      g.finding(
-        'bug',
-        '“My Account” leads to a sign-in page that does not work, and its links are broken',
-        `The person icon in the header opens a copy of the old Shopify sign-in page (Shop, Google, Facebook, email, a ticked “Email me with news and offers”). Every button only shows “Customer accounts are coming soon.”, and its **Contact us**, **Track your order** and **Terms of service** links open **Page not found** on a new shop. The shop has no customer accounts, so the icon only confuses customers; it cannot be removed in the admin.`,
-      );
-      g.finding(
-        'issue',
-        'Customers have no way to send the shop a message',
-        `The only contact form lives on the built-in Contact page (/pages/contact), and a new shop does not have it: built-in (“custom design”) pages cannot be created in the admin, and a normal page the owner creates shows only its text, never a form. So **Admin → Messages** (which the admin guide says “holds the contact-form submissions”) only ever receives newsletter sign-ups. Customers can still write on WhatsApp or call the phone number in the footer.`,
-      );
-    } else {
-      // a shop that already has the built-in Contact page: send the test message
-      const main = page.getByRole('main');
-      await g.form(
-        [
-          { label: 'Name', value: SHOPPER.contact.name, locator: main.getByLabel('Name', { exact: true }) },
-          { label: 'Email', value: SHOPPER.contact.email, locator: main.getByLabel('Email', { exact: true }) },
-          { label: 'Phone number', value: SHOPPER.contact.phone, locator: main.getByLabel('Phone number', { exact: true }) },
-          { label: 'Comment', value: SHOPPER.contact.message, locator: main.getByLabel('Comment', { exact: true }) },
-          { label: 'SEND MESSAGE', value: 'click it', kind: 'click', locator: main.getByRole('button', { name: /send message/i }) },
-        ],
-        'The Contact page opens. Fill in the form:',
-      );
-      await expect(main.getByRole('status')).toContainText('Thanks for contacting us');
-      g.expect('**Thanks for contacting us. We’ll get back to you as soon as possible.** appears above the form. The message arrives in **Admin → Messages** (section 10).');
-    }
+    await g.goto(page, '/account/login', `Type the address of the old sign-in page in the address bar: **${origin}/account/login**`);
+    await expect(page).toHaveURL(new RegExp(`^${reEsc(origin)}/?$`));
+    await expect(page.getByRole('region', { name: 'Featured' })).toBeVisible();
+    g.expect('The home page opens instead (old links to “My Account” pages such as /account or /account/login lead there), so nobody lands on a sign-in page that does not work.');
+
+    // F08-9 of the previous run is fixed: every shop has the built-in Contact us page with a working form.
+    const supportMenu = page.getByRole('contentinfo').getByRole('navigation', { name: 'Customer Support', exact: true });
+    const contactLink = supportMenu.getByRole('link', { name: MENUS.footerContact.label, exact: true });
+    g.step('Scroll down to the footer.');
+    await contactLink.scrollIntoViewIfNeeded();
+    await g.click(contactLink, `Under **CUSTOMER SUPPORT**, click **${MENUS.footerContact.label}** (the link added in section 6).`);
+    await expect(page).toHaveURL(new RegExp(`${reEsc(MENUS.footerContact.href)}$`));
+    const main = page.getByRole('main');
+    await expect(main.getByRole('heading', { level: 1, name: 'Contact Us' })).toBeVisible();
+    await expect(main.getByRole('link', { name: STORE.phone, exact: true })).toBeVisible();
+    await expect(main.getByRole('link', { name: STORE.email, exact: true })).toBeVisible();
+    g.expect(`The **Contact Us** page opens with a form on the left and the shop’s email, phone and address (from Settings) on the right.`);
+    const sendBtn = main.getByRole('button', { name: /send message/i });
+    await g.form(
+      [
+        { label: 'Name', value: SHOPPER.contact.name, locator: main.getByLabel('Name', { exact: true }) },
+        { label: 'Email', value: SHOPPER.contact.email, locator: main.getByLabel('Email', { exact: true }) },
+        { label: 'Phone number', value: SHOPPER.contact.phone, locator: main.getByLabel('Phone number', { exact: true }) },
+        { label: 'Comment', value: SHOPPER.contact.message, locator: main.getByLabel('Comment', { exact: true }) },
+      ],
+      'Fill in the form as a customer would:',
+    );
+    await g.click(sendBtn, 'Click **SEND MESSAGE**.');
+    const sent = main.getByRole('status');
+    await expect(sent).toHaveText(/^Thanks for contacting us\. We['’]ll get back to you as soon as possible\.$/);
+    await expect(main.getByLabel('Name', { exact: true })).toHaveValue('');
+    g.expect(
+      "**Thanks for contacting us. We'll get back to you as soon as possible.** appears above the form, and the boxes are emptied. The message arrives in **Admin → Messages** (section 10 opens it there).",
+    );
+    await g.shot(page, 'Contact Us: the message is sent', { highlight: sent });
 
     /* ------------------------------------------------------------------ 8.9 404 */
     g.part('8.9 Hidden products and wrong addresses');
+    const notFound = page.getByRole('heading', { level: 1, name: 'Page not found' });
+    const notFoundText = page.getByText('The page you were looking for doesn’t exist. You may have mistyped the address or the page may have moved.');
     if (draft) {
       await g.goto(page, `/products/${draft.handle}`, `Type the address of the draft product **${draft.title}** (saved as a draft in section 3) in the address bar: **${origin}/products/${draft.handle}**`);
-      await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
+      await expect(notFound).toBeVisible();
+      await expect(notFoundText).toBeVisible();
       await expect(page.getByRole('link', { name: 'Continue shopping' })).toBeVisible();
       await expect(page.getByText(draft.title)).toHaveCount(0);
       await expect(nav).toBeVisible();
       await expect(page.getByRole('contentinfo').getByRole('link', { name: STORE.phone, exact: true })).toBeVisible();
       g.expect('Customers cannot see a draft: the shop’s **Page not found** page appears (with the menu, the footer and a **CONTINUE SHOPPING** button), not the product.');
       await g.shot(page, `Draft product ${draft.title}: Page not found`);
-      if (await page.getByText(/looking for doesnt exist/).isVisible()) {
-        g.note('The “doesnt” typo on this page is finding **F01-3** (section 1).');
-      }
     }
 
+    // F08-10 of the previous run is fixed: any unknown address shows the shop's own Page not found.
     await g.goto(page, '/sofa-sale', `Type a wrong address, for example **${origin}/sofa-sale**`);
-    await expect(page.getByRole('heading', { level: 1, name: '404' })).toBeVisible();
-    await expect(page.getByText('This page could not be found.')).toBeVisible();
-    await expect(page.getByRole('banner')).toHaveCount(0);
-    await expect(page.getByRole('contentinfo')).toHaveCount(0);
-    await expect(page.getByRole('link')).toHaveCount(0);
-    g.expect('A bare white page that only says **404 | This page could not be found.** — no logo, no menu, no footer and no link back to the shop.');
-    await g.shot(page, 'Wrong address: bare 404 page');
-    g.finding(
-      'issue',
-      'A mistyped address shows a bare “404” page instead of the shop’s “Page not found”',
-      'Wrong product or page addresses (/products/…, /pages/…, /collections/…) show the shop’s own **Page not found** page with the menu and a CONTINUE SHOPPING button, but any other wrong address (e.g. /sofa-sale) shows the plain technical page “404 | This page could not be found.” with no logo, menu or way back. A customer arriving from an old or mistyped link may think the shop is down.',
+    await expect(notFound).toBeVisible();
+    await expect(notFoundText).toBeVisible();
+    await expect(page.getByText('This page could not be found.')).toHaveCount(0);
+    await expect(nav).toBeVisible();
+    await expect(page.getByRole('contentinfo').getByRole('link', { name: STORE.phone, exact: true })).toBeVisible();
+    const continueBtn = page.getByRole('link', { name: 'Continue shopping' });
+    await expect(continueBtn).toBeVisible();
+    g.expect(
+      'The same **Page not found** page, inside the shop’s own header, menu and footer: “The page you were looking for doesn’t exist. You may have mistyped the address or the page may have moved.” and a **CONTINUE SHOPPING** button.',
     );
+    await g.shot(page, 'Wrong address: the shop’s Page not found', { highlight: continueBtn });
+    await g.click(continueBtn, 'Click **CONTINUE SHOPPING**.');
+    await expect(page).toHaveURL(new RegExp(`^${reEsc(origin)}/?$`));
+    g.expect('The home page opens.');
     g.note('The blog (Blog in the main menu) was checked from the customer’s side in section 7.');
   },
 };

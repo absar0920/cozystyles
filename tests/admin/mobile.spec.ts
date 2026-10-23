@@ -46,6 +46,14 @@ test('the product editor save bar stays on screen', async ({ page }) => {
   await expect(bar).toBeInViewport();
   expect(inViewport(await bar.boundingBox(), vp)).toBe(true);
   await expect(bar.getByRole('button').first()).toBeVisible();
+  // the status line is never cut short on a phone (it sits above the buttons and wraps)
+  const status = bar.getByRole('status');
+  await expect(status).toHaveText('Published — visible on the store');
+  await page.locator('#product-delivery').fill(`${await page.locator('#product-delivery').inputValue()} x`);
+  await expect(status).toHaveText('Unsaved changes');
+  for (const el of [status, ...(await status.locator('*').all())]) {
+    expect(await el.evaluate((e) => e.scrollWidth <= e.clientWidth + 1 && getComputedStyle(e).textOverflow !== 'ellipsis')).toBe(true);
+  }
 });
 
 test('banners reorder with the arrow buttons', async ({ page }) => {

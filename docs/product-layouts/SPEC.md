@@ -714,7 +714,8 @@ Body:
   (not draggable) so the owner understands where sections appear.
 - **"+ Add section"** below the list: a sheet listing every kind with its name, one-line description and a tiny
   diagram; singleton kinds already present are disabled with "Already in this layout"; featured disabled at 4;
-  everything disabled at 20 sections ("A layout can have up to 20 sections."). The new section is appended, expanded
+  everything disabled at 20 sections ("A layout can have up to 20 sections."). The new section is inserted above the
+  trailing automatic sections ("You may also like", reviews) — an automatic kind itself is appended — then expanded
   and scrolled into view with `newSectionDefaults(kind)` (photo-and-text heading size = the one most used by this
   layout's photo-and-text sections, else Medium; §3.2).
 - **Section editors** per §3, in `_components/sections/{Overlay,ImageText,Icons,Testimonials,Slideshow,Featured,Automatic}Editor.tsx`.

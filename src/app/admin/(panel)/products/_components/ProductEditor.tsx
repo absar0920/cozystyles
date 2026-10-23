@@ -378,7 +378,9 @@ export function ProductEditor({
       <PendingContext.Provider value={reportPending}>
         {/* locked while saving: the save replaces the whole form with the saved version, so typing now would be lost */}
         <fieldset disabled={saving} aria-busy={saving} className="min-w-0 space-y-5">
-          {flash === 'saved' && <Notice tone="success">Saved. The store is updated.</Notice>}
+          {flash === 'saved' && (
+            <Notice tone="success">{published ? 'Saved. The store is updated.' : 'Saved as a draft. It is not on the store.'}</Notice>
+          )}
           {flash === 'duplicated' && <Notice tone="info">This is a copy. It is a draft until you publish it.</Notice>}
 
           <SectionCard id="basics" title="Basics">
@@ -402,7 +404,7 @@ export function ProductEditor({
               <Field
                 label="Delivery time (optional)"
                 htmlFor="product-delivery"
-                hint="Example: Delivered in 20 to 30 working days. When filled, the product page shows a FREE DELIVERY tag and this line."
+                hint="Example: Delivered in 20 to 30 working days. Filling this in also shows a red FREE DELIVERY! tag under the price, so leave it empty if delivery is not free."
               >
                 <TextInput
                   id="product-delivery"
@@ -521,7 +523,7 @@ export function ProductEditor({
               </p>
               <CheckboxField
                 label="Best seller"
-                hint="Star on the product photo, listed first when sorting by best selling."
+                hint="Puts the product in Hot Selling Products on the home page once published (up to 24 best sellers, most recently changed first) and lists it first when sorting by best selling."
                 checked={state.hot}
                 onChange={(hot) => patch({ hot })}
               />

@@ -45,7 +45,7 @@ export default async function ArrangeCollectionsPage() {
       </div>
       <AdminPageHeader
         title="Collections page"
-        subtitle="The cards on the store's “Shop by Category” page, in this order"
+        subtitle="The cards on the store's Collections page (“Shop by Category”), in this order. Cards with a cover photo also make the home page's “Shop by Category” row (the first 24)."
         actions={<ViewOnStoreLink href="/collections" />}
       />
       <ArrangeEditor initialCards={cards} candidates={candidates} />

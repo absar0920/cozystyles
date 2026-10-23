@@ -22,7 +22,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
 }
 
 /**
- * Live search template: page header (title, field, read-more toggle) → facets toolbar → 4-up
+ * Live search template: page header (title, field, "N results found for …") → facets toolbar → 4-up
  * grid, 12 per page, numbered circle pagination. No results (even when caused by filters) →
  * illustration + one sentence, no toolbar.
  */

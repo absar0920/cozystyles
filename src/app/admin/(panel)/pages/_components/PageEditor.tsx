@@ -166,7 +166,7 @@ export function PageEditor({
           {!designed && (
             <SectionCard title="Advanced" collapsible defaultOpen={fieldError('handle') != null}>
               <WebAddressField
-                prefix="cozyfurnitures.pk/pages/"
+                path="/pages/"
                 slug={slug}
                 title={title}
                 isNew={isNew}
@@ -197,7 +197,7 @@ export function PageEditor({
       <StickySaveBar
         dirty={dirty}
         saving={pending}
-        status={status}
+        status={status && !savedPublished ? 'Saved as a draft. It is not on the store.' : status}
         error={!state.ok ? state.error : null}
         actions={[{ label: isNew ? 'Create page' : 'Save', type: 'submit', form: FORM_ID }]}
       />

@@ -8,7 +8,8 @@ import { loadMenuTree, maxDepthFor, type MenuNodeInput } from '@/app/admin/(pane
 
 /** Menus (SPEC §5.5): the whole tree of one menu is saved at once. */
 
-export type { MenuNodeInput };
+// MenuNodeInput is imported from menus/_lib/tree, not re-exported here: Turbopack turns a type re-export in a
+// 'use server' module into a runtime reference that breaks every action in the file.
 
 export type SaveMenuResult = { ok: true; tree: MenuNodeInput[] } | { ok: false; error: string };
 

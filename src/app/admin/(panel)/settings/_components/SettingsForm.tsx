@@ -10,10 +10,11 @@ import { LinkPicker } from '@/components/admin/LinkPicker';
 import { StickySaveBar } from '@/components/admin/StickySaveBar';
 import { UnsavedChangesGuard } from '@/components/admin/UnsavedChangesGuard';
 import { ExternalLinkIcon } from '@/components/admin/icons';
+import { siteName, siteOrigin } from '@/lib/site-url';
 import type { SettingsValues } from '../_lib/fields';
 
 const INITIAL_STATE: SettingsFormState = { ok: false };
-const TEST_TEXT = 'Test message from your Cozy Furnitures website admin.';
+const TEST_TEXT = `Test message from your ${siteName()} website admin.`;
 
 type Key = keyof SettingsValues;
 
@@ -27,13 +28,14 @@ export function SettingsForm({ initial, targets }: { initial: SettingsValues; ta
   const [values, setValues] = useState<SettingsValues>(start);
   const [baseline, setBaseline] = useState<SettingsValues>(start);
   const [state, formAction, pending] = useActionState(saveSettingsAction, INITIAL_STATE);
-  const [origin, setOrigin] = useState('https://cozyfurnitures.pk');
+  // the shop's own address (NEXT_PUBLIC_SITE_URL), else the one the admin is open on
+  const [origin, setOrigin] = useState(() => siteOrigin() ?? '');
   const handled = useRef<number | undefined>(undefined);
   const submitted = useRef<SettingsValues | null>(null);
   const formId = useId();
   const router = useRouter();
 
-  useEffect(() => setOrigin(window.location.origin), []);
+  useEffect(() => setOrigin(siteOrigin() ?? window.location.origin), []);
 
   // After a save: the baseline becomes what was stored (e.g. the number in its normal form). Fields still
   // holding what was submitted show the stored value; anything edited while the save ran is kept (still unsaved).
@@ -64,6 +66,11 @@ export function SettingsForm({ initial, targets }: { initial: SettingsValues; ta
     value: values[key],
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => set(key, e.target.value),
   });
+
+  const stripPreview = values.homeStrip
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
 
   const number = parseWhatsAppNumberInput(values.whatsapp);
   const numberInvalid = values.whatsapp.trim() !== '' && !number;
@@ -215,34 +222,82 @@ export function SettingsForm({ initial, targets }: { initial: SettingsValues; ta
         </div>
       </SectionCard>
 
-      {/* 3. Contact details */}
-      <SectionCard title="Contact details" description="Shown in the website footer.">
+      {/* 3. Home page */}
+      <SectionCard
+        id="home-page"
+        title="Home page"
+        description="The yellow scrolling strip under the banners and the text block at the bottom of the home page."
+      >
+        <div className="space-y-4">
+          <div>
+            <Field
+              label="Scrolling strip"
+              htmlFor={`${formId}-homeStrip`}
+              hint="One message per line, e.g. a delivery or sale message. Leave empty to hide the strip."
+            >
+              <TextArea {...text('homeStrip')} data-plain-text rows={3} placeholder={'e.g. Free delivery in Lahore\nNew sofa collection now in'} />
+            </Field>
+            <FormError message={fe.homeStrip} />
+            <div className="mt-2">
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">Preview</p>
+              {stripPreview.length ? (
+                <div className="overflow-hidden whitespace-nowrap rounded-lg bg-[#f6e84a] px-3 py-2 text-sm font-medium text-accent">
+                  {stripPreview.join('\u2003\u2003')}
+                </div>
+              ) : (
+                <p className="rounded-lg border border-dashed border-gray-300 px-3 py-2 text-sm text-gray-500">The strip is hidden.</p>
+              )}
+            </div>
+          </div>
+          <div>
+            <Field label="Text block heading" htmlFor={`${formId}-homeTextHeading`}>
+              <TextInput {...text('homeTextHeading')} maxLength={120} showCount placeholder={`e.g. About ${siteName()}`} />
+            </Field>
+            <FormError message={fe.homeTextHeading} />
+          </div>
+          <div>
+            <Field
+              label="Text block"
+              htmlFor={`${formId}-homeText`}
+              hint="A few words about your shop. Leave an empty line between paragraphs. Long text shows its first lines with a “Show more” link. Leave the heading and the text empty to hide the block."
+            >
+              <TextArea {...text('homeText')} data-plain-text rows={8} maxLength={5000} showCount />
+            </Field>
+            <FormError message={fe.homeText} />
+          </div>
+        </div>
+      </SectionCard>
+
+      {/* 4. Contact details */}
+      <SectionCard title="Contact details" description="Shown in the website footer, on the Contact us page and in the What is Pre-Order? popup.">
         <div className="grid gap-4 md:grid-cols-3">
           <Field label="Phone" htmlFor={`${formId}-phone`}>
             <TextInput {...text('phone')} inputMode="tel" placeholder="+92-42-111-269-926" />
           </Field>
           <div>
             <Field label="Customer care email" htmlFor={`${formId}-email`}>
-              <TextInput {...text('email')} type="email" inputMode="email" placeholder="info@cozyfurnitures.pk" />
+              <TextInput {...text('email')} type="email" inputMode="email" placeholder="info@yourshop.pk" />
             </Field>
             <FormError message={fe.email} />
           </div>
           <div>
             <Field label="Complaints email" htmlFor={`${formId}-complaintsEmail`}>
-              <TextInput {...text('complaintsEmail')} type="email" inputMode="email" placeholder="complaints@cozyfurnitures.pk" />
+              <TextInput {...text('complaintsEmail')} type="email" inputMode="email" placeholder="complaints@yourshop.pk" />
             </Field>
             <FormError message={fe.complaintsEmail} />
           </div>
         </div>
-        <p className="mt-1 text-xs text-gray-400">The footer shows the complaints email, or the customer care email if that is empty.</p>
+        <p className="mt-1 text-xs text-gray-400">
+          The footer shows the complaints email and the Contact us page the customer care email; each uses the other when its own is empty.
+        </p>
         <div className="mt-4 max-w-xl">
-          <Field label="Address" htmlFor={`${formId}-address`} hint="Shown in the website footer. Each line shows on its own line.">
+          <Field label="Address" htmlFor={`${formId}-address`} hint="Shown in the website footer and on the Contact us page. Each line shows on its own line.">
             <TextArea {...text('address')} rows={3} placeholder={'Main Boulevard, Gulberg III\nLahore, Pakistan'} />
           </Field>
         </div>
       </SectionCard>
 
-      {/* 4. Social links */}
+      {/* 5. Social links */}
       <SectionCard title="Social links" description="Icons under “Follow Us” in the footer. Leave a box empty to hide that icon.">
         <div className="grid gap-4 md:grid-cols-2">
           {(
@@ -266,21 +321,6 @@ export function SettingsForm({ initial, targets }: { initial: SettingsValues; ta
               <FormError message={fe[key]} />
             </div>
           ))}
-        </div>
-      </SectionCard>
-
-      {/* 5. Store rating */}
-      <SectionCard title="Store rating" description="The score shown above the customer reviews on the home page.">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <Field label="Store rating (out of 5)" htmlFor={`${formId}-ratingSummary`} hint="Shown next to the stars on the home page.">
-              <TextInput {...text('ratingSummary')} inputMode="decimal" placeholder="4.9" className="max-w-[8rem]" />
-            </Field>
-            <FormError message={fe.ratingSummary} />
-          </div>
-          <Field label="Reviews text" htmlFor={`${formId}-ratingSummaryCount`} hint="Example: 2,500+ verified reviews.">
-            <TextInput {...text('ratingSummaryCount')} placeholder="2,500+ verified reviews" />
-          </Field>
         </div>
       </SectionCard>
 

@@ -43,13 +43,36 @@ export function decodeEntities(input: string): string {
   return out;
 }
 
+const TEXT_BLOCK_TAG = /<\/?(?:p|div|li|ul|ol|h[1-6]|blockquote|table|tr|td|th)\b[^>]*>|<br\s*\/?>/gi;
+const ENDS_SENTENCE = /[.!?:;,…][\s"'”’)\]]*$/;
+
+/**
+ * For plain-text excerpts: a heading or list item whose text ends without punctuation gets a full stop, so it
+ * doesn't run into the next sentence once the tags are gone ("…fabric and frame. Measure twice. Leave at least…").
+ * A list item's own text ends where a nested list starts ("Sofas. Corner sofas.").
+ */
+function punctuateBlockEnds(html: string): string {
+  let blockStart = 0;
+  return html.replace(TEXT_BLOCK_TAG, (tag: string, offset: number) => {
+    const inner = html.slice(blockStart, offset);
+    blockStart = offset + tag.length;
+    const nestedList = /^<(?:ul|ol)\b/i.test(tag);
+    if (!nestedList && !/^<\/(?:h[1-6]|li)\b/i.test(tag)) return tag;
+    const text = decodeEntities(inner.replace(/<[^>]*>/g, '')).trim();
+    const stop = text && !ENDS_SENTENCE.test(text) ? '.' : '';
+    return nestedList ? `${stop} ${tag}` : `${stop}${tag}`;
+  });
+}
+
 /** HTML → plain text (drops scripts/styles/links/comments first so they never leak into excerpts). */
 export function stripHtml(html: string): string {
-  const text = html
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<link[^>]*>/gi, ' ')
-    .replace(/<!--[\s\S]*?-->/g, ' ')
+  const text = punctuateBlockEnds(
+    html
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<link[^>]*>/gi, ' ')
+      .replace(/<!--[\s\S]*?-->/g, ' '),
+  )
     .replace(/<\/(p|li|h[1-6]|div)>/gi, ' ')
     .replace(/<[^>]*>/g, '');
   return decodeEntities(text).replace(/\s+/g, ' ').trim();
@@ -138,10 +161,11 @@ export type ArticleTag = { label: string; href: string };
 /** Index card excerpt: Shopify `article.content | strip_html | truncatewords: 30`. */
 export function articleExcerpt(contentHtml: string, words = 30): string {
   // strip_html removes tags without adding spaces, and &nbsp; does not split words. Block ends and <br>
-  // become a space first: editor-saved HTML has no newline between blocks, so words would run together
-  // (migrated bodies already had whitespace there, so their excerpts are unchanged).
+  // become a space first: editor-saved HTML has no newline between blocks, so words would run together.
+  // A subheading or list item without punctuation also gets a full stop (unlike live), so it reads as its own
+  // sentence in the preview.
   const text = decodeEntities(
-    contentHtml
+    punctuateBlockEnds(contentHtml)
       .replace(/&nbsp;/g, '\u00a0')
       .replace(/<\/(p|li|h[1-6]|div|blockquote)>|<br\s*\/?>/gi, '$& ')
       .replace(/<[^>]*>/g, ''),

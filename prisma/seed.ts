@@ -11,7 +11,7 @@ import bcrypt from 'bcryptjs';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { GLOBAL_MENUS, GLOBAL_SETTINGS, applyGlobalFidelity, createMenuTree } from '../scripts/fidelity/global';
-import { applyHomeFidelity } from '../scripts/fidelity/home';
+import { applyHomeFidelity, applyHomeHotSellingOrder } from '../scripts/fidelity/home';
 import { applyCatalogFidelity } from '../scripts/fidelity/catalog';
 import { applyProductFidelity } from '../scripts/fidelity/product';
 import { applyContentFidelity } from '../scripts/fidelity/content';
@@ -439,8 +439,6 @@ async function main() {
     instagram: '#',
     youtube: '#',
     linkedin: '#',
-    ratingSummary: '4.92',
-    ratingSummaryCount: '2,500+ verified reviews',
   };
   for (const [key, value] of Object.entries(settings)) await prisma.siteSetting.create({ data: { key, value } });
 
@@ -452,6 +450,8 @@ async function main() {
   await applyProductFidelity(prisma, { offline: true });
   await applyContentFidelity(prisma);
   printReport(await runAdminEasyModeMigration(prisma, { backup: false }));
+  // last: every step above may update products, and the home Hot Selling row follows their last change
+  await applyHomeHotSellingOrder(prisma);
 
   console.log('SEED COMPLETE');
 }

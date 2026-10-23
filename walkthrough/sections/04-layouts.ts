@@ -6,9 +6,9 @@ import { ICON_LABELS, type IconKey } from '../../src/lib/product-layout-icons';
 
 /*
  * 4. Product page layouts: copy the built-in standard layout, rename it to LAYOUT.name, give it five sections
- * (big photo, photo and text, icons, quotes, products from a collection) above "You may also like", preview it,
- * save it, move LAYOUT.products onto it and check the store: the sofa page shows the new sections in order,
- * the bed page keeps the standard layout.
+ * (big photo, photo and text, icons, quotes, products from a collection) — each new one goes in above the automatic
+ * "You may also like", so no reordering is needed — preview it, save it, move LAYOUT.products onto it and check the
+ * store: the sofa page shows the new sections in order, the bed page keeps the standard layout.
  */
 
 const STANDARD = 'General furniture (standard)';
@@ -203,7 +203,7 @@ const section: Section = {
     g.part(
       'Add the sections',
       'The **Sections** list shows what appears under the product description, from top to bottom. The copy starts with only “You may also like”. ' +
-        'Add five sections; each one opens its settings as soon as you add it.',
+        'Add five sections; each one opens its settings as soon as you add it, and goes in **above** “You may also like”, which stays last on the page.',
     );
 
     // 1. Big photo with text — open the "Add a section" window once with a screenshot
@@ -232,12 +232,11 @@ const section: Section = {
     await expect(addDlg).toBeHidden();
     const overlay = sectionRow(admin, 'overlay');
     await expect(overlay.getByTestId('section-editor')).toBeVisible();
-    expect(await kindsInEditor(admin)).toEqual(['recommendations', 'overlay']);
-    g.finding(
-      'note',
-      'New sections are added below “You may also like”',
-      'Every new section is added at the very bottom, under the automatic “You may also like” products, although on almost every product page that row is meant to stay last. ' +
-        'After adding sections you have to move them up (or move “You may also like” down) with the arrows. Adding new sections above “You may also like” would save these clicks.',
+    expect(await kindsInEditor(admin)).toEqual(['overlay', 'recommendations']);
+    await expect(sectionRow(admin, 'recommendations').getByRole('button', { name: 'Move down' }).first()).toBeDisabled();
+    g.expect(
+      '**Big photo with text** is added **above** “You may also like”, which stays the last section (the products row normally closes the product page). ' +
+        'You never have to move a new section up past it.',
     );
     await g.form([
       { label: 'Background photo', kind: 'upload', button: 'Upload photo', value: LAYOUT.overlayPhoto, act: () => uploadPhoto(overlay, LAYOUT.overlayPhoto) },
@@ -375,19 +374,19 @@ const section: Section = {
     await closeSection(g, featured, 'Products from a collection', LAYOUT.featuredHeading);
 
     /* ------------------------------------------------------------------ order */
-    g.part('Put the sections in order');
-    const wanted = ['overlay', 'imageText', 'icons', 'testimonials', 'featuredCollection', 'recommendations'];
-    expect(await kindsInEditor(admin)).toEqual(['recommendations', ...wanted.slice(0, -1)]);
-    g.text('“You may also like” is still at the top, because new sections are added at the bottom. Move it down to the end:');
-    const recs = sectionRow(admin, 'recommendations');
-    g.step(
-      'On the **“You may also like”** row, click the **↓** arrow (_Move down_) on the right **5 times**, until it is the last section. (On a computer you can also drag a section by the handle at its left edge.)',
+    g.part(
+      'Check the order of the sections',
+      'Each section was added above “You may also like”, in the order you added them, so the list is already in the right order. ' +
+        'To change the order, use the **↑** / **↓** arrows on the right of a row (on a computer you can also drag a row by the handle at its left edge).',
     );
-    for (let i = 0; i < wanted.length - 1; i++) await recs.getByRole('button', { name: 'Move down' }).first().click();
-    await expect.poll(() => kindsInEditor(admin)).toEqual(wanted);
+    const wanted = ['overlay', 'imageText', 'icons', 'testimonials', 'featuredCollection', 'recommendations'];
+    expect(await kindsInEditor(admin)).toEqual(wanted);
+    const recs = sectionRow(admin, 'recommendations');
     await expect(recs.getByRole('button', { name: 'Move down' }).first()).toBeDisabled();
+    await expect(sectionRow(admin, 'overlay').getByRole('button', { name: 'Move up' }).first()).toBeDisabled();
     g.expect(
-      'The sections now read, from top to bottom: **Big photo with text**, **Photo and text**, **Icons row**, **Customer quotes**, **Products from a collection**, **“You may also like”** (its ↓ arrow is greyed out).',
+      'Without moving anything, the sections read from top to bottom: **Big photo with text**, **Photo and text**, **Icons row**, **Customer quotes**, **Products from a collection**, **“You may also like”** ' +
+        '(the last one’s ↓ arrow and the first one’s ↑ arrow are greyed out).',
     );
     await tallShot(g, admin, `The ${LAYOUT.name} sections in their final order`, { highlight: admin.getByRole('list', { name: 'Sections' }) });
 

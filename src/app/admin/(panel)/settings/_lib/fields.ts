@@ -10,6 +10,9 @@ export const SETTINGS_FIELDS = [
   'announcementHref',
   'announcementCta',
   'announcementCtaHref',
+  'homeStrip',
+  'homeTextHeading',
+  'homeText',
   'phone',
   'email',
   'complaintsEmail',
@@ -18,8 +21,6 @@ export const SETTINGS_FIELDS = [
   'instagram',
   'youtube',
   'linkedin',
-  'ratingSummary',
-  'ratingSummaryCount',
 ] as const satisfies readonly SettingKey[];
 
 export type SettingsValues = Record<(typeof SETTINGS_FIELDS)[number], string>;

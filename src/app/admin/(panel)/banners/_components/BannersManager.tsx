@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { deleteBannerAction, reorderBannersAction, toggleBannerAction } from '@/app/admin/actions/banners';
 import type { LinkTarget } from '@/lib/links';
 import { Notice, ToggleSwitch } from '@/components/admin/ui';
@@ -86,10 +86,36 @@ export function BannersManager({ banners, targets }: { banners: BannerRow[]; tar
     });
   };
 
-  const onSaved = useCallback((id: number) => {
+  // a scroll to the saved banner still waiting for the history step below (cancelled on unmount)
+  const pendingReveal = useRef<(() => void) | null>(null);
+  useEffect(() => () => pendingReveal.current?.(), []);
+
+  const onSaved = useCallback((id: number, guarded: boolean) => {
     setEditing(null);
     setFlash('Saved. The home page is updated.');
-    window.setTimeout(() => document.getElementById(`banner-${id}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 150);
+    pendingReveal.current?.();
+    const reveal = () => document.getElementById(`banner-${id}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    if (!guarded) {
+      const t = window.setTimeout(reveal, 150);
+      pendingReveal.current = () => window.clearTimeout(t);
+      return;
+    }
+    // A form with unsaved changes had its UnsavedChangesGuard add a Back-button entry; once the save has settled
+    // the guard removes it with history.back(), and the browser then scrolls back to where the page was when the
+    // form was first changed. Scrolling to the banner before that step made the page slide down and straight
+    // back up, so wait for it (or give up waiting after 3 s) and scroll once the browser's own scroll has begun.
+    const done = () => {
+      window.removeEventListener('popstate', done);
+      window.clearTimeout(fallback);
+      const t = window.setTimeout(reveal, 0);
+      pendingReveal.current = () => window.clearTimeout(t);
+    };
+    const fallback = window.setTimeout(done, 3000);
+    window.addEventListener('popstate', done);
+    pendingReveal.current = () => {
+      window.removeEventListener('popstate', done);
+      window.clearTimeout(fallback);
+    };
   }, []);
   const onCancel = useCallback(() => setEditing(null), []);
 

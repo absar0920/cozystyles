@@ -94,7 +94,10 @@ export default async function InquiriesPage({
       />
 
       {/* ---------- Filters (plain GET form: works without JavaScript) ---------- */}
+      {/* keyed by the filters: the fields are uncontrolled, so a client-side visit to other filters (Clear, the
+          sidebar link, Back) remounts the form to show them instead of keeping the previous choices */}
       <form
+        key={`${range}|${kind}|${q}|${productId ?? ''}`}
         action="/admin/inquiries"
         method="get"
         className="mb-5 grid grid-cols-2 gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm lg:grid-cols-[repeat(3,minmax(0,1fr))_auto] lg:items-end"

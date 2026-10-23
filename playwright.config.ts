@@ -27,7 +27,7 @@ export default defineConfig({
   // Never start a server when BASE_URL points elsewhere; otherwise reuse the dev server if it is already up.
   webServer: externalBaseURL
     ? undefined
-    : { command: 'npx next dev -p 3100', url: 'http://localhost:3100/admin/login', reuseExistingServer: true, timeout: 180_000 },
+    : { command: 'npx next dev --turbopack -p 3100', url: 'http://localhost:3100/admin/login', reuseExistingServer: true, timeout: 180_000 },
   projects: [
     { name: 'setup', testMatch: /auth\.setup\.ts/ },
     { name: 'admin', testMatch: /(admin|integration)\/(?!mobile).*\.spec\.ts/, dependencies: ['setup'], use: { storageState: authFile } },

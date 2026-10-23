@@ -67,8 +67,9 @@ test('layout editor: signed out while editing keeps the draft and saves after si
     await dialog.getByRole('button', { name: 'Sign in and save' }).click();
     await expect(page.getByText(/^Saved\./).first()).toBeVisible({ timeout: 30_000 });
     const rows = await rowsOf(prisma, id);
-    expect(rows.map((r) => r.kind)).toEqual(['recommendations', 'testimonials']);
-    expect(JSON.parse(rows[1].data).heading).toBe(heading);
+    // a new section goes above the automatic "You may also like" at the end
+    expect(rows.map((r) => r.kind)).toEqual(['testimonials', 'recommendations']);
+    expect(JSON.parse(rows[0].data).heading).toBe(heading);
   } finally {
     await data.cleanup();
     await prisma.$disconnect();

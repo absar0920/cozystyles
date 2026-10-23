@@ -17,9 +17,9 @@ async function labels(page: Page): Promise<string[]> {
   return topItems(page).evaluateAll((els) => els.map((e) => e.getAttribute('data-label') ?? ''));
 }
 
-async function storefrontUserArea(page: Page): Promise<string[]> {
+async function storefrontCustomerSupport(page: Page): Promise<string[]> {
   await page.goto('/');
-  return page.locator('nav[aria-label="User Area"] li').allInnerTexts().then((t) => t.map((s) => s.trim()));
+  return page.locator('nav[aria-label="Customer Support"] li').allInnerTexts().then((t) => t.map((s) => s.trim()));
 }
 
 async function saveMenu(page: Page) {
@@ -63,7 +63,8 @@ async function restore(page: Page, order: string[]) {
 test('reorder the Customer Support footer menu', async ({ page }) => {
   // start from the seed order (repairs a previous run that could not restore)
   await restore(page, SEED_ORDER);
-  await expect(page.getByTestId('tabs')).toContainText('User Area');
+  // the tab's hint names the footer heading the store shows (the same words as the tab)
+  await expect(page.getByTestId('tabs')).toContainText('under the “Customer Support” heading');
   const original = await labels(page);
   expect(original).toEqual(SEED_ORDER);
 
@@ -74,7 +75,7 @@ test('reorder the Customer Support footer menu', async ({ page }) => {
     const afterArrows = [original[2], original[0], original[1], ...original.slice(3)];
     expect(await labels(page)).toEqual(afterArrows);
     await saveMenu(page);
-    expect((await storefrontUserArea(page))[0]).toBe(original[2]);
+    expect((await storefrontCustomerSupport(page))[0]).toBe(original[2]);
 
     // drag item 1 below item 2 with the handle
     await page.goto(TAB);
@@ -92,7 +93,7 @@ test('reorder the Customer Support footer menu', async ({ page }) => {
     // the drop has registered once the save bar says so (a click during the drop animation is swallowed)
     await expect(saveBar(page)).toContainText('Unsaved changes');
     await saveMenu(page);
-    expect((await storefrontUserArea(page)).slice(0, afterDrag.length)).toEqual(afterDrag);
+    expect((await storefrontCustomerSupport(page)).slice(0, afterDrag.length)).toEqual(afterDrag);
 
     // removing asks first and only happens on save
     await page.goto(TAB);
@@ -105,7 +106,7 @@ test('reorder the Customer Support footer menu', async ({ page }) => {
   } finally {
     await restore(page, SEED_ORDER);
   }
-  expect(await storefrontUserArea(page)).toEqual(SEED_ORDER);
+  expect(await storefrontCustomerSupport(page)).toEqual(SEED_ORDER);
 });
 
 test('main menu: a stacked heading shows an unticked "Start a new column" box', async ({ page }) => {

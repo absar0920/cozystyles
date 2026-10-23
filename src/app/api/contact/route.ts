@@ -4,8 +4,12 @@ import { clientIpFromHeaders, rateLimit } from '@/lib/ratelimit';
 
 export const dynamic = 'force-dynamic';
 
-/** Must match the subject options offered by the storefront contact form. */
-const ALLOWED_SUBJECTS = new Set(['General', 'Sales', 'Complaint', 'Corporate', 'Careers']);
+/**
+ * Subjects the storefront forms send (anything else is stored as General). "Newsletter" = the footer sign-up box:
+ * there is no mailing list behind it, the sign-ups are listed in Admin → Messages (subject "Newsletter").
+ */
+const NEWSLETTER_SUBJECT = 'Newsletter';
+const ALLOWED_SUBJECTS = new Set(['General', 'Sales', 'Complaint', 'Corporate', 'Careers', NEWSLETTER_SUBJECT]);
 
 const LIMITS = {
   name: 120,
@@ -63,8 +67,14 @@ export async function POST(request: Request) {
   if (email.length > LIMITS.email) return bad('Email address is too long.');
   if (phone.length > LIMITS.phone) return bad('Phone number is too long.');
   if (subjectRaw.length > LIMITS.subject) return bad('Subject is too long.');
+  const newsletter = subject === NEWSLETTER_SUBJECT;
+  if (newsletter && !email) return bad('Please enter your email address.');
 
   try {
+    // Signing up twice keeps one row per email address.
+    if (newsletter && (await prisma.contactSubmission.findFirst({ where: { subject, email }, select: { id: true } }))) {
+      return NextResponse.json({ ok: true });
+    }
     await prisma.contactSubmission.create({
       data: { name, email, phone, subject, message },
     });

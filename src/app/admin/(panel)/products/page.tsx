@@ -115,13 +115,18 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
       </span>
     );
 
+  // the star is the product editor's "Best seller" tick: it decides the home page's Hot Selling Products row
+  const starLabel = (hot: boolean) =>
+    hot
+      ? 'Best seller: in Hot Selling Products on the home page. Click to take it out'
+      : 'Mark as best seller: puts it in Hot Selling Products on the home page';
   const Star = ({ id, hot }: { id: number; hot: boolean }) => (
     <form action={toggleProductHotAction}>
       <input type="hidden" name="id" value={id} />
       <button
         type="submit"
-        aria-label={hot ? 'Best seller — click to remove the star' : 'Click to mark as best seller'}
-        title={hot ? 'Best seller — click to remove the star' : 'Mark as best seller'}
+        aria-label={starLabel(hot)}
+        title={starLabel(hot)}
         className={`inline-flex h-10 w-10 items-center justify-center rounded-lg transition hover:bg-gray-100 ${hot ? 'text-amber-500' : 'text-gray-300 hover:text-amber-400'}`}
       >
         <StarIcon className="h-5 w-5" filled={hot} />

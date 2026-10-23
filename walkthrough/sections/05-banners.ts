@@ -76,6 +76,30 @@ const recordScroll = (page: Page) =>
     w.__scrollLog = [];
   });
 
+/**
+ * After a save the page scrolls to the banner just added and stays there. (The first run found it sliding down to
+ * the new banner and then jumping back to the top, when the unsaved-changes guard stepped back in the browser
+ * history a moment after the save.) Call recordScroll() before clicking the save button.
+ */
+async function expectSavedBannerInView(page: Page, name: string) {
+  const card = cardOf(page, name);
+  const inView = () =>
+    card.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return r.top >= 0 && r.bottom <= window.innerHeight;
+    });
+  await expect.poll(inView, { message: `"${name}" is scrolled into view after saving`, timeout: 10_000 }).toBe(true);
+  // give the history step and any late scroll time to happen, then check the page did not slide back up
+  await page.waitForTimeout(1500);
+  const { log, y } = await page.evaluate(() => ({
+    log: (window as unknown as { __scrollLog?: number[] }).__scrollLog ?? [],
+    y: Math.round(window.scrollY),
+  }));
+  const peak = Math.max(0, ...log);
+  expect(y, `the page stays at "${name}" after saving (scroll positions: ${log.join(', ')})`).toBeGreaterThanOrEqual(peak - 20);
+  expect(await inView(), `"${name}" is still in view after saving`).toBe(true);
+}
+
 /** Add one banner with the inline form (undocumented steps: the caller documents them as a table). */
 async function addBanner(page: Page, b: Banner, beforeSave?: (form: Locator) => Promise<void>): Promise<string> {
   await addBannerButton(page).click();
@@ -104,6 +128,7 @@ async function addBanner(page: Page, b: Banner, beforeSave?: (form: Locator) => 
   await expect(card).toContainText(`Link: Collection · ${b.link}`);
   await expect(card).toContainText(b.visible ? 'Shown on the store' : 'Hidden');
   await expect(card.locator('img').first()).toHaveAttribute('src', desktop);
+  await expectSavedBannerInView(page, b.name);
   return desktop;
 }
 
@@ -200,6 +225,7 @@ const section: Section = {
     await form.evaluate((el) => el.scrollIntoView({ block: 'start' }));
     await g.shot(admin, `New banner form filled in for "${first.name}", before saving`, { highlight: form });
 
+    await recordScroll(admin);
     await g.click(saveNewButton(admin), 'In the bar at the bottom of the screen, click **Add banner**.');
     await expect(admin.getByText(SAVED)).toBeVisible();
     await expect(form).toHaveCount(0);
@@ -212,6 +238,7 @@ const section: Section = {
     await expect(firstCard.locator('img').nth(1)).toHaveAttribute('src', firstPhone);
     await expect(firstCard.getByText('Phone', { exact: true })).toBeVisible();
     await expect(admin.getByText('1 banner · 1 shown on the store')).toBeVisible();
+    await expectSavedBannerInView(admin, first.name);
     g.expect(
       `A green message **${SAVED}** appears and the form closes. The list shows banner **#1 ${first.name}** with both photos (**Computer** and **Phone**), **Link: Collection · ${first.link}** and **Shown on the store**.`,
     );
@@ -261,33 +288,10 @@ const section: Section = {
     g.expect(
       `After each **Add banner** click, **${SAVED}** appears and the new banner is added at the end of the list, showing **Link: Collection · …** with the collection you picked.`,
     );
+    g.expect(
+      `After each save the page scrolls by itself to the banner you just added (once the list is longer than the screen) and stays there, so you can check the new banner without scrolling.`,
+    );
     g.expect(`While a banner form is open, the list's drag handles and arrows are greyed out and the page says **${FORM_HINT}**`);
-
-    // After a save the list scrolls to the new banner; give the page time to settle, then see where it ended up.
-    await admin.waitForTimeout(2000);
-    const after = await admin.evaluate(() => ({
-      log: (window as unknown as { __scrollLog?: number[] }).__scrollLog ?? [],
-      y: Math.round(window.scrollY),
-    }));
-    // the biggest downward movement after the click (towards the new banner)
-    let lowest = Infinity;
-    let slidDown = 0;
-    for (const y of after.log) {
-      lowest = Math.min(lowest, y);
-      slidDown = Math.max(slidDown, y - lowest);
-    }
-    const last = rest[rest.length - 1];
-    const lastInView = await cardOf(admin, last.name).evaluate((el) => {
-      const r = el.getBoundingClientRect();
-      return r.top >= 0 && r.bottom <= window.innerHeight;
-    });
-    if (slidDown > 100 && after.y === 0 && !lastInView) {
-      g.finding(
-        'issue',
-        'After saving a banner the page slides down to it, then jumps back to the top',
-        `After **Add banner** was clicked for **${last.name}**, the page started sliding down to show the new banner (about ${slidDown} px), but without any further click it jumped back to the very top a moment later, so the banner that was just saved is out of view again. The page itself is meant to keep the saved banner in view. It is only a small visual jolt (the green **${SAVED}** message at the top is still visible), but with a longer list the owner has to scroll down again to check the new banner.`,
-      );
-    }
 
     /* ---------------------------------------------------------------------------------- the list */
     g.part('Check the list and the order', 'The home page shows the banners in the order of this list. We keep the order as it is.');

@@ -25,8 +25,9 @@ export type SettingKey =
   | 'whatsappGreeting'
   | 'whatsappAvailabilityGreeting'
   | 'whatsappClosing'
-  | 'ratingSummary'
-  | 'ratingSummaryCount';
+  | 'homeStrip'
+  | 'homeTextHeading'
+  | 'homeText';
 
 export type SettingsFormState = {
   ok: boolean;
@@ -55,8 +56,9 @@ const SETTING_KEYS: SettingKey[] = [
   'whatsappGreeting',
   'whatsappAvailabilityGreeting',
   'whatsappClosing',
-  'ratingSummary',
-  'ratingSummaryCount',
+  'homeStrip',
+  'homeTextHeading',
+  'homeText',
 ];
 
 const SOCIAL_HOSTS: Record<'facebook' | 'instagram' | 'youtube' | 'linkedin', { name: string; hosts: string[] }> = {
@@ -67,6 +69,12 @@ const SOCIAL_HOSTS: Record<'facebook' | 'instagram' | 'youtube' | 'linkedin', { 
 };
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Home page text limits (the form shows the same numbers)
+const HOME_STRIP_MESSAGE_MAX = 120;
+const HOME_STRIP_MESSAGES_MAX = 10;
+const HOME_TEXT_HEADING_MAX = 120;
+const HOME_TEXT_MAX = 5000;
 
 const oneLine = (v: string) => v.replace(/[\r\n\t]+/g, ' ');
 
@@ -134,12 +142,24 @@ export async function saveSettingsAction(_prev: SettingsFormState, formData: For
     if (!hosts.some((h) => host === h || host.endsWith(`.${h}`))) fe[key] = `This doesn't look like a ${name} address.`;
   }
 
-  // Store rating
-  const rating = raw('ratingSummary').trim().replace(',', '.');
-  if (rating === '') v.ratingSummary = '';
-  else if (!/^\d(\.\d{1,2})?$/.test(rating) || Number(rating) > 5) fe.ratingSummary = 'Enter a number from 0 to 5, like 4.9.';
-  else v.ratingSummary = rating;
-  v.ratingSummaryCount = oneLine(raw('ratingSummaryCount')).trim().slice(0, 60);
+  // Home page: the scrolling strip (one message per line) and the text block at the bottom
+  const messages = raw('homeStrip')
+    .split(/\r?\n/)
+    .map((l) => oneLine(l).trim())
+    .filter(Boolean);
+  v.homeStrip = messages.join('\n');
+  if (messages.some((m) => m.length > HOME_STRIP_MESSAGE_MAX)) fe.homeStrip = `Keep each message under ${HOME_STRIP_MESSAGE_MAX} characters.`;
+  else if (messages.length > HOME_STRIP_MESSAGES_MAX) fe.homeStrip = `Use at most ${HOME_STRIP_MESSAGES_MAX} messages (one per line).`;
+  v.homeTextHeading = oneLine(raw('homeTextHeading')).trim();
+  if (v.homeTextHeading.length > HOME_TEXT_HEADING_MAX) fe.homeTextHeading = `Keep the heading under ${HOME_TEXT_HEADING_MAX} characters.`;
+  v.homeText = raw('homeText')
+    .replace(/\r\n?/g, '\n')
+    .split('\n')
+    .map((l) => l.replace(/[ \t]+$/, ''))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  if (v.homeText.length > HOME_TEXT_MAX) fe.homeText = `Keep the text under ${HOME_TEXT_MAX.toLocaleString('en-US')} characters.`;
 
   if (Object.keys(fe).length) {
     return { ok: false, error: 'Please fix the highlighted fields.', fieldErrors: fe };
@@ -151,7 +171,7 @@ export async function saveSettingsAction(_prev: SettingsFormState, formData: For
     ),
   );
 
-  // Buttons, the bubble, the announcement bar, the footer and the admin's WhatsApp warning all read settings.
+  // Buttons, the bubble, the announcement bar, the home page, the footer and the admin's WhatsApp warning all read settings.
   revalidatePath('/', 'layout');
   revalidatePath('/admin', 'layout');
   return { ok: true, savedAt: Date.now(), values: v };

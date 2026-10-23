@@ -2,16 +2,38 @@
 
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { SITE } from '@/lib/constants';
 
-/** "+92-42-111-269-926" → "042 111 269 926" (live writes its UAN this way). */
-function localPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, '').replace(/^92/, '0');
-  return digits.replace(/^(\d{3})(\d{3})(\d{3})(\d+)$/, '$1 $2 $3 $4');
+/** A UAN "+92-42-111-269-926" → "042 111 269 926" (live writes its UAN this way); other numbers as typed. */
+export function localPhone(phone: string): string {
+  const trimmed = phone.trim();
+  const digits = trimmed.replace(/\D/g, '').replace(/^92/, '0');
+  const uan = digits.match(/^(0\d{2})(111)(\d{3})(\d{3})$/);
+  return uan ? uan.slice(1).join(' ') : trimmed;
 }
 
-/** Live "What is Pre-Order?" popup: centred white box, thick translucent border, 70% black page backdrop. */
-export function PreOrderModal({ onClose }: { onClose: () => void }) {
+/** The popup's last line: how to get help, from what the shop has set up (nothing → no line). */
+export function preOrderHelpLine(phone: string | null | undefined, hasWhatsApp: boolean): string | null {
+  const call = phone?.trim() ? `call ${localPhone(phone)}` : '';
+  if (hasWhatsApp && call) return `For any help, message us on WhatsApp or ${call}.`;
+  if (hasWhatsApp) return 'For any help, message us on WhatsApp.';
+  if (call) return `For any help, ${call}.`;
+  return null;
+}
+
+/**
+ * Live "What is Pre-Order?" popup: centred white box, thick translucent border, 70% black page backdrop.
+ * `phone` is the Phone from Admin → Settings → Contact details; `hasWhatsApp` = a WhatsApp number is set.
+ */
+export function PreOrderModal({
+  onClose,
+  phone = null,
+  hasWhatsApp = true,
+}: {
+  onClose: () => void;
+  phone?: string | null;
+  hasWhatsApp?: boolean;
+}) {
+  const help = preOrderHelpLine(phone, hasWhatsApp);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
@@ -40,8 +62,12 @@ export function PreOrderModal({ onClose }: { onClose: () => void }) {
           Please note that delivery dates for pre-order items are subject to change so your product may arrive a little
           earlier or later than estimated.
           <br />
-          For any help, message us on WhatsApp or call {localPhone(SITE.phone)}.
-          <br />
+          {help && (
+            <>
+              {help}
+              <br />
+            </>
+          )}
         </p>
         <button
           type="button"

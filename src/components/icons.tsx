@@ -125,13 +125,6 @@ export const ThemeSearchIcon = (p: P) => (
   </svg>
 );
 
-/** Header account (19×21). */
-export const ThemeAccountIcon = (p: P) => (
-  <svg width="19" height="21" viewBox="0 0 19 21" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden {...p}>
-    <path d="M9.3486 1C15.5436 1 15.5436 10.4387 9.3486 10.4387C3.15362 10.4387 3.15362 1 9.3486 1ZM1 19.9202C1.6647 9.36485 17.4579 9.31167 18.0694 19.9468L17.0857 20C16.5539 10.6145 2.56869 10.6411 2.01034 19.9734L1.02659 19.9202H1ZM9.3486 2.01034C4.45643 2.01034 4.45643 9.42836 9.3486 9.42836C14.2408 9.42836 14.2408 2.01034 9.3486 2.01034Z" fill="currentColor" stroke="currentColor" strokeWidth="0.1" />
-  </svg>
-);
-
 /** Search-panel close X (14×14, stroke 1.5). */
 export const ThemeCloseIcon = (p: P) => (
   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden {...p}>

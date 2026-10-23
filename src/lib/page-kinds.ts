@@ -2,7 +2,11 @@
 export const PAGE_KINDS = ['TEXT', 'BLOG', 'DESIGNED'] as const;
 export type PageKind = (typeof PAGE_KINDS)[number];
 
-/** Pages rendered by code: the admin edits only their SEO fields and publish state. */
+/**
+ * Handles the easy-mode migration stores as DESIGNED pages (rendered by code: the admin edits only their SEO
+ * fields and publish state). Only the rows decide which addresses are taken: a shop without, say, an "about-us"
+ * row can give that address to a text page (see `savePageAction`).
+ */
 export const DESIGNED_PAGE_HANDLES: readonly string[] = [
   // rendered by components
   'about',
@@ -36,6 +40,13 @@ export const DESIGNED_PAGE_HANDLES: readonly string[] = [
   'track-your-order',
 ];
 
+/**
+ * Page addresses the store answers from code even when no page row has them (the built-in “Contact us” page at
+ * /pages/contact), so a text page can never take them.
+ */
+export const BUILT_IN_PAGE_HANDLES: readonly string[] = ['contact'];
+
+/** Blog posts are stored as `news-<slug>`, so text page addresses never start with it. */
 export const BLOG_HANDLE_PREFIX = 'news-';
 
 export function blogHandle(slug: string): string {

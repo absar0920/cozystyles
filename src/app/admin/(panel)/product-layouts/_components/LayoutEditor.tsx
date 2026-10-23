@@ -25,6 +25,7 @@ import {
 import {
   MAX_DESCRIPTION,
   describeChanges,
+  isAutomaticKind,
   preferredImageTextHeading,
   productsPhrase,
   sectionLabels,
@@ -94,6 +95,18 @@ function adoptKeys(loaded: LayoutDraft, saved: LayoutDraft): LayoutDraft {
       return { ...s, key: k ?? newKey() };
     }),
   };
+}
+
+/**
+ * Where "Add section" puts a new section: above the automatic sections at the end of the layout ("You may also
+ * like", reviews), which normally close the product page, so the owner doesn't have to move it up each time.
+ * An automatic section itself is added at the very end.
+ */
+function insertAt(sections: readonly DraftSection[], kind: SectionKind): number {
+  if (isAutomaticKind(kind)) return sections.length;
+  let at = sections.length;
+  while (at > 0 && isAutomaticKind(sections[at - 1].kind)) at--;
+  return at;
 }
 
 function SubmitDeleteButton({ className }: { className: string }) {
@@ -224,7 +237,10 @@ export function LayoutEditor({
   const addSection = (kind: SectionKind) => {
     const d = newSectionDefaults(kind, kind === 'imageText' ? { headingClass: preferredImageTextHeading(draftRef.current.sections) } : {});
     const s = { key: newKey(), kind, base: { from: 'new' }, hidden: false, bodyHtml: d.bodyHtml, values: valuesFromData(kind, d.data, null) } as DraftSection;
-    setDraft((cur) => ({ ...cur, sections: [...cur.sections, s] }));
+    setDraft((cur) => {
+      const at = insertAt(cur.sections, kind);
+      return { ...cur, sections: [...cur.sections.slice(0, at), s, ...cur.sections.slice(at)] };
+    });
     setAddOpen(false);
     toggleOpen(s.key, true);
     window.setTimeout(() => scrollTo(s.key), 50);

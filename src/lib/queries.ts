@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db';
 import type { Prisma } from '@prisma/client';
 import { cardStatusLabel, isAvailable } from '@/lib/variant-status';
+import { discountPercent } from '@/lib/money';
 
 export type MenuNode = {
   id: number;
@@ -80,12 +81,34 @@ export function displayPrice(prices: number[]): number | null {
   return positive.length ? Math.min(...positive) : null;
 }
 
+export type CardPrice = {
+  /** 0 when every variant is 0 (price on request). */
+  price: number;
+  priceOnRequest: boolean;
+  /** The struck-through "was" price: the SAME variant's compare-at price, only when above its price. */
+  compareAtPrice: number | null;
+  /** Sale circle %: the same variant's discount (null = no circle). */
+  salePercent: number | null;
+};
+
+/**
+ * A product card's price, struck price and sale circle all come from ONE variant: the cheapest one (price > 0).
+ * Mixing variants would advertise a deal no option has (e.g. the 2 Seater's price with the 3 Seater's old
+ * price). When several variants share the lowest price, the one with a real compare-at price wins.
+ */
+export function cardPrice(variants: { price: number; compareAtPrice: number | null }[]): CardPrice {
+  const price = displayPrice(variants.map((v) => v.price));
+  if (price == null) return { price: 0, priceOnRequest: true, compareAtPrice: null, salePercent: null };
+  const was = (v: { price: number; compareAtPrice: number | null }) =>
+    v.compareAtPrice != null && v.compareAtPrice > v.price ? v.compareAtPrice : 0;
+  const compareAt = Math.max(0, ...variants.filter((v) => v.price === price).map(was));
+  if (!compareAt) return { price, priceOnRequest: false, compareAtPrice: null, salePercent: null };
+  return { price, priceOnRequest: false, compareAtPrice: compareAt, salePercent: discountPercent(price, compareAt) };
+}
+
 export function toCard(p: CardRaw): ProductCardData & { compareAtPrice: number | null; priceOnRequest: boolean } {
   const vs = p.variants;
-  const price = displayPrice(vs.map((v) => v.price)) ?? 0;
-  const priceOnRequest = price === 0;
-  const compares = vs.map((v) => v.compareAtPrice).filter((c): c is number => c != null && c > price);
-  const compareAtPrice = priceOnRequest ? null : compares.length ? Math.max(...compares) : null;
+  const { price, priceOnRequest, compareAtPrice } = cardPrice(vs);
   return {
     id: p.id,
     handle: p.handle,

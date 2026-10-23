@@ -24,7 +24,8 @@ export function BannerForm({
 }: {
   banner: BannerRow | null;
   target?: LinkTarget;
-  onSaved: (id: number) => void;
+  /** `guarded`: the form had unsaved changes when saved, so its UnsavedChangesGuard steps back in history after the save */
+  onSaved: (id: number, guarded: boolean) => void;
   onCancel: () => void;
 }) {
   const initial: Values = {
@@ -41,6 +42,7 @@ export function BannerForm({
   const formRef = useRef<HTMLFormElement>(null);
   const formId = useId();
   const handled = useRef<number | undefined>(undefined);
+  const submittedDirty = useRef(false);
 
   const dirty = JSON.stringify(values) !== JSON.stringify(baseline);
   const set = <K extends keyof Values>(key: K, v: Values[K]) => setValues((prev) => ({ ...prev, [key]: v }));
@@ -48,7 +50,7 @@ export function BannerForm({
   useEffect(() => {
     if (state.ok && state.savedAt && state.savedAt !== handled.current && state.savedId) {
       handled.current = state.savedAt;
-      onSaved(state.savedId);
+      onSaved(state.savedId, submittedDirty.current);
     }
   }, [state, onSaved]);
 
@@ -66,6 +68,7 @@ export function BannerForm({
       data-testid="banner-form"
       onSubmit={(e) => {
         e.preventDefault();
+        submittedDirty.current = dirty;
         const fd = new FormData(e.currentTarget);
         startTransition(() => formAction(fd));
       }}

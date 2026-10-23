@@ -18,6 +18,11 @@ function readDotEnv(): Record<string, string> {
   return out;
 }
 
+/** A variable from the environment, else from .env (e.g. NEXT_PUBLIC_SITE_NAME, which the build inlined). */
+export function envValue(key: string): string | undefined {
+  return process.env[key] ?? readDotEnv()[key];
+}
+
 /** E2E_ADMIN_EMAIL / E2E_ADMIN_PASSWORD, else ADMIN_EMAIL / ADMIN_PASSWORD from .env. */
 export function adminCredentials(): { email: string; password: string } {
   const env = readDotEnv();

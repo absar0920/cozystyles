@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Roboto } from 'next/font/google';
-import { SITE } from '@/lib/constants';
 import { GENERAL_QUESTION_TEXT, waLink, type WhatsAppConfig } from '@/lib/whatsapp';
 import { currentPath, logWhatsAppClick } from '@/components/whatsapp/log-click';
 import { ThemeForm } from './ContactForm';
@@ -66,7 +65,8 @@ function displayWhatsApp(number: string): string {
   return `${number.slice(0, 2)}-${number.slice(2, 5)}-${number.slice(5, 8)}-${number.slice(8)}`;
 }
 
-export function ComplaintForm({ whatsapp }: { whatsapp: WhatsAppConfig | null }) {
+/** `email`: Admin → Settings → Contact details (the complaints email, else the customer care email; '' = no line). */
+export function ComplaintForm({ whatsapp, email }: { whatsapp: WhatsAppConfig | null; email: string }) {
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState('');
 
@@ -153,14 +153,16 @@ export function ComplaintForm({ whatsapp }: { whatsapp: WhatsAppConfig | null })
                 </a>
               </p>
             )}
-            <p>
-              {/* live's unbreakable address is 295px wide and sets the mobile column's min-content (the cards
-                  overflow a 390 viewport to 391px); the shorter local address keeps that footprint */}
-              Email:{' '}
-              <a href={`mailto:${SITE.complaintsEmail}`} className="inline-block min-w-[295px]">
-                {SITE.complaintsEmail}
-              </a>
-            </p>
+            {email && (
+              <p>
+                {/* live's unbreakable address is 295px wide and sets the mobile column's min-content (the cards
+                    overflow a 390 viewport to 391px); a shorter address keeps that footprint */}
+                Email:{' '}
+                <a href={`mailto:${email}`} className="inline-block min-w-[295px]">
+                  {email}
+                </a>
+              </p>
+            )}
             <p>Hours: Mon–Sat, 09:00–17:30 (PKT)</p>
           </div>
         </aside>

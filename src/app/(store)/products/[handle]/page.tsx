@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getProductByHandle } from '@/lib/queries';
-import { SITE } from '@/lib/constants';
+import { siteName } from '@/lib/site-url';
 import { Breadcrumbs } from '@/components/catalog/Breadcrumbs';
 import { ProductMain } from '@/components/product/ProductMain';
 import { CardRow, StaticSection } from '@/components/product/TemplateSections';
@@ -22,6 +22,7 @@ import { NEUTRAL_SWATCH, isSwatchOptionName } from '@/lib/product-options';
 import { schemaAvailability } from '@/lib/variant-status';
 import { getWhatsAppConfig } from '@/lib/whatsapp-server';
 import { getAdminOrNull } from '@/lib/admin-guard';
+import { prisma } from '@/lib/db';
 import { LayoutPreviewBar } from '@/components/product/LayoutPreviewBar';
 
 export const dynamic = 'force-dynamic';
@@ -44,7 +45,7 @@ export async function generateMetadata({ params, searchParams }: Params): Promis
   const product = await getProductByHandle(handle);
   if (!product || (product.status !== 'ACTIVE' && !preview)) return { title: 'Product Not Found' };
   const description =
-    richTextToPlainText(product.bodyHtml).slice(0, 160) || `${product.title} — buy online at ${SITE.name}, ${SITE.tagline}.`;
+    richTextToPlainText(product.bodyHtml).slice(0, 160) || `${product.title} — buy online at ${siteName()}.`;
   return {
     title: product.title,
     description,
@@ -63,7 +64,7 @@ export default async function ProductPage({ params, searchParams }: Params) {
   const previewData = preview ? await getLayoutSectionsForPreview(preview) : null;
   const sections: PdpSection[] = previewData?.sections ?? (await getLayoutSections(product.layout));
   const collectionHandles = product.collections.map((c) => c.handle);
-  const [recommendations, featured, whatsapp] = await Promise.all([
+  const [recommendations, featured, whatsapp, phoneRow] = await Promise.all([
     sections.some((s) => s.kind === 'recommendations') ? getRecommendations(product.id, collectionHandles, 4) : [],
     Promise.all(
       sections
@@ -71,6 +72,8 @@ export default async function ProductPage({ params, searchParams }: Params) {
         .map(async (s) => ({ s, cards: await getFeaturedCards(s, product.id) })),
     ),
     getWhatsAppConfig(),
+    // the What is Pre-Order? popup's "call …" line: the Phone from Admin → Settings → Contact details
+    prisma.siteSetting.findUnique({ where: { key: 'phone' } }),
   ]);
 
   const options: ProductOption[] = product.productOptions.map((o) => ({ name: o.name, values: o.values.map((v) => v.value) }));
@@ -135,7 +138,7 @@ export default async function ProductPage({ params, searchParams }: Params) {
     description: plainBody.slice(0, 320) || undefined,
     image: images.slice(0, 4).map((i) => i.src),
     sku: variants[0]?.sku ?? undefined,
-    brand: { '@type': 'Brand', name: product.vendor || SITE.name },
+    brand: { '@type': 'Brand', name: product.vendor || siteName() },
     offers: {
       '@type': 'Offer',
       priceCurrency: 'PKR',
@@ -177,6 +180,7 @@ export default async function ProductPage({ params, searchParams }: Params) {
           deliveryLine: product.deliveryTime || null,
         }}
         whatsapp={whatsapp}
+        phone={phoneRow?.value ?? ''}
       >
         {bodyHtml.trim() && (
           <div

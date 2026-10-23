@@ -6,7 +6,9 @@ import { FacebookIcon, InstagramIcon, LinkedinIcon, YoutubeIcon } from '@/compon
 export type FooterSeoGroup = { title: string; items: MenuNode[] };
 
 type FooterProps = {
+  /** FOOTER_1, edited under Menus → Footer “About” */
   information: MenuNode[];
+  /** FOOTER_2, edited under Menus → Footer “Customer Support” */
   userArea: MenuNode[];
   seo: FooterSeoGroup[];
   settings: Record<string, string>;
@@ -32,8 +34,9 @@ export function Footer({ information, userArea, seo, settings }: FooterProps) {
     <>
       <footer className="footer bg-cream pt-[45px] text-[15px] leading-[26.25px] text-accent md:pt-[65px]">
         <div className="mx-auto flex max-w-[1360px] flex-wrap px-[5px] md:px-[25px]">
-          <FooterMenu title="Information" items={information} className="lg:w-1/6" />
-          <FooterMenu title="User Area" items={userArea} className="lg:w-1/6" />
+          {/* headings = the admin's menu tab names (Menus → Footer “About” / Footer “Customer Support”) */}
+          <FooterMenu title="About" items={information} className="lg:w-1/6" />
+          <FooterMenu title="Customer Support" items={userArea} className="lg:w-1/6" />
 
           <div className={COL}>
             <div className="mb-[30px]">
@@ -98,18 +101,17 @@ export function Footer({ information, userArea, seo, settings }: FooterProps) {
                   <ul className="mb-5 ml-5 list-none p-0 text-[17px] leading-[1.7]">
                     {group.items.map((item, i) => (
                       <li key={item.id} className="contents">
-                        {i > 0 && ' '}
+                        {/* "Sofas, Beds, Office chairs": the comma follows the previous link, outside the next one */}
+                        {i > 0 && <span className="text-[15.5px] font-light leading-[1.5] text-ink-seo">, </span>}
                         {item.href ? (
                           <Link
                             href={item.href}
                             className="text-[15.5px] font-light leading-[1.5] text-ink-seo no-underline hover:text-accent2"
                           >
-                            {i > 0 ? `, ${item.label}` : item.label}
+                            {item.label}
                           </Link>
                         ) : (
-                          <span className="text-[15.5px] font-light leading-[1.5] text-ink-seo no-underline">
-                            {i > 0 ? `, ${item.label}` : item.label}
-                          </span>
+                          <span className="text-[15.5px] font-light leading-[1.5] text-ink-seo no-underline">{item.label}</span>
                         )}
                       </li>
                     ))}

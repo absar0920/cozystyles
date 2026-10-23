@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePendingUploads } from './upload-client';
+// SessionGuard wraps window.fetch when its module runs. Importing it here makes it run before this module's own
+// wrapper, so the save tracker below is always the outer wrapper and counts a save from the click. With the
+// order reversed (it depended on script load order), the tracker only saw a save after the session check, the
+// guard's history.back() ran in between and the router dropped the save's result (F02-2).
+import './SessionGuard';
 
 const DEFAULT_MESSAGE = 'You have unsaved changes. Leave this page and lose them?';
 

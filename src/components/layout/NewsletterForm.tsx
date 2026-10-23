@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { ThemeArrowRight } from '@/components/icons';
 
 /**
- * Footer newsletter signup. Posts to the shared /api/contact endpoint with
- * subject "Newsletter"; the message body carries the email so submissions can
- * be reported from the admin Messages screen.
+ * Footer newsletter sign-up. There is no mailing service: it posts to the shared /api/contact endpoint with
+ * subject "Newsletter" (one row per email address), and the owner finds the sign-ups in Admin → Messages →
+ * Newsletter sign-ups, with a CSV download.
  */
 export function NewsletterForm() {
   const [email, setEmail] = useState('');
@@ -31,7 +31,7 @@ export function NewsletterForm() {
           name: 'Newsletter Subscriber',
           email: trimmed,
           subject: 'Newsletter',
-          message: `Newsletter signup: ${trimmed}`,
+          message: `Signed up for the newsletter in the website footer: ${trimmed}`,
         }),
       });
       const data: unknown = await res.json().catch(() => null);

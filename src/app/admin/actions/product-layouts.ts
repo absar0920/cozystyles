@@ -555,5 +555,6 @@ export async function undoMoveProductsAction(input: { movedIds: number[]; fromKe
 
 /* ----------------------------------------------------------------------------------------- snapshot */
 
-/** For scripts/tests: the snapshot type re-exported so callers don't import two modules. */
-export type { LayoutSnapshot };
+// LayoutSnapshot is imported from '@/lib/product-layout-sections', not from here: a
+// 'use server' module may only export async functions, and Turbopack turns a type re-export into a runtime
+// reference ("ReferenceError: LayoutSnapshot is not defined") that breaks every action in this file.

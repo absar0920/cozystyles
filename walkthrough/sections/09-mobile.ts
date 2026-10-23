@@ -7,10 +7,10 @@ import { WHATSAPP_DEFAULTS } from '../../src/lib/whatsapp';
 /**
  * 9. Shopping on a phone: a Pixel 7-sized Chrome (412 × 839, touch) goes through the store the way a shopper on a
  * phone does: home page, ☰ menu → Living Room → Sofas, the collection grid, the Antonin Sofa with options picked,
- * ORDER ON WHATSAPP (the wa.me address is caught; the WhatsApp site itself is blocked), the blog and a text page
- * from the footer. Then the owner signs in to the admin on a phone and opens the Dashboard, the ☰ admin menu, the
- * product list and the Antonin Sofa editor (nothing is saved). Every page is checked for sideways scrolling;
- * a page that is wider than the phone becomes a finding.
+ * ORDER ON WHATSAPP (the wa.me address is caught; the WhatsApp site itself is blocked), the blog, a text page and
+ * the built-in Contact us page from the footer (section 8 sends its form from a computer). Then the owner signs in to the admin on a phone and opens the Dashboard, the ☰ admin menu, the
+ * product list and the Antonin Sofa editor (one letter is typed and removed again to see the save bar's messages;
+ * nothing is saved). Every page is checked for sideways scrolling; a page that is wider than the phone becomes a finding.
  */
 
 const PHONE = devices['Pixel 7'];
@@ -132,7 +132,7 @@ const section: Section = {
   id: '09',
   title: '9. Shopping on a phone',
   intro:
-    'Most shoppers will visit on their phone. Here we go through the store on a phone-sized screen (menu, a collection, ordering on WhatsApp, the blog and a text page), then check that the admin can be used from a phone too.',
+    'Most shoppers will visit on their phone. Here we go through the store on a phone-sized screen (menu, a collection, ordering on WhatsApp, the blog, a text page and the Contact us page), then check that the admin can be used from a phone too.',
   async run(ctx) {
     const { guide: g } = ctx;
     if (!LIVING || !BLOG_ITEM) throw new Error('data.ts: the main menu needs the Sofas parent item and a Blog item');
@@ -157,10 +157,12 @@ const section: Section = {
       expect(menuBox && menuBox.width >= 40 && menuBox.height >= 40, 'the ☰ button is big enough to tap').toBe(true);
       await expect(phone.getByRole('navigation', { name: 'Main navigation' })).toBeHidden();
       await expect(phone.getByRole('link', { name: 'Cozy Furnitures home' })).toBeVisible();
+      // F08-8 of the previous run (a My Account icon leading to a sign-in page that did not work) is fixed: no account links
+      await expect(phone.locator('a[href*="/account"]')).toHaveCount(0);
       const slider = phone.locator('section[aria-roledescription="carousel"][aria-label="Featured"]');
       await expect(slider).toBeVisible();
       g.expect(
-        'The page opens with the logo at the top and a **☰** menu button (three lines) on the left, big enough to tap with a thumb. The long menu bar of the computer version is not shown. The banner slider is at the top of the page.',
+        'The page opens with the logo at the top and a **☰** menu button (three lines) on the left, big enough to tap with a thumb. The long menu bar of the computer version is not shown, and there is no person (My Account) icon: this shop has no customer accounts. The banner slider is at the top of the page.',
       );
       await checkPhoneWidth(g, phone, 'home page', { loadImages: true });
       await g.shot(phone, 'Home page on a phone: the ☰ menu button is top left', { highlight: menuButton });
@@ -172,11 +174,19 @@ const section: Section = {
       await expect(mobileNav).toBeVisible();
       await expect(phone.getByRole('button', { name: 'Close menu' })).toBeVisible();
       for (const item of MENUS.main) await expect(mobileNav.getByRole('link', { name: item.label, exact: true })).toBeVisible();
-      await expect(phone.getByRole('link', { name: 'Login', exact: true })).toBeVisible();
+      // F08-8 of the previous run: the phone menu no longer ends with a Login row (the shop has no customer accounts)
+      await expect(phone.getByRole('link', { name: /^\s*login\s*$/i })).toHaveCount(0);
+      await expect(phone.locator('a[href*="/account"]')).toHaveCount(0);
+      // F08-2 of the previous run (the first menu item was always a dark red block) is fixed: every row looks the same
+      const rowLooks = await mobileNav
+        .locator(':scope > ul > li > div > :first-child')
+        .evaluateAll((els) => els.map((e) => { const s = getComputedStyle(e); return `${s.backgroundColor} ${s.color}`; }));
+      expect(rowLooks).toHaveLength(MENUS.main.length);
+      expect(new Set(rowLooks).size, `menu rows look the same: ${rowLooks.join(' | ')}`).toBe(1);
       const expand = mobileNav.getByRole('button', { name: `Expand ${LIVING.label}` });
       await expect(expand).toBeVisible();
       g.expect(
-        `The menu opens with one row per item: ${MENUS.main.map((m) => `**${m.label}**`).join(', ')}, and **Login** at the bottom. The ☰ button turns into an **×** (close). **${LIVING.label}** has a small arrow (⌄) on its right for its sub-items.`,
+        `The menu opens with one row per item: ${MENUS.main.map((m) => `**${m.label}**`).join(', ')}. Every row looks the same (black text on white; the first item is not highlighted), and there is no **Login** row. The ☰ button turns into an **×** (close). **${LIVING.label}** has a small arrow (⌄) on its right for its sub-items.`,
       );
       await g.shot(phone, 'The phone menu is open; the arrow next to Living Room is outlined', { highlight: expand });
 
@@ -285,7 +295,7 @@ const section: Section = {
       g.note('In this test the WhatsApp website was blocked, so the message was checked but never sent.');
 
       /* ------------------------------------------------------------------ blog */
-      g.part('Read the blog and a page from the footer');
+      g.part('Read the blog and the pages in the footer');
       await g.click(menuButton, `Back on the store, tap **☰** at the top left again.`);
       await expect(mobileNav).toBeVisible();
       await g.click(mobileNav.getByRole('link', { name: BLOG_ITEM.label, exact: true }), `Tap **${BLOG_ITEM.label}**.`);
@@ -332,13 +342,41 @@ const section: Section = {
         `Scroll down to the bottom of the page. In the footer${column ? `, under **${column.toUpperCase()}**` : ''}, tap **${TEXT_PAGE.title}**.`,
       );
       await expect(phone).toHaveURL(new RegExp(`${pagePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/?(\\?.*)?$`));
+      // F07-4 of the previous run (a text page showed no title) is fixed: the title is the page heading
+      const pageHeading = phone.getByRole('heading', { level: 1, name: TEXT_PAGE.title, exact: true });
+      await expect(pageHeading).toBeVisible();
       await expect(phone.locator('main')).toContainText(TEXT_PAGE.body);
       await expect(phone).toHaveTitle(`${TEXT_PAGE.title} - Cozy Furnitures`);
       g.expect(
-        `The **${TEXT_PAGE.title}** page opens (the address ends in \`${pagePath}\`) and shows its text, wrapped to the screen: _${TEXT_PAGE.body}_ (As noted in section 7, the page title itself is only in the browser tab, not on the page.)`,
+        `The **${TEXT_PAGE.title}** page opens (the address ends in \`${pagePath}\`) with its title **${TEXT_PAGE.title}** as the heading, and under it its text, wrapped to the screen: _${TEXT_PAGE.body}_`,
       );
       await checkPhoneWidth(g, phone, `${TEXT_PAGE.title} page`, { loadImages: true });
       await g.shot(phone, `The ${TEXT_PAGE.title} page on a phone`);
+
+      // the built-in Contact us page (F08-9 of the previous run; section 8 sends its form from a computer) on a phone
+      const contact = MENUS.footerContact;
+      const contactLink = footer.getByRole('navigation', { name: 'Customer Support', exact: true }).getByRole('link', { name: contact.label, exact: true });
+      await contactLink.scrollIntoViewIfNeeded();
+      await g.click(contactLink, `Scroll down to the footer again. Under **CUSTOMER SUPPORT**, tap **${contact.label}**.`);
+      await expect(phone).toHaveURL(new RegExp(`${contact.href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/?(\\?.*)?$`));
+      const contactMain = phone.getByRole('main');
+      await expect(contactMain.getByRole('heading', { level: 1, name: 'Contact Us' })).toBeVisible();
+      const contactFields = ['Name', 'Email', 'Phone number', 'Comment'];
+      for (const label of contactFields) await expect(contactMain.getByLabel(label, { exact: true })).toBeVisible();
+      const send = contactMain.getByRole('button', { name: /send message/i });
+      await expect(send).toBeVisible();
+      const callLink = contactMain.getByRole('link', { name: STORE.phone, exact: true });
+      await expect(callLink).toHaveAttribute('href', `tel:${STORE.phone.replace(/[^\d+]/g, '')}`);
+      await expect(contactMain.getByRole('link', { name: STORE.email, exact: true })).toHaveAttribute('href', `mailto:${STORE.email}`);
+      for (const line of STORE.address.split('\n')) await expect(contactMain).toContainText(line);
+      // the details (first heading: Email) come under the form, with room between them and the button
+      const [sendBox, detailsBox] = [await send.boundingBox(), await contactMain.locator('strong').filter({ hasText: /^Email$/ }).boundingBox()];
+      expect(sendBox && detailsBox && detailsBox.y >= sendBox.y + sendBox.height + 16, 'the contact details are under the form, clear of the button').toBe(true);
+      g.expect(
+        `The **Contact Us** page opens (the address ends in \`${contact.href}\`). The form (${contactFields.map((f) => `**${f}**`).join(', ')} and **SEND MESSAGE**) fits the screen. Under the button, with some space, come the shop's email **${STORE.email}**, phone **${STORE.phone}** and address (${STORE.address.replace(/\n/g, ', ')}) from Settings. Tapping the phone number starts a call; tapping the email opens the email app.`,
+      );
+      await checkPhoneWidth(g, phone, 'Contact Us page', { loadImages: true });
+      await g.shot(phone, 'The Contact Us page on a phone: the form, then the shop’s contact details', { highlight: send });
     } finally {
       await phoneContext.close();
     }
@@ -347,10 +385,9 @@ const section: Section = {
     const adminContext = await ctx.newContext({ ...PHONE });
     try {
       const a = await adminContext.newPage();
-      const vpAdmin = a.viewportSize()!;
       g.part(
         'The admin on a phone',
-        'You can look after the shop from your phone as well. Here we only check that the main screens fit and can be used; nothing is changed or saved.',
+        'You can look after the shop from your phone as well. Here we only check that the main screens fit and can be used; nothing is saved.',
       );
       await g.goto(a, '/admin/login', `On your phone, open **${ctx.baseURL}/admin/login**.`);
       await expect(a.getByRole('heading', { name: 'Admin Panel' })).toBeVisible();
@@ -408,9 +445,12 @@ const section: Section = {
       await expect(row).toContainText(`${variants.length} combinations`);
       await expect(row).toContainText(range);
       await expect(row.getByRole('link', { name: 'Edit', exact: true })).toBeVisible();
+      if (SOFA.bestSeller) await expect(row.getByRole('button', { name: /^Best seller: in Hot Selling Products on the home page/ })).toBeVisible();
       await expect(a.getByRole('table')).toBeHidden();
       g.expect(
-        `The menu closes and **Products** opens. On a phone each product is a card instead of a table row. The **${SOFA.title}** card shows **${range}**, **Published** and **${variants.length} combinations**, and an **Edit** link.`,
+        `The menu closes and **Products** opens. On a phone each product is a card instead of a table row. The **${SOFA.title}** card shows **${range}**, **Published** and **${variants.length} combinations**, and an **Edit** link${
+          SOFA.bestSeller ? '. Its star is filled in orange: it is a **Best seller** (section 3), so it is in **Hot Selling Products** on the home page' : ''
+        }.`,
       );
       await checkPhoneWidth(g, a, 'admin product list');
       await g.shot(a, `Products on a phone: the ${SOFA.title} card`, { highlight: row });
@@ -418,35 +458,71 @@ const section: Section = {
       await g.click(row.getByRole('link', { name: 'Edit', exact: true }), `On the **${SOFA.title}** card, tap **Edit**.`);
       await expect(a).toHaveURL(/\/admin\/products\/\d+\/?(\?.*)?$/);
       await expect(a.getByRole('heading', { level: 1, name: SOFA.title })).toBeVisible();
-      await expect(a.getByRole('textbox', { name: 'Title', exact: true })).toHaveValue(SOFA.title);
+      const titleBox = a.getByRole('textbox', { name: 'Title', exact: true });
+      await expect(titleBox).toHaveValue(SOFA.title);
       const bar = a.getByTestId('save-bar');
       await expect(bar).toBeInViewport();
       const barStatus = bar.getByRole('status');
       const STATUS_TEXT = 'Published — visible on the store';
       await expect(barStatus).toHaveText(STATUS_TEXT);
-      await expect(bar.getByRole('button', { name: 'Save', exact: true })).toBeVisible();
+      const save = bar.getByRole('button', { name: 'Save', exact: true });
+      await expect(save).toBeVisible();
       const unpublish = bar.getByRole('button', { name: /Unpublish/ });
       await expect(unpublish).toBeVisible();
       const unpublishLabel = (await unpublish.innerText()).trim();
-      // the status shares the bar with the buttons; `truncate` cuts it with "…" when there is no room
-      const statusFit = await barStatus.evaluate((el) => ({ shown: el.clientWidth, needed: el.scrollWidth }));
-      const statusCut = statusFit.needed - statusFit.shown > 1;
+      // F09-1 of the previous run (on phones 400px and wider the status was cut to "Published …") is fixed: on a phone
+      // the message has its own line above the buttons and wraps instead of being cut, so it is always shown in full.
+      const expectStatusInFull = async () => {
+        const fit = await barStatus.evaluate((el) => ({ shown: el.clientWidth, needed: el.scrollWidth, ellipsis: getComputedStyle(el).textOverflow }));
+        expect(fit.needed - fit.shown, `save bar status fits (${fit.needed}px needed, ${fit.shown}px shown)`).toBeLessThanOrEqual(1);
+        expect(fit.ellipsis).not.toBe('ellipsis');
+        const [statusBox, buttonBox] = [await barStatus.boundingBox(), await unpublish.boundingBox()];
+        expect(statusBox && buttonBox && statusBox.y + statusBox.height <= buttonBox.y + 1, 'the status is above the buttons').toBe(true);
+      };
+      await expectStatusInFull();
+      const [unpublishBox, saveBox] = [await unpublish.boundingBox(), await save.boundingBox()];
+      expect(unpublishBox && saveBox && Math.abs(unpublishBox.y - saveBox.y) < 2, 'the two buttons share a row').toBe(true);
       g.expect(
-        `The **${SOFA.title}** editor opens, with the **Title** box filled in. A bar stays at the bottom of the screen with the **${unpublishLabel}** and **Save** buttons. ${
-          statusCut
-            ? `On its left it should say **${STATUS_TEXT}**, but on this screen there is only room for **Published …** (see the finding below).`
-            : `On its left it says **${STATUS_TEXT}**.`
-        }`,
+        `The **${SOFA.title}** editor opens, with the **Title** box filled in. A bar stays at the bottom of the screen. Its first line says **${STATUS_TEXT}** in full; under it are the **${unpublishLabel}** and **Save** buttons side by side.`,
       );
-      if (statusCut) {
-        g.finding(
-          'issue',
-          'On larger phones the save bar cuts its status text short',
-          `On a ${vpAdmin.width}px-wide phone the bar at the bottom of the product editor puts its status text, **${unpublishLabel}** and **Save** on one line. That leaves the status about ${statusFit.shown}px of the ${statusFit.needed}px it needs, so **${STATUS_TEXT}** shows as **Published …**. After any edit the same spot shows only **● Unsaved** instead of **Unsaved changes** (checked separately, without saving). Phones narrower than 400px (for example an iPhone 15, 393px) get a different layout: the status has its own line above shorter buttons (**Unpublish** / **Save**), and the full text fits. Larger phones such as this Pixel 7 (412px) or an iPhone 15 Pro Max (430px) get the cramped one-line bar. Suggestion: keep the two-line layout, or the short button labels, up to about 520px.`,
-        );
-      }
       await checkPhoneWidth(g, a, `admin product editor (${SOFA.title})`);
-      await g.shot(a, `The ${SOFA.title} editor on a phone; the save bar is at the bottom`, statusCut ? { highlight: barStatus } : {});
+      await g.shot(a, `The ${SOFA.title} editor on a phone; the save bar is at the bottom`, { highlight: barStatus });
+
+      // the bar's message after an edit ("Unsaved changes") is shown in full too; the edit is undone, nothing is saved
+      const ADDED = ' test';
+      await g.form(
+        [
+          {
+            label: 'Title',
+            kind: 'click',
+            value: `type a space and **test** at the end, so the box reads **${SOFA.title}${ADDED}**`,
+            act: async () => {
+              await titleBox.tap();
+              await titleBox.press('End');
+              await titleBox.pressSequentially(ADDED);
+            },
+          },
+        ],
+        `To see the bar's message after a change, make a small change that is taken back in the next step (nothing is saved):`,
+      );
+      await expect(titleBox).toHaveValue(`${SOFA.title}${ADDED}`);
+      g.step('Tap an empty spot of the page to close the keyboard (the bar at the bottom hides while the keyboard is open).');
+      await a.getByRole('heading', { level: 1, name: SOFA.title }).tap();
+      await expect(bar).toBeInViewport();
+      await expect(barStatus).toHaveText(/^\s*Unsaved changes\s*$/);
+      await expectStatusInFull();
+      g.expect('The first line of the bar changes to an orange dot and **Unsaved changes**, in full.');
+      await g.shot(a, 'After typing in the Title box the save bar says Unsaved changes', { highlight: barStatus });
+
+      g.step(`Tap at the end of the **Title** box again and delete the word **test** and the space before it, so the title is **${SOFA.title}** again. Close the keyboard. Do not tap **Save**.`);
+      await titleBox.tap();
+      await titleBox.press('End');
+      for (let i = 0; i < ADDED.length; i++) await titleBox.press('Backspace');
+      await expect(titleBox).toHaveValue(SOFA.title);
+      await a.getByRole('heading', { level: 1, name: SOFA.title }).tap();
+      await expect(barStatus).toHaveText(STATUS_TEXT);
+      await expectStatusInFull();
+      g.expect(`The bar says **${STATUS_TEXT}** again: the product is exactly as it was saved, so there is nothing to save.`);
 
       g.step('Scroll down to **Options & prices**. Do not change anything.');
       const optionsHeading = a.getByRole('heading', { level: 2, name: 'Options & prices' });
@@ -467,7 +543,7 @@ const section: Section = {
         }, **${variants[0].status}**). Nothing is marked as changed, and the save bar is still at the bottom of the screen.`,
       );
       await g.shot(a, 'Options & prices on a phone, with the save bar at the bottom', { highlight: variantRows.first() });
-      g.note('Nothing was changed, so there is nothing to save: just close the page or tap **← Products** at the top.');
+      g.note('Nothing was changed (the word test was removed again), so there is nothing to save: just close the page or tap **← Products** at the top.');
     } finally {
       await adminContext.close();
     }

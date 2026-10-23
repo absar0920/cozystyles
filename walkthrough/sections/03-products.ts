@@ -8,11 +8,14 @@ import { chooseFiles, expectImagesLoaded, gotoPage, type FieldRow, type Guide } 
 /**
  * Section 3: every product in data.ts is created through Products → + New product. The Antonin Sofa is shown in full
  * (options, colour circles, a price per combination, photos tagged by colour, collections, publish); the others get
- * one form table each. Then: a draft that the store does not show, Duplicate + Delete, the products list, and a light
- * look at the store (section 8 checks the store in detail).
+ * one form table each. The Antonin Sofa and the Alexa Sofa Chair are ticked Best seller (Hot Selling Products on the
+ * home page; section 8 checks that row). Then: a draft that the store does not show, Duplicate + Delete, the products
+ * list, and a light look at the store (section 8 checks the store in detail).
  */
 
 const SAVED = 'Saved. The store is updated.';
+const SAVED_DRAFT = 'Saved as a draft. It is not on the store.';
+const BEST_SELLER_HINT = 'Puts the product in Hot Selling Products on the home page';
 const COPY_NOTICE = 'This is a copy. It is a draft until you publish it.';
 const DRAFT_BAR = 'Draft — not visible on the store';
 
@@ -54,6 +57,7 @@ const listRows = (page: Page) => page.locator('tr[data-testid="product-row"]');
 const listRow = (page: Page, title: string) => listRows(page).filter({ has: page.getByRole('link', { name: title, exact: true }) });
 const descriptionBox = (page: Page) => page.getByRole('textbox', { name: 'Description', exact: true });
 const galleryItems = (page: Page) => page.getByTestId('image-gallery').getByTestId('gallery-item');
+const bestSellerBox = (page: Page) => page.getByRole('checkbox', { name: /^Best seller/ });
 const newArrivalBox = (page: Page) => page.getByRole('checkbox', { name: /^New arrival/ });
 const limitedBox = (page: Page) => page.getByRole('checkbox', { name: /^Limited edition/ });
 
@@ -217,6 +221,7 @@ function collectionRows(page: Page, names: string[]): FieldRow[] {
 
 function labelRows(page: Page, p: ProductData): FieldRow[] {
   const rows: FieldRow[] = [];
+  if (p.bestSeller) rows.push({ label: 'Best seller (in Visibility)', value: '', kind: 'check', locator: bestSellerBox(page) });
   if (p.newArrival) rows.push({ label: 'New arrival (in Visibility)', value: '', kind: 'check', locator: newArrivalBox(page) });
   if (p.limitedEdition) rows.push({ label: 'Limited edition (in Visibility)', value: '', kind: 'check', locator: limitedBox(page) });
   return rows;
@@ -236,6 +241,7 @@ async function expectPhotos(page: Page, p: ProductData) {
 async function expectCollectionsAndLabels(page: Page, p: ProductData) {
   const chosen = page.locator('[aria-label="Chosen collections"]');
   for (const c of p.collections) await expect(chosen.getByRole('button', { name: `Remove ${c}`, exact: true })).toBeVisible();
+  await expect(bestSellerBox(page)).toBeChecked({ checked: !!p.bestSeller });
   await expect(newArrivalBox(page)).toBeChecked({ checked: !!p.newArrival });
   await expect(limitedBox(page)).toBeChecked({ checked: !!p.limitedEdition });
 }
@@ -246,7 +252,8 @@ async function save(g: Guide, page: Page, p: ProductData, brief: boolean) {
   await g.click(saveBar(page).getByRole('button', { name: button, exact: true }), `In the bar at the bottom of the screen, click **${button}**.`);
   // a new product moves to its own address once saved
   await page.waitForURL(/\/admin\/products\/\d+/, { timeout: 30_000 });
-  await expect(page.getByText(SAVED)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(p.draft ? SAVED_DRAFT : SAVED)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(p.draft ? SAVED : SAVED_DRAFT)).toHaveCount(0);
   await expect(page.getByTestId('product-status')).toHaveText(p.draft ? 'Draft' : 'Published');
   await expect(saveBar(page)).not.toContainText('Unsaved changes');
   await expect(page.locator('#product-title')).toHaveValue(p.title);
@@ -254,7 +261,7 @@ async function save(g: Guide, page: Page, p: ProductData, brief: boolean) {
     await expect(page.getByText('Publish to see it on the store')).toBeVisible();
     await expect(saveBar(page)).toContainText(DRAFT_BAR);
     g.expect(
-      `The message **${SAVED}** appears, the label next to the title reads **Draft**, where published products have **View on store** the page shows **Publish to see it on the store**, and the bottom bar says **${DRAFT_BAR}**.`,
+      `The message **${SAVED_DRAFT}** appears at the top, the label next to the title reads **Draft**, where published products have **View on store** the page shows **Publish to see it on the store**, and the bottom bar says **${DRAFT_BAR}**.`,
     );
   } else {
     await expect(page.getByRole('link', { name: 'View on store' })).toHaveAttribute('href', `/products/${p.handle}`);
@@ -298,7 +305,7 @@ function summaryRows(): string[][] {
       : `${price(p.regular ?? '0', p.sale)} · ${p.status ?? 'Ready to ship'}`,
     p.collections.join(', '),
     String(p.photos.length),
-    [p.newArrival && 'New arrival', p.limitedEdition && 'Limited edition'].filter(Boolean).join(', ') || '—',
+    [p.bestSeller && 'Best seller', p.newArrival && 'New arrival', p.limitedEdition && 'Limited edition'].filter(Boolean).join(', ') || '—',
     p.draft ? 'Draft' : 'Published',
   ]);
 }
@@ -343,13 +350,14 @@ async function addAntonin(ctx: Ctx) {
   } catch {
     /* no README: nothing to compare */
   }
-  if (readme.includes('Products → Add product')) {
-    g.finding(
-      'note',
-      'Owner guide says “Add product”, the button says “+ New product”',
-      'README → _Running the shop: admin guide_ → _Adding a product_ says **Products → Add product**, but the button on the Products page reads **+ New product**.',
-    );
+  if (readme) {
+    // the owner guide names the same button as the screen
+    expect(readme, 'README → Adding a product').toContain('Products → + New product');
+    expect(readme, 'README → Adding a product').not.toContain('Products → Add product');
   }
+  g.expect(
+    'The **New product** form opens; the label next to its title reads **Not saved yet**. (The owner guide in the README, _Adding a product_, names the same button: **Products → + New product**.)',
+  );
 
   await g.form(basicsRows(page, p), 'In **Basics**, fill in:');
   await expect(page.locator('#product-title')).toHaveValue(p.title);
@@ -410,16 +418,29 @@ async function addAntonin(ctx: Ctx) {
   await g.form([descriptionRow(page, p)], 'In **Description**, click into the text box and type:');
   await expect(descriptionBox(page)).toContainText(p.description);
 
-  await g.form([...collectionRows(page, p.collections), ...labelRows(page, p)], 'In **Collections**, add the sofa to its collections; then in **Visibility** tick its label:');
-  await expectCollectionsAndLabels(page, p);
-  g.expect(
-    `${p.collections.map((c) => `**${c}**`).join(' and ')} appear as chips above the search box${p.newArrival ? ', and **New arrival** is ticked' : ''}.`,
+  const ticks = [p.bestSeller && 'Best seller', p.newArrival && 'New arrival', p.limitedEdition && 'Limited edition'].filter((x): x is string => !!x);
+  const tickList = ticks.map((t) => `**${t}**`).join(' and ');
+  await g.form(
+    [...collectionRows(page, p.collections), ...labelRows(page, p)],
+    `In **Collections**, add the sofa to its collections; then in **Visibility** tick ${tickList}:`,
   );
+  await expectCollectionsAndLabels(page, p);
+  g.expect(`${p.collections.map((c) => `**${c}**`).join(' and ')} appear as chips above the search box${ticks.length ? `, and ${tickList} ${ticks.length > 1 ? 'are' : 'is'} ticked` : ''}.`);
+  if (p.bestSeller) {
+    // the tick's own help line says what it does on the store
+    const bestSellerLabel = page.locator('section#visibility label').filter({ has: bestSellerBox(page) });
+    await expect(bestSellerLabel).toContainText(BEST_SELLER_HINT);
+    const hint = ((await bestSellerLabel.innerText()).replace(/^\s*Best seller\s*/, '').trim() || BEST_SELLER_HINT).replace(/\s+/g, ' ');
+    g.expect(
+      `Under **Best seller** the admin explains what the tick does: _${hint}_ Once published, the ${p.title} appears in **Hot Selling Products** on the home page (section 8 checks that row).`,
+    );
+  }
   // Collections card at the top of the screen, so the Visibility ticks below it are in the picture too
   const collectionsCard = page.locator('section#collections');
   await collectionsCard.evaluate((el) => window.scrollBy(0, el.getBoundingClientRect().top - 16));
+  if (p.bestSeller) await expect(bestSellerBox(page)).toBeInViewport();
   if (p.newArrival) await expect(newArrivalBox(page)).toBeInViewport();
-  await g.shot(page, `${p.title}: collections chosen${p.newArrival ? ', New arrival ticked' : ''}`, { highlight: collectionsCard });
+  await g.shot(page, `${p.title}: collections chosen${ticks.length ? `, ${ticks.join(' and ')} ticked` : ''}`, { highlight: collectionsCard });
 
   await save(g, page, p, false);
   await g.shot(page, `${p.title} published`, { highlight: page.getByText(SAVED) });
@@ -447,12 +468,7 @@ async function addDraft(ctx: Ctx) {
     'A product that is not ready for sale can be saved as a **draft**: it stays in the admin, but customers cannot see it.',
   );
   await addProduct(ctx, p);
-  g.finding(
-    'note',
-    'Saving a draft says “The store is updated”',
-    `After **Save as draft** the green message at the top says **${SAVED}**, while the bar at the bottom says **${DRAFT_BAR}**. A draft is not on the store, so the top message is misleading; something like “Saved as a draft. It is not on the store.” would be clearer.`,
-  );
-  await g.shot(page, `${p.title} saved as a draft`, { highlight: page.getByTestId('product-status') });
+  await g.shot(page, `${p.title} saved as a draft: “${SAVED_DRAFT}”`, { highlight: page.getByText(SAVED_DRAFT) });
 
   const url = `/products/${p.handle}`;
   let status = 0;
@@ -532,6 +548,17 @@ async function productsList(ctx: Ctx) {
       draft ? `**${draft.title}** is **Draft**, the other ${PRODUCTS.length - 1} are **Published**` : `all are **Published**`
     }.`,
   );
+  // the star in each row is the same switch as the editor's Best seller tick
+  const bestSellers = PRODUCTS.filter((p) => p.bestSeller);
+  for (const p of PRODUCTS) {
+    const star = listRow(page, p.title).getByRole('button', { name: /best seller/i });
+    await expect(star).toHaveAccessibleName(p.bestSeller ? /^Best seller: in Hot Selling Products on the home page/ : /^Mark as best seller/);
+  }
+  if (bestSellers.length) {
+    g.expect(
+      `In the **Actions** column, a filled yellow ★ marks the best sellers, ${bestSellers.map((p) => `**${p.title}**`).join(' and ')}; the other stars are grey. Clicking a star does the same as the **Best seller** tick in the product (pointing at it says _Mark as best seller: puts it in Hot Selling Products on the home page_).`,
+    );
+  }
   await g.shot(page, `The products list: ${PRODUCTS.length} products`, draft ? { highlight: listRow(page, draft.title) } : {});
 }
 
@@ -591,26 +618,35 @@ async function checkStore(ctx: Ctx) {
     )}**${ALEXA.sale && ALEXA.regular ? ` with **${rs(ALEXA.regular)}** crossed out` : ''}.`,
   );
 
-  // The card price of a product with options: the cheapest combination, struck against the lowest regular price that has a sale.
+  // The card price of a product with options comes from ONE combination, the cheapest: its own sale price and its own
+  // crossed-out regular price (none when that combination is not on sale), so the card never shows a discount no option has.
   const antonin = cards.filter({ hasText: p.title });
-  const cardPrice = (await antonin.locator('ins').first().textContent())?.trim() ?? '';
-  const cardWas = (await antonin.locator('del').count()) ? ((await antonin.locator('del').first().textContent())?.trim() ?? '') : '';
-  const cheapest = (p.variants ?? []).reduce<{ pays: number; regular: number; onSale: boolean } | null>((best, v) => {
-    const pays = Number(v.sale ?? v.regular);
-    return !best || pays < best.pays ? { pays, regular: Number(v.regular), onSale: !!v.sale } : best;
-  }, null);
-  if (cheapest && !cheapest.onSale && cardPrice === rs(String(cheapest.pays)) && cardWas && cardWas !== rs(String(cheapest.regular))) {
-    // Section 8.3 records this as a finding; here it is only pointed out, so the Findings list does not repeat it.
+  const variants = p.variants ?? [];
+  if (variants.length) {
+    const pays = Math.min(...variants.map((v) => Number(v.sale ?? v.regular)));
+    const cheapest = variants.filter((v) => Number(v.sale ?? v.regular) === pays);
+    const onSale = cheapest.find((v) => v.sale);
     const badge = antonin.getByText(/^\d+%\s*off$/i);
-    await expect(badge).toBeVisible();
-    const pct = ((await badge.textContent()) ?? '').match(/\d+/)?.[0] ?? '';
-    const names = (keep: (v: NonNullable<ProductData['variants']>[number]) => boolean) =>
-      (p.variants ?? []).filter(keep).map((v) => combo(v.values)).join(' and ');
-    const cheapNames = names((v) => !v.sale && Number(v.regular) === cheapest.pays);
-    const struckNames = names((v) => !!v.sale && rs(v.regular) === cardWas);
-    g.note(
-      `Look at the ${p.title} card: it shows **${cardPrice}** with **${cardWas}** crossed out and **${pct}% OFF**. ${cardPrice} is the normal price of the ${cheapNames} (not on sale), and ${cardWas} is the regular price of the ${struckNames} (on sale for less), so it looks like a discount nobody gets. Section 8 reports this as a finding (_A product card can show a “discount” that no option really has_).`,
-    );
+    await expect(antonin.locator('ins').first()).toHaveText(rs(String(pays)));
+    const names = cheapest.map((v) => combo(v.values)).join(' and ');
+    if (onSale) {
+      const pct = Math.round(((Number(onSale.regular) - pays) / Number(onSale.regular)) * 100);
+      await expect(antonin.locator('del').first()).toHaveText(rs(onSale.regular));
+      await expect(badge).toHaveText(new RegExp(`^${pct}%\\s*off$`, 'i'));
+      g.expect(
+        `The ${p.title} card shows its cheapest option, the ${names}: **${rs(String(pays))}** with its own regular price **${rs(onSale.regular)}** crossed out and **${pct}% OFF**.`,
+      );
+    } else {
+      // the cheapest combinations are not on sale, so the card shows no crossed-out price and no "% OFF" circle
+      await expect(antonin.locator('del')).toHaveCount(0);
+      await expect(badge).toHaveCount(0);
+      const sales = variants.filter((v) => v.sale).map((v) => combo(v.values));
+      g.expect(
+        `The ${p.title} card shows **${rs(String(pays))}**, the price of its cheapest option (the ${names}), with nothing crossed out and no **% OFF** circle: that option is not on sale.${
+          sales.length ? ` (The sale price of the ${sales.join(' and ')} shows on the product page when a customer picks ${sales.length > 1 ? 'one of them' : 'it'}.)` : ''
+        }`,
+      );
+    }
   }
   await g.shot(shopper, 'The Sofas collection on the store', { fullPage: true, highlight: alexa });
 }
@@ -621,7 +657,7 @@ const section: Section = {
   id: '03',
   title: '3. Products',
   intro:
-    'Here we add the shop’s 8 products from the admin: the Antonin Sofa in full detail (sizes, colours, a price for each combination, photos per colour), then seven shorter ones, one of them kept hidden as a draft. We also copy and delete a product, and look at the result on the store.',
+    'Here we add the shop’s 8 products from the admin: the Antonin Sofa in full detail (sizes, colours, a price for each combination, photos per colour), then seven shorter ones, one of them kept hidden as a draft. The Antonin Sofa and the Alexa Sofa Chair are ticked **Best seller**, which puts them in **Hot Selling Products** on the home page. We also copy and delete a product, and look at the result on the store.',
   async run(ctx) {
     await removeLeftovers(ctx.guide, ctx.admin);
     await addAntonin(ctx);

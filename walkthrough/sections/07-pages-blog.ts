@@ -5,13 +5,15 @@ import { BLOG_POSTS, MENUS, PAGES } from '../data';
 
 /**
  * Section 7: text pages (About Us + the four policies) and two blog posts, written in the admin's rich-text editor,
- * linked from the two footer menus, then checked as a shopper sees them (pages, footer, blog, post, tag page).
- * Pages are found by title and their real web address is read from the admin ("View on store"), never assumed.
+ * linked from the two footer menus (Footer “Customer Support” already starts with the built-in Contact us page from
+ * section 6), then checked as a shopper sees them (pages, footer, blog, post, tag page).
+ * Pages are found by title and their real web address is read from the admin ("View on store"); it must be the
+ * address the Web address box showed before saving (the admin never changes it silently).
  */
 
 /** Extra content for the About Us page (the other pages are one paragraph: PAGES[i].body). */
 const ABOUT = {
-  heading: 'About Cozy Furnitures',
+  heading: 'Our story',
   subheading: 'Why customers choose us',
   bullets: [
     'Solid wood frames, kiln-dried and hand-joined',
@@ -29,6 +31,9 @@ const POST_DATES = [
 ];
 
 const SAVED = 'Saved. The store is updated.';
+/** Footer column headings on the store: the names of the two tabs in Menus (the CSS shows them in capitals). */
+const FOOTER_HEADING = { about: 'About', support: 'Customer Support' };
+const CONTACT = MENUS.footerContact;
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const exactly = (s: string) => new RegExp(`^${escapeRe(s)}$`);
@@ -67,6 +72,18 @@ async function openAdvanced(g: Guide, page: Page, md: string) {
   if ((await details.getAttribute('open')) === null) await g.click(advanced(page), md);
   else g.step(md);
   await expect(page.locator('#web-address')).toBeVisible();
+}
+
+/**
+ * The grey text in front of the Web address box ("cozystyle.pk/pages/"): the shop's own domain (NEXT_PUBLIC_SITE_URL,
+ * set when the website is installed), never the old website's name cozyfurnitures.pk. Section 2 explains it and
+ * records a finding if it differs from the address the store runs at; here it is only checked and shown.
+ */
+async function checkAddressPrefix(page: Page, baseURL: string, path: string): Promise<string> {
+  const prefix = ((await page.locator('#web-address').locator('xpath=..').innerText()) || '').trim();
+  expect(prefix, 'grey text in front of the Web address box').toMatch(new RegExp(`^[a-z0-9.-]+(:\\d+)?${escapeRe(path)}$`, 'i'));
+  if (!/(^|\.)cozyfurnitures\.pk$/.test(new URL(baseURL).hostname)) expect(prefix).not.toContain('cozyfurnitures.pk');
+  return prefix;
 }
 
 /** The address a person would guess from a title ("About Us" → about-us), as the admin shows it before saving. */
@@ -175,9 +192,10 @@ const section: Section = {
   title: '7. Pages and blog posts',
   intro:
     'The About Us page, the four policy pages and two blog posts are written in the admin with the same text editor. ' +
-    'The pages are then linked from the two footer menus, and everything is checked on the store as a customer sees it.',
+    'The pages are then linked from the two footer menus (Footer “Customer Support” already has the built-in **Contact us** page from section 6), ' +
+    'and everything is checked on the store as a customer sees it.',
 
-  async run({ guide: g, admin: page, shopper }: Ctx) {
+  async run({ guide: g, admin: page, shopper, baseURL }: Ctx) {
     const [about, ...otherPages] = PAGES;
     /** page title → store address (/pages/…), read from the admin after saving */
     const pageAddress = new Map<string, string>();
@@ -266,20 +284,12 @@ const section: Section = {
     const guessed = guessAddress(about.title);
     await expect(webAddress).toHaveValue(guessed);
     const addressShownBefore = await webAddress.inputValue();
-    const prefix = 'cozyfurnitures.pk/pages/';
-    await expect(page.getByText(prefix, { exact: true })).toBeVisible();
-    g.expect(`The **Web address** field shows **${addressShownBefore}** (after the grey \`${prefix}\`).`);
-    await formShot(g, page, 'About Us page filled in, before saving');
-    const host = new URL(page.url()).host;
-    if (!/(^|\.)cozyfurnitures\.pk$/.test(host)) {
-      g.finding(
-        'note',
-        'The web address box always shows the domain cozyfurnitures.pk',
-        `The grey start of the **Web address** box is fixed text: \`${prefix}\` here, and \`cozyfurnitures.pk/…\` in the product, ` +
-          `collection and blog post editors too. It does not follow the address the store really runs at (this test: **${host}**). ` +
-          'If the shop’s domain is not cozyfurnitures.pk, the admin shows a wrong address to copy and share.',
-      );
-    }
+    const prefix = await checkAddressPrefix(page, baseURL, '/pages/');
+    g.expect(
+      `The **Web address** field shows **${addressShownBefore}**. In front of it the grey text shows the shop's own address followed by ` +
+        `**/pages/**: \`${prefix}\` (the domain the website was installed with, as in the collection form in section 2).`,
+    );
+    await formShot(g, page, 'About Us page filled in, before saving', { highlight: webAddress.locator('xpath=..') });
 
     await g.click(saveBar(page).getByRole('button', { name: 'Create page' }), 'At the bottom of the screen, click **Create page**.');
     await expect(page).toHaveURL(/\/admin\/pages\/\d+\?created=1/, { timeout: 30_000 });
@@ -290,10 +300,19 @@ const section: Section = {
 
     const aboutPath = await storeAddress(page, /^\/pages\/[a-z0-9-]+$/);
     const aboutHandle = aboutPath.replace('/pages/', '');
+    // the address shown before saving is the one saved: nothing on this shop uses /pages/about-us yet
+    expect(aboutHandle, 'web address saved for About Us').toBe(addressShownBefore);
     pageAddress.set(about.title, aboutPath);
     await openAdvanced(g, page, 'Scroll down and click **Advanced** again to see the web address the page was saved with.');
     await expect(webAddress).toHaveValue(aboutHandle);
-    g.expect(`The saved web address is **${aboutHandle}**: the page is at **${aboutPath}** on the store (the **View on store** link at the top opens it).`);
+    g.expect(
+      `The saved web address is **${aboutHandle}**, exactly what the box showed before saving: the page is at **${aboutPath}** on the store ` +
+        '(the **View on store** link at the top opens it).',
+    );
+    g.note(
+      'The admin never changes a web address by itself. It refuses one only when another page already uses it (or it is kept for the ' +
+        'built-in **Contact us** page, /pages/contact): **Create page** then shows a red message under **Web address**, and you choose another.',
+    );
     await formShot(g, page, `About Us saved: Page created, web address ${aboutHandle}`, { highlight: page.locator('div:has(> #web-address)') });
 
     /* ------------------------------------------------------------ the other four pages */
@@ -319,11 +338,15 @@ const section: Section = {
       await expect(page).toHaveURL(/\/admin\/pages\/\d+\?created=1/, { timeout: 30_000 });
       await expect(page.getByText('To let customers find this page, add it to a menu.')).toBeVisible();
       const path = await storeAddress(page, /^\/pages\/[a-z0-9-]+$/);
+      expect(path, `store address of ${p.title}`).toBe(`/pages/${guessAddress(p.title)}`);
       pageAddress.set(p.title, path);
       rows.push([p.title, '`' + p.body + '`', path]);
     }
     g.table(['Title', 'Content (type exactly)', 'Address on the store (made from the title)'], rows);
-    g.expect('After each **Create page**, the page reopens with **Page created** and _To let customers find this page, add it to a menu._');
+    g.expect(
+      'After each **Create page**, the page reopens with **Page created** and _To let customers find this page, add it to a menu._ ' +
+        'Each page gets the address made from its title (an **&** becomes **and**), as its **Web address** box showed.',
+    );
 
     await g.click(page.getByRole('link', { name: 'All pages' }), 'Click **All pages**.');
     const pageRows = page.getByTestId('page-row');
@@ -436,12 +459,19 @@ const section: Section = {
           .map((t) => `**${t}**`)
           .join(' and ')} chips.`,
       );
-      if (i === 0) await formShot(g, page, `Blog post “${post.title}” filled in, before saving`);
+      if (i === 0) {
+        await openAdvanced(g, page, 'Scroll down and click **Advanced** to see the post’s web address, made from its title.');
+        await expect(page.locator('#web-address')).toHaveValue(guessAddress(post.title));
+        const blogPrefix = await checkAddressPrefix(page, baseURL, '/blogs/news/');
+        g.expect(`**Web address** shows **${guessAddress(post.title)}**, after the grey \`${blogPrefix}\`: blog posts are under **/blogs/news/** on the store.`);
+        await formShot(g, page, `Blog post “${post.title}” filled in, before saving`);
+      }
 
       await g.click(saveBar(page).getByRole('button', { name: 'Create post' }), 'Click **Create post** at the bottom of the screen.');
       await expect(page).toHaveURL(/\/admin\/blog\/\d+\?created=1/, { timeout: 30_000 });
       await expect(page.getByText('Blog post created.')).toBeVisible();
       postAddress.set(post.title, await storeAddress(page, /^\/blogs\/news\/[a-z0-9-]+$/));
+      expect(postAddress.get(post.title), `store address of ${post.title}`).toBe(`/blogs/news/${guessAddress(post.title)}`);
       g.expect(`The post reopens with **Blog post created.** It will be at **${postAddress.get(post.title)}** on the store.`);
     }
 
@@ -464,7 +494,8 @@ const section: Section = {
     /* ------------------------------------------------------------ footer menus */
     g.part(
       'Link the pages from the footer',
-      'A new page is only found by customers once a menu links to it. The pages go into the two footer menus.',
+      'A new page is only found by customers once a menu links to it. The pages go into the two footer menus: About Us and the terms ' +
+        `under Footer “About”, the three customer-service pages under Footer “Customer Support”, after the **${CONTACT.label}** link added in section 6.`,
     );
     await g.click(sidebarLink(page, 'Menus'), 'In the left menu, click **Menus**.');
     await expect(page.getByRole('heading', { level: 1, name: 'Menus' })).toBeVisible();
@@ -473,37 +504,41 @@ const section: Section = {
     await g.shot(page, 'Footer “About” menu with About Us and Terms & Conditions', { highlight: page.getByRole('list', { name: 'Menu items' }) });
 
     await fillFooterTab(g, page, 'Footer “Customer Support”', MENUS.footerSupport);
-    await g.shot(page, 'Footer “Customer Support” menu with the three policy pages', { highlight: page.getByRole('list', { name: 'Menu items' }) });
+    const supportOrder = [CONTACT.label, ...MENUS.footerSupport.map((e) => e.label)];
+    await expect.poll(() => menuItems(page).evaluateAll((els) => els.map((el) => el.getAttribute('data-label') ?? ''))).toEqual(supportOrder);
+    await expect(menuItemHeader(menuItems(page).first())).toContainText(`Page · ${CONTACT.link} (Built-in)`);
+    g.expect(`**${CONTACT.label}** (the built-in contact page, added in section 6) stays first; the three policy pages follow it.`);
+    await g.shot(page, 'Footer “Customer Support” menu: Contact us, then the three policy pages', { highlight: page.getByRole('list', { name: 'Menu items' }) });
 
     /* ------------------------------------------------------------ the shopper's view */
     g.part('Check the pages, footer and blog on the store', 'Done in a separate browser window that is not signed in, like a customer.');
     await g.goto(shopper, '/', 'Open the store home page **/** and scroll to the very bottom.');
-    const information = shopper.getByRole('navigation', { name: 'Information', exact: true });
-    const userArea = shopper.getByRole('navigation', { name: 'User Area', exact: true });
+    const aboutNav = shopper.getByRole('navigation', { name: FOOTER_HEADING.about, exact: true });
+    const supportNav = shopper.getByRole('navigation', { name: FOOTER_HEADING.support, exact: true });
     const footerLink = (label: string) =>
       MENUS.footerAbout.some((e) => e.label === label)
-        ? information.getByRole('link', { name: label, exact: true })
-        : userArea.getByRole('link', { name: label, exact: true });
-    for (const e of [...MENUS.footerAbout, ...MENUS.footerSupport]) await expect(footerLink(e.label)).toBeVisible();
-    await expect(information.getByRole('heading', { name: 'Information' })).toBeVisible();
-    await expect(userArea.getByRole('heading', { name: 'User Area' })).toBeVisible();
+        ? aboutNav.getByRole('link', { name: label, exact: true })
+        : supportNav.getByRole('link', { name: label, exact: true });
+    await expect(aboutNav.getByRole('heading')).toHaveText(FOOTER_HEADING.about);
+    await expect(supportNav.getByRole('heading')).toHaveText(FOOTER_HEADING.support);
+    // the links in the order of their menu tab: Contact us (section 6) first under Customer Support
+    await expect(aboutNav.getByRole('link')).toHaveText(MENUS.footerAbout.map((e) => e.label));
+    await expect(supportNav.getByRole('link')).toHaveText([CONTACT.label, ...MENUS.footerSupport.map((e) => e.label)]);
+    await expect(supportNav.getByRole('link', { name: CONTACT.label, exact: true })).toHaveAttribute('href', CONTACT.href);
+    for (const e of [...MENUS.footerAbout, ...MENUS.footerSupport]) {
+      await expect(footerLink(e.label)).toHaveAttribute('href', pageAddress.get(e.link)!);
+    }
     g.expect(
-      `The footer shows ${MENUS.footerAbout.map((e) => `**${e.label}**`).join(' and ')} under **INFORMATION**, and ` +
-        `${MENUS.footerSupport.map((e) => `**${e.label}**`).join(', ')} under **USER AREA** (the footer is in the next screenshot, ` +
-        'at the bottom of the About Us page).',
-    );
-    g.finding(
-      'issue',
-      'The policy links are under a footer heading “User Area”',
-      'The links of **Footer “Customer Support”** appear on the store under the heading **USER AREA**, and those of **Footer “About”** ' +
-        'under **INFORMATION**. The grey line under each tab in **Menus** says so, but the two headings are fixed and cannot be changed ' +
-        'in the admin. “User Area” is misleading on a shop without customer accounts; “Customer Support”, as the admin calls it, ' +
-        'would describe Shipping, Returns and Privacy.',
+      `The footer column **${FOOTER_HEADING.about.toUpperCase()}** lists ${MENUS.footerAbout.map((e) => `**${e.label}**`).join(' and ')}, and the column ` +
+        `**${FOOTER_HEADING.support.toUpperCase()}** lists **${CONTACT.label}**, ${MENUS.footerSupport.map((e) => `**${e.label}**`).join(', ')}: ` +
+        'each column has the name of its tab in **Menus** and its links in the same order (the footer is in the next screenshot, at the bottom of the About Us page).',
     );
 
     await g.click(footerLink(MENUS.footerAbout[0].label), `In the footer, click **${MENUS.footerAbout[0].label}**.`);
     await expect(shopper).toHaveURL(new RegExp(`${escapeRe(aboutPath)}$`));
-    const text = shopper.locator('.sf-text-body');
+    const main = shopper.getByRole('main');
+    const text = main.locator('.sf-text-body');
+    await expect(main.getByRole('heading', { level: 1 })).toHaveText(about.title);
     await expect(text.locator('h2')).toHaveText(ABOUT.heading);
     await expect(text).toContainText(about.body);
     await expect(text.locator('h3')).toHaveText(ABOUT.subheading);
@@ -511,24 +546,11 @@ const section: Section = {
     await expect(shopper).toHaveTitle(`${ABOUT.seoTitle} - Cozy Furnitures`);
     await expect(shopper.locator('meta[name="description"]')).toHaveAttribute('content', ABOUT.seoDescription);
     g.expect(
-      `The About Us page opens at **${aboutPath}** with the heading **${ABOUT.heading}**, the paragraph, the subheading and the three bullet points. ` +
+      `The About Us page opens at **${aboutPath}**, the address shown in the admin. At the top is the page’s **Title**, **${about.title}**, as the page heading; ` +
+        `below it the content: the heading **${ABOUT.heading}**, the paragraph, the subheading **${ABOUT.subheading}** and the three bullet points. ` +
         `The browser tab shows the SEO title _${ABOUT.seoTitle} - Cozy Furnitures_.`,
     );
     await g.shot(shopper, 'About Us page on the store, the footer links below it', { fullPage: true });
-
-    if (aboutHandle !== addressShownBefore) {
-      await g.goto(shopper, `/pages/${addressShownBefore}`, `Now type the address a customer would guess: **/pages/${addressShownBefore}**.`);
-      await expect(shopper.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
-      g.note(`The store shows **Page not found** at /pages/${addressShownBefore}; the page is only at **${aboutPath}**.`);
-      g.finding(
-        'issue',
-        `The About Us page cannot have the address /pages/${addressShownBefore}`,
-        `While the page was being written, **Advanced → Web address** showed \`${addressShownBefore}\`, but the page was saved as ` +
-          `\`${aboutHandle}\`. The address \`${addressShownBefore}\` is kept for the old built-in “custom design” About page, which a new store ` +
-          `does not have, so **/pages/${addressShownBefore}** shows _Page not found_. Links chosen with the link picker work; addresses typed ` +
-          'by hand, printed or shared need the longer address. Free the address when no built-in page uses it.',
-      );
-    }
 
     g.step('Using the footer links, open each of the other pages:');
     const visited: string[][] = [];
@@ -541,36 +563,32 @@ const section: Section = {
         await shopper.goto(expected);
       }
       await expect(shopper).toHaveURL(new RegExp(`${escapeRe(expected)}$`));
-      await expect(shopper.locator('.sf-text-body')).toContainText(p.body);
-      visited.push([entry ? `click **${entry.label}** in the footer` : `open **${expected}**`, expected, p.body]);
+      await expect(main.getByRole('heading', { level: 1 })).toHaveText(p.title);
+      await expect(main.locator('.sf-text-body')).toHaveText(p.body);
+      visited.push([entry ? `click **${entry.label}** in the footer` : `open **${expected}**`, expected, `**${p.title}**`, p.body]);
     }
-    g.table(['Do this', 'Address that opens', 'Text on the page'], visited);
-    g.expect('Each footer link opens its page with the text typed in the admin.');
+    g.table(['Do this', 'Address that opens', 'Heading', 'Text on the page'], visited);
+    g.expect('Each footer link opens its page: the page’s title as the heading, then the text typed in the admin.');
 
-    // A page written as one paragraph (no Heading in the editor) shows no title on the store.
+    // A page written as one paragraph (no Heading in the editor) still opens with its title as the heading.
     const plain = otherPages[0];
     const plainEntry = [...MENUS.footerAbout, ...MENUS.footerSupport].find((e) => e.link === plain.title);
     const plainPath = pageAddress.get(plain.title)!;
     if (plainEntry) await g.click(footerLink(plainEntry.label), `In the footer, click **${plainEntry.label}** again and look at the top of the page.`);
     else await g.goto(shopper, plainPath, `Open **${plainPath}** and look at the top of the page.`);
     await expect(shopper).toHaveURL(new RegExp(`${escapeRe(plainPath)}$`));
-    const main = shopper.getByRole('main');
+    await expect(main.getByRole('heading')).toHaveCount(1);
+    await expect(main.getByRole('heading', { level: 1 })).toHaveText(plain.title);
     await expect(main.locator('.sf-text-body')).toHaveText(plain.body);
-    await expect(main.getByRole('heading')).toHaveCount(0);
-    await expect(main).not.toContainText(plain.title);
     await expect(shopper).toHaveTitle(`${plain.title} - Cozy Furnitures`);
     g.expect(
-      `The page shows only the paragraph typed in **Content**. The title **${plain.title}** is not on the page; it appears only in the ` +
-        `browser tab (_${plain.title} - Cozy Furnitures_).`,
+      `The page was written as one paragraph, without a heading in **Content**, and still opens with its title **${plain.title}** as the heading, ` +
+        `above the paragraph. The browser tab shows _${plain.title} - Cozy Furnitures_.`,
     );
-    await g.shot(shopper, `${plain.title} on the store: the text only, no title`, { highlight: main.locator('.sf-text-body') });
-    g.finding(
-      'issue',
-      'A page’s title is not shown on the store',
-      `The **Title** typed in the admin (e.g. **${plain.title}**) is used for the browser tab and Google results, but the page ` +
-        'itself shows only the **Content**: a page written as one paragraph opens with no heading, so a customer cannot see which page ' +
-        'they are on. The admin does not say this. Until it changes, start each page’s content with a line in **Heading** style ' +
-        `(as done above for ${about.title}).`,
+    await g.shot(shopper, `${plain.title} on the store: the title above the text`, { highlight: main.locator('.sf-tpl-page .container-iw') });
+    g.note(
+      'The **Title** of a page is always shown as its heading on the store, so the **Content** does not need to repeat it. ' +
+        'If the content starts with a heading that is exactly the title, the store shows it only once.',
     );
 
     /* blog */
@@ -591,16 +609,14 @@ const section: Section = {
       `The page redirects to **/blogs/news** (“Blog Posts”) and shows both posts with their featured photo and date, ` +
         `the newer one (**${BLOG_POSTS[0].title}**) first.`,
     );
-    await g.shot(shopper, 'Blog page with the two posts', { fullPage: true });
     const excerpt = cards.filter({ has: shopper.locator('h5', { hasText: exactly(BLOG_POSTS[0].title) }) }).locator('.post-excerpt');
-    await expect(excerpt).toContainText(`${BLOG_POSTS[0].subheading} ${BLOG_POSTS[0].subheadingBody}`);
-    g.finding(
-      'note',
-      'Blog cards run the subheading into the next sentence',
-      `The short preview text under each post on the blog page runs a subheading straight into the next sentence, with no full stop, e.g. ` +
-        `“…${BLOG_POSTS[0].body.split(' ').slice(-3).join(' ')} **${BLOG_POSTS[0].subheading} ${BLOG_POSTS[0].subheadingBody.split(' ').slice(0, 4).join(' ')}**…”. ` +
-        'The post itself is fine; only the preview reads oddly.',
+    // the subheading ends with a full stop in the preview, so it does not run into the next sentence
+    await expect(excerpt).toContainText(`${BLOG_POSTS[0].body} ${BLOG_POSTS[0].subheading}. ${BLOG_POSTS[0].subheadingBody}`);
+    g.expect(
+      `Under each title a short preview of the post reads as whole sentences: the subheading gets a full stop, e.g. ` +
+        `“…${BLOG_POSTS[0].body.split(' ').slice(-3).join(' ')} **${BLOG_POSTS[0].subheading}.** ${BLOG_POSTS[0].subheadingBody.split(' ').slice(0, 4).join(' ')}…”.`,
     );
+    await g.shot(shopper, 'Blog page with the two posts', { fullPage: true });
 
     const first = BLOG_POSTS[0];
     const firstCard = cards.filter({ has: shopper.locator('h5', { hasText: exactly(first.title) }) });

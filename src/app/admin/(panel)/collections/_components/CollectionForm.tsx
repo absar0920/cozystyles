@@ -1,9 +1,10 @@
 'use client';
 
 import { startTransition, useActionState, useEffect, useId, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { saveCollectionAction, type CollectionFormState } from '@/app/admin/actions/collections';
 import { slugify } from '@/lib/slug';
+import { useSiteHost } from '@/lib/use-site-host';
 import { CheckboxField, Field, FormError, Notice, SectionCard, Select, TextInput } from '@/components/admin/ui';
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
@@ -38,10 +39,16 @@ export function CollectionForm({
   const [values, setValues] = useState(initial);
   const [baseline, setBaseline] = useState(initial);
   const [handleTouched, setHandleTouched] = useState(!isNew);
-  const [state, formAction, pending] = useActionState(saveCollectionAction, INITIAL_STATE);
+  const [rawState, formAction, pending] = useActionState(saveCollectionAction, INITIAL_STATE);
+  // Next.js resolves an action with undefined when its answer is a redirect it could not render: never crash on it
+  const state = rawState ?? INITIAL_STATE;
+  const router = useRouter();
+  // a new collection was created: its own page is opening (keep the form quiet and the Create button off)
+  const opening = state.ok && state.createdId != null;
   const savedFromUrl = useSearchParams().get('saved') === '1';
   const handled = useRef<number | undefined>(undefined);
   const formId = useId();
+  const host = useSiteHost();
 
   useEffect(() => {
     if (!state.ok || !state.savedAt || state.savedAt === handled.current || !state.saved) return;
@@ -49,6 +56,8 @@ export function CollectionForm({
     const next = { ...values, handle: state.saved.handle, description: state.saved.description };
     setValues(next);
     setBaseline(next);
+    // a new collection opens on its own page (which remounts this form from fresh server props)
+    if (state.createdId != null) router.replace(`/admin/collections/${state.createdId}?saved=1`, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
@@ -110,7 +119,7 @@ export function CollectionForm({
               value={values.image || null}
               onChange={(url) => set('image', url ?? '')}
               label="Cover photo"
-              hint="Shown on the Collections page and the home “Shop by Category” tiles."
+              hint="Shown on the Collections page and, while the collection is on it, in the home “Shop by Category” row (the first 24 with a photo, in the Arrange Collections page order)."
               purpose="collection"
               previewAspect="3 / 4"
             />
@@ -145,7 +154,7 @@ export function CollectionForm({
           <SectionCard title="Advanced" collapsible defaultOpen={!!fe.handle}>
             <Field label="Web address" htmlFor={`${formId}-handle`} hint={isNew ? 'Made from the name. You can change it.' : undefined}>
               <div className="flex min-w-0 items-center rounded-lg border border-gray-300 bg-gray-50 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/20">
-                <span className="hidden shrink-0 pl-3 text-sm text-gray-500 sm:inline">cozyfurnitures.pk/collections/</span>
+                <span className="hidden shrink-0 pl-3 text-sm text-gray-500 sm:inline">{host}/collections/</span>
                 <span className="shrink-0 pl-3 text-sm text-gray-500 sm:hidden">…/collections/</span>
                 <input
                   id={`${formId}-handle`}
@@ -168,13 +177,13 @@ export function CollectionForm({
         </div>
       </div>
 
-      <UnsavedChangesGuard dirty={dirty && !pending} />
+      <UnsavedChangesGuard dirty={dirty && !pending && !opening} />
       <StickySaveBar
         dirty={dirty}
-        saving={pending}
+        saving={pending || opening}
         error={!state.ok ? state.error : null}
         status={isNew ? 'New collection' : 'All changes saved'}
-        actions={[{ label: isNew ? 'Create collection' : 'Save collection', shortLabel: isNew ? 'Create' : 'Save', type: 'submit', form: formId, disabled: !isNew && !dirty }]}
+        actions={[{ label: isNew ? 'Create collection' : 'Save collection', shortLabel: isNew ? 'Create' : 'Save', type: 'submit', form: formId, disabled: opening || (!isNew && !dirty) }]}
       />
     </form>
   );

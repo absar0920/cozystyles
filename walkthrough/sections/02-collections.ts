@@ -1,17 +1,18 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import type { Section } from '../context';
-import { COLLECTIONS, type CollectionData } from '../data';
-import { afterSave, chooseFiles, expectImagesLoaded, gotoPage, type Guide } from '../guide';
+import { COLLECTIONS, STORE, type CollectionData } from '../data';
+import { chooseFiles, expectImagesLoaded, gotoPage, type Guide } from '../guide';
 
 /** The main departments, first on the store's Collections ("Shop by Category") page, in this order. */
 const TOP_ORDER = ['Living Room', 'Bedroom', 'Dining', 'Office Chairs'];
 
 const SAVED = 'Saved. The store is updated.';
 const ORDER_SAVED = 'Saved. The Collections page is updated.';
+/** The admin's error screen (it used to appear now and then right after creating a collection on staging). */
+const ERROR_SCREEN = 'This page could not finish loading';
 
 const reEsc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const exactly = (s: string) => new RegExp(`^\\s*${reEsc(s)}\\s*$`);
-const sameOrder = (a: string[], b: string[]) => a.length === b.length && a.every((x, i) => x === b[i]);
 const listed = (titles: string[]) => titles.map((t, i) => `${i + 1}. ${t}`).join(', ');
 const times = (n: number) => (n === 1 ? 'once' : `${n} times`);
 
@@ -81,15 +82,14 @@ async function uploadCover(page: Page, file: string) {
   await expect(f.coverImg).toHaveAttribute('src', /\/uploads\//);
 }
 
-/** After "Create collection": the page becomes the saved collection with the green notice. */
-async function expectCreated(page: Page, c: CollectionData, g: Guide) {
-  const errored = await afterSave(g, page, () => expect(page).toHaveURL(/\/admin\/collections\/\d+\?saved=1/, { timeout: 30_000 }), `the collection **${c.title}**`);
-  if (errored) {
-    // the save went through: open the collection from the list and check it like after a normal save
-    await gotoPage(page, '/admin/collections');
-    await page.getByRole('link', { name: c.title, exact: true }).first().click();
-    await expect(page).toHaveURL(/\/admin\/collections\/\d+/);
-  } else await expect(page.getByText(SAVED)).toBeVisible();
+/**
+ * After "Create collection": the page becomes the saved collection with the green notice — never the admin's
+ * "Something went wrong — This page could not finish loading" screen (F02-2 of the previous run, fixed).
+ */
+async function expectCreated(page: Page, c: CollectionData) {
+  await expect(page).toHaveURL(/\/admin\/collections\/\d+\?saved=1/, { timeout: 30_000 });
+  await expect(page.getByText(SAVED)).toBeVisible();
+  await expect(page.getByText(ERROR_SCREEN)).toHaveCount(0);
   await expect(page.getByRole('heading', { level: 1, name: c.title, exact: true })).toBeVisible();
   const f = collectionForm(page);
   await expect(f.parent.locator('option:checked')).toHaveText(c.parent ?? '— Top level —');
@@ -136,7 +136,7 @@ const section: Section = {
   title: '2. Collections',
   intro:
     'Collections are the departments of the shop (Living Room, Bedroom…) and the groups inside them (Sofas, Beds…). ' +
-    'This section creates all eight with a description and cover photo, puts the main departments first on the store\'s "Shop by Category" page, and checks every collection on the store.',
+    'This section creates all eight with a description and cover photo, puts the main departments first on the store\'s "Shop by Category" page (the home page\'s "Shop by Category" row follows the same order), and checks every collection on the store.',
   async run({ guide: g, admin, shopper, baseURL }) {
     const site = baseURL.replace(/\/$/, '');
     const storeUrl = (handle: string) => `${site}/collections/${handle}`;
@@ -181,25 +181,42 @@ const section: Section = {
       await expect(f.replace).toBeVisible();
       await expect(f.remove).toBeVisible();
       g.expect('The photo appears in the **Cover photo** box, with **Replace** and **Remove** buttons under it.');
+      await expect(admin.getByText('in the home “Shop by Category” row', { exact: false })).toBeVisible();
+      g.note(
+        'The grey hint under the photo says where it is shown: on the store\'s Collections page and, while the collection is on that page, in the home page\'s **Shop by Category** row (in the **Arrange Collections page** order).',
+      );
       g.note('Leave **Products in this collection** empty: there are no products yet. In section 3 every product is put into its collections from the product page.');
 
       await g.click(f.advanced, 'Click **Advanced** (bottom right) to see the **Web address** the shop made from the name. Leave it as it is.');
       await expect(f.webAddress).toBeVisible();
       await expect(f.webAddress).toHaveValue(first.handle);
       g.expect(`**Web address** shows \`${first.handle}\`, so the collection's page on the store will be **${storeUrl(first.handle)}**.`);
+      // The grey text in front of the box: the shop's own domain (set when the website is installed), never the
+      // old website's name cozyfurnitures.pk (F02-1 of the previous run, fixed).
       const prefix = ((await f.webAddress.locator('xpath=..').innerText()) || '').trim();
+      expect(prefix, 'grey text in front of the Web address box').toMatch(/^[a-z0-9.-]+(:\d+)?\/collections\/$/i);
+      const prefixHost = prefix.replace(/\/collections\/$/, '');
       const host = new URL(site).hostname;
-      if (!/^(localhost|127\.0\.0\.1)$/.test(host) && prefix && !prefix.includes(host.replace(/^(www|staging)\./, ''))) {
+      const bare = (h: string) => h.replace(/:\d+$/, '').replace(/^(www|staging)\./, '');
+      if (bare(host) !== 'cozyfurnitures.pk') expect(prefix).not.toContain('cozyfurnitures.pk');
+      if (/^(localhost|127\.0\.0\.1)$/.test(host)) {
+        g.expect(`In front of the box the grey text shows the shop's own address followed by **/collections/**: \`${prefix}\`.`);
+        g.note(
+          `The grey text shows the domain the website was installed with. In this local test that is the test address \`${prefixHost}\`; on the live shop it is the shop's real domain (for example \`cozystyle.pk/collections/\`). The product, page and blog post forms show the same domain.`,
+        );
+      } else if (bare(prefixHost) === bare(host)) {
+        g.expect(`In front of the box the grey text shows this shop's own domain: \`${prefix}\`. The product, page and blog post forms show the same domain.`);
+      } else {
         g.finding(
           'note',
           'Web address box shows a different website name',
-          `In front of the web address the form shows \`${prefix}\`, but this store runs at \`${host}\`. The same fixed name appears on products, pages and blog posts. Make sure it matches the shop's real domain.`,
+          `In front of the web address the form shows \`${prefix}\`, but this store runs at \`${host}\`. The grey text comes from the shop address set when the website was installed (NEXT_PUBLIC_SITE_URL in the hosting panel); make sure it is the shop's real domain.`,
         );
       }
-      await wholeAdminShot(g, admin, 'Living Room filled in, before saving');
+      await wholeAdminShot(g, admin, 'Living Room filled in, before saving', { highlight: f.webAddress.locator('xpath=..') });
 
       await g.click(f.create, 'At the bottom of the screen, click **Create collection**.');
-      await expectCreated(admin, first, g);
+      await expectCreated(admin, first);
       g.expect(
         `The page becomes the **${first.title}** collection with the green message **${SAVED}** at the top, and a **View on store** button appears next to the name.`,
       );
@@ -239,7 +256,7 @@ const section: Section = {
       await expect(f.handleInput).toHaveValue(c.handle);
       if (c === firstSub) await wholeAdminShot(g, admin, `${c.title} filled in: inside ${c.parent}`, { highlight: f.parent });
       await f.create.click();
-      await expectCreated(admin, c, g);
+      await expectCreated(admin, c);
     }
     g.expect(
       `After each **Create collection** the green message **${SAVED}** appears, and the saved page shows the chosen collection under **Inside collection (optional)**.`,
@@ -270,17 +287,23 @@ const section: Section = {
     /* ------------------------------------------------------------ arrange */
     g.part(
       'Arrange the Collections page',
-      'The store\'s **Collections** page ("Shop by Category") shows a card for every collection with **Show on the Collections page** ticked. New collections are added at the end, so put the four main departments first.',
+      'The store\'s **Collections** page ("Shop by Category") shows a card for every collection with **Show on the Collections page** ticked. ' +
+        'The **Shop by Category** row on the home page shows the same cards in the same order (those with a cover photo, at most 24). New collections are added at the end, so put the four main departments first.',
     );
     await g.click(admin.getByRole('link', { name: 'Arrange Collections page' }), 'On the Collections list, click **Arrange Collections page** (top right).');
     await expect(admin.getByRole('heading', { level: 1, name: 'Collections page' })).toBeVisible();
+    const homeHint = admin.getByText('Cards with a cover photo also make the home page', { exact: false });
+    await expect(homeHint).toBeVisible();
+    g.expect(
+      'Under the heading **Collections page** the page explains: _"The cards on the store\'s Collections page (“Shop by Category”), in this order. Cards with a cover photo also make the home page\'s “Shop by Category” row (the first 24)."_',
+    );
     await admin.waitForLoadState('networkidle');
     const cardList = admin.getByRole('list', { name: 'Collections page cards' });
     await expect(admin.getByTestId('index-card').first()).toBeVisible();
     const before = await cardTitles(admin);
     expect(before).toEqual(expect.arrayContaining(COLLECTIONS.map((c) => c.title)));
     g.expect(`All ${COLLECTIONS.length} collections are there as cards, numbered in the order the store shows them: ${listed(before)}.`);
-    await wholeAdminShot(g, admin, 'Collections page cards before arranging');
+    await wholeAdminShot(g, admin, 'Collections page cards before arranging', { highlight: homeHint });
 
     const final = [...TOP_ORDER, ...before.filter((t) => !TOP_ORDER.includes(t))];
     g.text(`Put **${TOP_ORDER.join('**, **')}** at the top, in that order, with the up arrow (**Move up**) on the right of each card:`);
@@ -336,22 +359,21 @@ const section: Section = {
     g.expect(`The **Shop by Category** page shows ${final.length} cards in the saved order (${listed(final)}), each with its cover photo.`);
     await g.shot(shopper, 'Store: Shop by Category page', { fullPage: true });
 
-    const placeholder = grid.getByText('Add a short description for your collections');
-    if (await placeholder.isVisible()) {
-      g.finding(
-        'issue',
-        'Template sentence under "Shop by Category"',
-        'Under the heading of the store\'s Collections page customers read _"Add a short description for your collections"_. It is leftover template text, and there is no place in the admin to change or remove it.',
-      );
-    }
-    const meta = (await shopper.locator('meta[name="description"]').first().getAttribute('content').catch(() => null)) ?? '';
-    if (/wardrobes|kitchens|doors/i.test(meta)) {
-      g.finding(
-        'note',
-        'Search-engine text of the Collections page lists categories the shop does not have',
-        `The description Google shows for ${site}/collections is fixed text: _"${meta}"_. It cannot be changed in the admin.`,
-      );
-    }
+    // Nothing between the heading and the cards (F02-3 of the previous run, the template sentence, is fixed).
+    await expect(shopper.getByText('Add a short description', { exact: false })).toHaveCount(0);
+    g.expect('The cards start right under the heading **Shop by Category**: there is no template sentence such as _"Add a short description for your collections"_.');
+
+    // The description given to Google names this shop's collections, nothing it does not sell (F02-4, fixed).
+    const meta = (await shopper.locator('head meta[name="description"]').first().getAttribute('content')) ?? '';
+    const named = meta.match(/^Browse the .+ collections: (.+?)(?: and more)?\.$/);
+    expect(named, `description of /collections: "${meta}"`).not.toBeNull();
+    const names = (named as RegExpMatchArray)[1].split(', ');
+    expect(names, `collections named in "${meta}"`).toEqual(final.slice(0, names.length));
+    expect(meta).not.toMatch(/wardrobe|kitchen|doors|desks|kids|d[ée]cor|flooring/i);
+    g.step('_(Optional)_ Right-click an empty part of the page, choose **View page source**, and search (**Ctrl+F**) for `name="description"`.');
+    g.expect(
+      `The description given to Google lists this shop's collections in the order of the page, and nothing else: “${meta}”`,
+    );
 
     const sofas = byTitle('Sofas');
     await g.click(tile(sofas.title), `Click the **${sofas.title}** card.`);
@@ -366,6 +388,10 @@ const section: Section = {
       `The address becomes **${storeUrl(sofas.handle)}**. The page shows _Home / Shop / ${sofas.title}_ at the top, **No products found**, and the description _"${sofas.description}"_ under it.`,
     );
     g.note('The collection is empty for now: products are put into their collections in section 3.');
+    const shopSofas = shopper.getByRole('link', { name: STORE.announcementButton, exact: true });
+    if ((await shopSofas.count()) && (await shopSofas.first().getAttribute('href')) === `/collections/${sofas.handle}`) {
+      g.note(`The red **${STORE.announcementButton}** button in the dark bar at the top (section 1) links to this collection, so it no longer opens _Page not found_.`);
+    }
     await g.shot(shopper, 'Store: the Sofas collection, no products yet', { fullPage: true });
 
     /* ------------------------------------------------------------ every web address */
@@ -387,42 +413,49 @@ const section: Section = {
     );
 
     /* ------------------------------------------------------------ home page tiles */
-    g.part('The "Shop by Category" row on the home page');
+    // F02-5 of the previous run (the row used a fixed list of the old website's collections) is fixed: the row is
+    // the Collections page cards that have a cover photo, in the saved order, each once.
+    g.part('The "Shop by Category" row on the home page', 'The home page shows the cards of the Collections page as a sliding row of photos, in the same order.');
     await g.goto(shopper, '/', `Open the home page **${site}/** and scroll down to **Shop by Category**.`);
-    const homeRow = shopper
-      .locator('section')
-      .filter({ has: shopper.getByRole('heading', { level: 2, name: 'Shop by Category' }) })
-      .last();
-    const homeTitles = (await homeRow.count())
-      ? (await homeRow.locator('[data-cell]:not([aria-hidden]) h2').allTextContents()).map((t) => t.trim())
-      : [];
-    /* the tiles actually in view (the slider repeats its tiles when there are fewer than fit in the row) */
-    const inView = homeTitles.length
-      ? await homeRow.getByRole('region', { name: 'Shop by Category' }).evaluate((region) => {
-          const r = region.getBoundingClientRect();
-          return Array.from(region.querySelectorAll('[data-cell]'))
-            .filter((c) => {
-              const b = c.getBoundingClientRect();
-              return b.width > 0 && b.left >= r.left - 2 && b.right <= r.right + 2;
-            })
-            .map((c) => c.querySelector('h2')?.textContent?.trim() ?? '');
+    const homeRow = shopper.locator('section').filter({ has: shopper.getByRole('heading', { level: 2, name: 'Shop by Category' }) });
+    await expect(homeRow).toHaveCount(1);
+    const slider = homeRow.getByRole('region', { name: 'Shop by Category' });
+    await expect(slider).toBeVisible();
+    /* every collection here has a cover photo, so the row is the whole saved order (at most 24) */
+    const rowOrder = final.slice(0, 24);
+    // the slider keeps copies of its tiles on both sides for the wrap-around; only the real ones can be tabbed to
+    const realTiles = slider.locator('a[tabindex="0"]');
+    await expect.poll(async () => (await realTiles.locator('h2').allTextContents()).map((t) => t.trim())).toEqual(rowOrder);
+    for (const [i, t] of rowOrder.entries()) await expect(realTiles.nth(i)).toHaveAttribute('href', `/collections/${byTitle(t).handle}`);
+    await expectImagesLoaded(shopper, 'section [role="region"][aria-label="Shop by Category"] a[tabindex="0"] img');
+    /* the tiles actually in view on a computer screen: the first three, each once */
+    await homeRow.scrollIntoViewIfNeeded();
+    const inView = await slider.evaluate((region) => {
+      const r = region.getBoundingClientRect();
+      return Array.from(region.querySelectorAll('a'))
+        .filter((a) => {
+          const b = a.getBoundingClientRect();
+          return b.width > 0 && b.left >= r.left - 2 && b.right <= r.right + 2;
         })
-      : [];
-    const repeats = new Set(inView).size < inView.length;
-    if (sameOrder(homeTitles, final) || sameOrder(homeTitles, TOP_ORDER)) {
-      g.expect(`The home page row shows the collections in the saved order: ${listed(homeTitles)}.`);
-    } else {
-      g.finding(
-        'bug',
-        'Home page "Shop by Category" does not follow your collections',
-        'The cover photo help says the photo is shown "on the Collections page and the home Shop by Category tiles", but the home page row ignores the collections and the order set in **Arrange Collections page**. ' +
-          'It only shows collections whose web address is on a fixed list copied from the old website (`coalesce-bedroom`, `sofas-all`, `office-chairs`, `beds`, `dining-table-sets`, `kids`, `decor-acc`), and nothing in the admin changes it. ' +
-          `With this shop's collections the row shows: ${homeTitles.length ? homeTitles.join(', ') : 'nothing (the whole row is missing)'}.` +
-          (repeats ? ` Because there are fewer tiles than places in the row, the slider repeats them: on a computer screen it reads _${inView.join(', ')}_.` : ''),
-      );
-    }
-    if (homeTitles.length) await g.shot(shopper, `Home page: Shop by Category shows ${homeTitles.join(', ')}`, { highlight: homeRow });
-    else await g.shot(shopper, 'Home page: no Shop by Category row', { fullPage: true });
+        .map((a) => a.querySelector('h2')?.textContent?.trim() ?? '');
+    });
+    expect(inView, 'home tiles in view').toEqual(rowOrder.slice(0, 3));
+    const dots = homeRow.getByRole('list', { name: 'Category slides' }).getByRole('button');
+    await expect(dots).toHaveCount(rowOrder.length);
+    g.expect(
+      `The row shows the same ${rowOrder.length} collections as the Collections page, in the saved order: ${listed(rowOrder)}. ` +
+        `On a computer screen the first three (${inView.join(', ')}) are in view, each with its cover photo; the row slides on to the others (drag it, or click one of the ${rowOrder.length} dots next to it).`,
+    );
+    g.note(
+      'The row follows **Arrange Collections page** by itself: change the order there and the home page changes with it. A collection without a cover photo, or with **Show on the Collections page** unticked, is left out of the row; when no collection is left, the home page has no **Shop by Category** row at all.',
+    );
+    await g.shot(shopper, 'Home page: Shop by Category in the saved order', { highlight: homeRow });
+
+    const firstTile = byTitle(rowOrder[0]);
+    await g.click(realTiles.first(), `Click the first photo in the row, **${firstTile.title}**.`);
+    await expect(shopper).toHaveURL(new RegExp(`/collections/${firstTile.handle}$`));
+    await expect(shopper.getByRole('navigation', { name: 'breadcrumbs' }).locator('[aria-current="page"]')).toHaveText(firstTile.title);
+    g.expect(`The **${firstTile.title}** collection opens (**${storeUrl(firstTile.handle)}**).`);
   },
 };
 

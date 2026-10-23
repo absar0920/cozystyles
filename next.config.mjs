@@ -12,6 +12,9 @@ const nextConfig = {
       { source: '/cart', destination: '/', permanent: false },
       { source: '/checkout', destination: '/', permanent: false },
       { source: '/checkout/:path*', destination: '/', permanent: false },
+      // No customer accounts: old /account links (sign-in, orders…) go to the home page.
+      { source: '/account', destination: '/', permanent: false },
+      { source: '/account/:path*', destination: '/', permanent: false },
     ];
   },
 };

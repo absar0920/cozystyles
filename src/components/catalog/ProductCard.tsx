@@ -20,7 +20,7 @@ export type ProductCardExtras = {
   limitedEdition?: boolean;
   /** Overrides the status bar text. Default: the card data's `statusLabel` (from the variant statuses). */
   statusLabel?: string | null;
-  /** Sale circle % (live = max over variants). Default: computed from price vs compareAtPrice. */
+  /** Sale circle %: the card's own variant discount (cardPrice). Default: computed from price vs compareAtPrice. */
   salePercent?: number | null;
   /** Judge.me text stars under the price — live shows them only for products with reviews. */
   showRating?: boolean;

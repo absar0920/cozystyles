@@ -4,6 +4,7 @@ import { useEffect, useId, useState } from 'react';
 import { CheckboxField, Field, FormError, SectionCard, Select, TextInput } from '@/components/admin/ui';
 import { ChipsInput } from '@/components/admin/ChipsInput';
 import { slugify } from '@/lib/slug';
+import { useSiteHost } from '@/lib/use-site-host';
 import { DISCOUNT_GROUPS, type ProductEditorState, type VariantState } from '../_lib/types';
 import { comboLabel } from '../_lib/variants';
 
@@ -56,6 +57,7 @@ export function AdvancedSection({
   fieldError: (field: string) => string | null;
 }) {
   const typesId = useId();
+  const host = useSiteHost();
   const handleChanged = savedHandle != null && slugify(state.handle) !== savedHandle;
 
   return (
@@ -70,7 +72,7 @@ export function AdvancedSection({
               fieldError('handle') ? 'border-red-400' : 'border-gray-300'
             }`}
           >
-            <span className="hidden shrink-0 select-none bg-gray-50 px-3 py-2.5 text-sm text-gray-500 sm:inline">cozyfurnitures.pk/products/</span>
+            <span className="hidden shrink-0 select-none bg-gray-50 px-3 py-2.5 text-sm text-gray-500 sm:inline">{host}/products/</span>
             <span className="shrink-0 select-none bg-gray-50 px-2 py-2.5 text-sm text-gray-500 sm:hidden">…/products/</span>
             <input
               id="product-handle"

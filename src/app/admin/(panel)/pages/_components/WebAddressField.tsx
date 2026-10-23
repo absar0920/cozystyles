@@ -2,24 +2,25 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { slugify } from '@/lib/slug';
+import { useSiteHost } from '@/lib/use-site-host';
 import { Field, FormError } from '@/components/admin/ui';
 
 /**
- * The editable end of a page's web address ("cozyfurnitures.pk/pages/" + slug). For a new page it follows the
+ * The editable end of a page's web address (shop host + "/pages/" + slug). For a new page it follows the
  * title until the user types in it; `handleTouched` tells the server whether to use the typed value.
  *
  * The input is uncontrolled on purpose: the form's dirty tracker re-renders the editor from a native `input`
  * listener, which would reset a controlled input before React saw the first keystroke.
  */
 export function WebAddressField({
-  prefix,
+  path,
   slug,
   title,
   isNew,
   error,
 }: {
-  /** shown before the input, e.g. "cozyfurnitures.pk/pages/" */
-  prefix: string;
+  /** the address before the slug, e.g. "/pages/" — shown after the shop's host (NEXT_PUBLIC_SITE_URL) */
+  path: string;
   /** the stored slug ('' for a new page) */
   slug: string;
   /** current title, for the automatic address of a new page */
@@ -31,6 +32,7 @@ export function WebAddressField({
   const touchedRef = useRef(false);
   const [touched, setTouched] = useState(false);
   const [shown, setShown] = useState(slug);
+  const prefix = `${useSiteHost()}${path}`;
 
   const show = (v: string) => {
     if (inputRef.current) inputRef.current.value = v;

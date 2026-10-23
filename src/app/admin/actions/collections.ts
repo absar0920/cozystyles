@@ -15,6 +15,8 @@ import { parseSectionData, serializeSectionData } from '@/lib/product-layout-sec
 export type CollectionFormState = {
   ok: boolean;
   savedAt?: number;
+  /** set when a new collection was created: the editor then opens it (/admin/collections/<id>?saved=1) */
+  createdId?: number;
   error?: string | null;
   fieldErrors?: Partial<Record<'title' | 'handle' | 'image' | 'parentId' | 'products', string>>;
   /** what was stored, so the editor can show the cleaned values */
@@ -146,8 +148,11 @@ export async function saveCollectionAction(_prev: CollectionFormState, formData:
   }
   revalidateCollection(saved.handle);
 
-  if (!existing) redirect(`/admin/collections/${saved.id}?saved=1`);
-  return { ok: true, savedAt: Date.now(), saved: { handle: saved.handle, description } };
+  // A new collection is opened by the editor itself (router.replace to /admin/collections/<id>?saved=1), not by
+  // redirect(): after a redirect from a server action Next.js fetches the target page from its own server to
+  // send it along, and on Hostinger that fetch always fails ("failed to get redirect response … fetch failed").
+  // The editor then got an empty answer and showed the error screen instead of the new collection (F02-2).
+  return { ok: true, savedAt: Date.now(), saved: { handle: saved.handle, description }, ...(existing ? {} : { createdId: saved.id }) };
 }
 
 export async function deleteCollectionAction(formData: FormData) {

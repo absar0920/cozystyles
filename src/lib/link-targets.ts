@@ -41,6 +41,15 @@ async function clashingCollectionDetails(titles: string[]): Promise<Map<string, 
   return out;
 }
 
+/**
+ * The built-in Contact us page (src/app/(store)/pages/contact): every shop has it, so the picker offers it under
+ * Pages even when Admin → Pages has no page with the web address "contact". When it does, that page is listed
+ * (and named) instead.
+ */
+export const CONTACT_PAGE_HANDLE = 'contact';
+const BUILT_IN_CONTACT: LinkTarget = { href: `/pages/${CONTACT_PAGE_HANDLE}`, kind: 'page', label: 'Contact us', detail: 'Built-in' };
+const CONTACT_WORDS = ['contact us', 'contact form', 'contact page', 'built-in'];
+
 /** exact title match first, then startsWith, then the rest (stable). */
 function rank<T extends { label: string }>(items: T[], q: string): T[] {
   const lq = q.toLowerCase();
@@ -53,7 +62,7 @@ export async function searchLinkTargets(query: string, limit = 20): Promise<Link
   const q = query.trim().slice(0, 100);
   const statics = STATIC_LINK_TARGETS.filter((t) => !q || t.label.toLowerCase().includes(q.toLowerCase()));
   const contains = q ? { contains: q } : undefined;
-  const [collections, products, pages, posts] = await Promise.all([
+  const [collections, products, pages, posts, contactRow] = await Promise.all([
     prisma.collection.findMany({
       where: q ? { OR: [{ title: contains }, { handle: contains }] } : {},
       select: { handle: true, title: true },
@@ -78,7 +87,10 @@ export async function searchLinkTargets(query: string, limit = 20): Promise<Link
       orderBy: { title: 'asc' },
       take: 20,
     }),
+    prisma.page.findUnique({ where: { handle: CONTACT_PAGE_HANDLE }, select: { id: true } }),
   ]);
+  const lq = q.toLowerCase();
+  const builtInContact = !contactRow && (!lq || CONTACT_WORDS.some((w) => w.includes(lq) || lq.includes(w))) ? [BUILT_IN_CONTACT] : [];
   const clash = await clashingCollectionDetails(collections.map((c) => c.title));
   const out: LinkTarget[] = [
     ...rank(
@@ -98,7 +110,10 @@ export async function searchLinkTargets(query: string, limit = 20): Promise<Link
       q,
     ).slice(0, 6),
     ...rank(
-      pages.map((p) => ({ href: `/pages/${p.handle}`, kind: 'page' as const, label: readable(p.title), ...(p.published ? {} : { detail: 'Hidden' }) })),
+      [
+        ...builtInContact,
+        ...pages.map((p) => ({ href: `/pages/${p.handle}`, kind: 'page' as const, label: readable(p.title), ...(p.published ? {} : { detail: 'Hidden' }) })),
+      ],
       q,
     ).slice(0, 4),
     ...rank(
@@ -179,7 +194,8 @@ export async function resolveLinkTargets(hrefs: string[]): Promise<Record<string
       }
       case 'page': {
         const row = pageBy.get(handle!);
-        out[href] = row ? { href, kind, label: readable(row.title), ...(row.published ? {} : { detail: 'Hidden' }) } : missing();
+        if (row) out[href] = { href, kind, label: readable(row.title), ...(row.published ? {} : { detail: 'Hidden' }) };
+        else out[href] = handle === CONTACT_PAGE_HANDLE ? { ...BUILT_IN_CONTACT, href } : missing();
         break;
       }
       case 'blogPost': {
@@ -220,7 +236,8 @@ function storePathTarget(href: string): LinkTarget {
   const tag = path.match(/^\/blogs\/news\/tagged\/([^/]+)$/);
   if (tag) return store(`Blog posts tagged “${safeDecode(tag[1]).replace(/-/g, ' ')}”`);
   if (path === '/blogs/blog') return store('Blog');
-  if (path === '/account/login') return store('Account login');
+  // the shop has no customer accounts: /account… addresses only lead to the home page
+  if (path === '/account' || path.startsWith('/account/')) return { href, kind: 'external', label: 'Customer account page (removed)', missing: true };
   if (path === '/track') return store('Order tracking on WhatsApp');
   if (path.startsWith('/uploads/') || path.startsWith('/images/')) return store('Uploaded file');
   return { href, kind: 'external', label: 'Old link', missing: true };

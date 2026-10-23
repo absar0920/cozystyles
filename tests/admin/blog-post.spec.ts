@@ -68,6 +68,8 @@ test.describe('blog posts and pages', () => {
     await expect(card).toBeVisible();
     await expect(card.locator('img')).toHaveAttribute('src', /^\/uploads\//);
     await expect(card.locator('aside')).toHaveText(/January 15 2026/i);
+    // the subheading ends with a full stop in the preview instead of running into the next sentence
+    await expect(card.locator('.post-excerpt')).toHaveText('An introduction paragraph. E2E subheading. The body text under the subheading.');
 
     // post page: date, author, image, tags, content
     await card.getByRole('link', { name: postTitle }).first().click();
@@ -171,6 +173,12 @@ test.describe('blog posts and pages', () => {
     const res = await request.get(`/pages/${slug}`);
     expect(res.status()).toBe(200);
     expect(await res.text()).toContain('Our return rules.');
+    // the store shows the title as the page heading, above the text
+    const store = await page.context().newPage();
+    await store.goto(`/pages/${slug}`);
+    await expect(store.locator('main h1')).toHaveText(pageTitle);
+    await expect(store.locator('main .sf-text-body')).toHaveText('Our return rules.');
+    await store.close();
 
     // edit: the save bar reports unsaved changes, then "Saved"
     await page.getByLabel('SEO title').fill('E2E SEO title');
@@ -187,14 +195,41 @@ test.describe('blog posts and pages', () => {
     await expect(saveBar(page)).toContainText('Saved');
     expect((await request.get(`/pages/${slug}`)).status()).toBe(404);
 
-    // a built-in web address is refused
+    // a web address another page has is refused (the demo's custom-design About Us page here; a shop without one
+    // can give /pages/about-us to a text page), and so is the built-in Contact us page's
     await page.getByText('Advanced').click();
     await page.getByLabel('Web address').fill('about-us');
+    await saveBar(page).getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('The page “About Us” already uses this web address. Please choose another.').first()).toBeVisible();
+    await page.getByLabel('Web address').fill('contact');
     await saveBar(page).getByRole('button', { name: 'Save' }).click();
     await expect(page.getByText('That web address is used by a built-in page. Please choose another.').first()).toBeVisible();
 
     await page.getByTestId('confirm-delete').click();
     await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Delete permanently' }).click();
     await expect(page).toHaveURL(/\/admin\/pages\?deleted=1/);
+  });
+
+  test('a new page whose automatic web address is taken is refused, not saved under another address', async ({ page }) => {
+    await page.goto('/admin/pages/new');
+    await expect(editor(page)).toBeVisible(); // hydrated
+    await page.getByLabel('Title', { exact: true }).fill('Privacy Policy');
+    await editor(page).click();
+    await page.keyboard.type('Copy.');
+    await saveBar(page).getByRole('button', { name: 'Create page' }).click();
+    try {
+      await expect(page.getByText('The page “Privacy Policy” already uses this web address. Please choose another.').first()).toBeVisible();
+      // the Advanced section opens on the address that was refused
+      await expect(page.getByLabel('Web address')).toBeVisible();
+      await expect(page.getByLabel('Web address')).toHaveValue('privacy-policy');
+      await expect(page).toHaveURL(/\/admin\/pages\/new$/);
+    } finally {
+      // a regression would have created a second "Privacy Policy" page: remove it
+      if (/\/admin\/pages\/\d+/.test(page.url())) {
+        await page.getByTestId('confirm-delete').click();
+        await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Delete permanently' }).click();
+        await expect(page).toHaveURL(/\/admin\/pages\?deleted=1/);
+      }
+    }
   });
 });

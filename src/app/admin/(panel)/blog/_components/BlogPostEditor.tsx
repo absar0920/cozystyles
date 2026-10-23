@@ -200,7 +200,7 @@ export function BlogPostEditor({
           </SectionCard>
 
           <SectionCard title="Advanced" collapsible defaultOpen={fieldError('handle') != null}>
-            <WebAddressField prefix="cozyfurnitures.pk/blogs/news/" slug={slug} title={title} isNew={isNew} error={fieldError('handle')} />
+            <WebAddressField path="/blogs/news/" slug={slug} title={title} isNew={isNew} error={fieldError('handle')} />
           </SectionCard>
         </form>
 
@@ -225,7 +225,7 @@ export function BlogPostEditor({
       <StickySaveBar
         dirty={dirty}
         saving={pending}
-        status={status}
+        status={status && !savedPublished ? 'Saved as a draft. It is not on the store.' : status}
         error={!state.ok ? state.error : null}
         actions={[{ label: isNew ? 'Create post' : 'Save', type: 'submit', form: FORM_ID }]}
       />

@@ -5,7 +5,7 @@ import { usePendingUploads, WAITING_FOR_UPLOAD } from './upload-client';
 
 export type SaveBarAction = {
   label: string;
-  /** used below 400px wide (e.g. "Draft" / "Publish") */
+  /** used below 640px wide, where the message sits above the buttons (e.g. "Draft" / "Publish") */
   shortLabel?: string;
   variant?: 'primary' | 'secondary';
   type?: 'submit' | 'button';
@@ -88,6 +88,7 @@ export function StickySaveBar({
     };
   }, []);
 
+  // every message wraps rather than being cut short: a save error must be readable in full
   const text = error ? (
     <span className="font-semibold text-red-600">{error}</span>
   ) : uploading ? (
@@ -110,8 +111,8 @@ export function StickySaveBar({
         typing ? 'translate-y-full' : ''
       }`}
     >
-      <div className="mx-auto flex max-w-7xl flex-col gap-2 min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between">
-        <div role="status" aria-live="polite" className="min-h-5 min-w-0 truncate text-sm">
+      <div className="mx-auto flex max-w-7xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div role="status" aria-live="polite" className="min-h-5 min-w-0 break-words text-sm">
           {text}
         </div>
         <div className="flex shrink-0 gap-2">
@@ -127,14 +128,14 @@ export function StickySaveBar({
                 onClick={a.onClick}
                 // every action waits for uploads: a save (or undo) mid-upload would drop the photo
                 disabled={a.disabled || saving || uploading}
-                className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-lg px-4 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 min-[400px]:flex-none ${
+                className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-lg px-4 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none ${
                   primary ? 'bg-brand text-white hover:bg-brand-600' : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 {a.shortLabel ? (
                   <>
-                    <span className="min-[400px]:hidden">{a.shortLabel}</span>
-                    <span className="hidden min-[400px]:inline">{a.label}</span>
+                    <span className="sm:hidden">{a.shortLabel}</span>
+                    <span className="hidden sm:inline">{a.label}</span>
                   </>
                 ) : (
                   a.label

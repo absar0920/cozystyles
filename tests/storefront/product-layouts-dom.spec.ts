@@ -44,6 +44,11 @@ const PRODUCTS: Record<string, string> = {
 const FIXTURES = path.resolve(__dirname, '../fixtures/product-layouts-dom');
 const undoAllowed = (s: string) => s.replaceAll(' [overflow-wrap:anywhere]', '').replaceAll('md:min-h-[650px]', 'md:h-[650px]').replaceAll('min-h-[500px]', 'h-[500px]');
 const T = new Date('2026-01-01T10:00:00Z');
+/**
+ * The class next/font gives a font (here Barlow Condensed) is a bundler-made name: `__className_3aabff` with
+ * webpack (the fixtures), `barlow_condensed_…-module__…__className` with Turbopack. Both sides use one placeholder.
+ */
+const sameFontClass = (s: string) => s.replace(/\b__className_[a-z0-9]+\b|\b[\w-]+-module__[\w-]+__className\b/g, '__className_FONT');
 
 test.use({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1, reducedMotion: 'reduce' });
 
@@ -81,6 +86,6 @@ for (const [key, handle] of Object.entries(PRODUCTS)) {
       };
       return kids.filter(fixed).map((k) => k.outerHTML).join('\n');
     });
-    expect(undoAllowed(html)).toBe(readFileSync(file, 'utf8'));
+    expect(sameFontClass(undoAllowed(html))).toBe(sameFontClass(readFileSync(file, 'utf8')));
   });
 }
