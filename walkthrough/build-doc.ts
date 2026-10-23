@@ -18,7 +18,7 @@ const env = readEnvFile(process.env.WALK_ENV_FILE ?? path.resolve(__dirname, '..
 const outDir = path.resolve(__dirname, '../walkthrough-output', target);
 const date = process.env.WALK_DATE ?? new Date().toISOString().slice(0, 10);
 
-const preambleText = `This document is the result of a complete test of the **${target}** shop, done **only through a web browser** (Google Chrome driven by Playwright): the database started with nothing but its tables, nothing was seeded, nothing was changed directly in the database and no API was called by hand. Every product, collection, page layout, banner, menu, page and blog post below was created by clicking and typing in the admin panel, and every check on the store was made as a shopper would. Each numbered step says exactly what was clicked and typed; the screenshots were taken at that moment.`;
+const preambleText = `This document is the result of a complete test of the **${target}** shop, done **only through a web browser** (Google Chrome driven by Playwright): the shop started empty (only its database tables and the admin login), nothing was seeded, nothing was changed directly in the database and no API was called by hand. Every product, collection, page layout, banner, menu, page and blog post below was created by clicking and typing in the admin panel, and every check on the store was made as a shopper would. Each numbered step says exactly what was clicked and typed; the screenshots were taken at that moment.`;
 
 const meta: [string, string][] = [
   ['Shop tested', baseURL],

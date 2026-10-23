@@ -20,10 +20,10 @@ export type CollectionData = { title: string; handle: string; parent?: string; d
 
 export const COLLECTIONS: CollectionData[] = [
   { title: 'Living Room', handle: 'living-room', description: 'Sofas, coffee tables and accent chairs for the heart of your home.', cover: 'public/images/collections/living.jpg' },
-  { title: 'Sofas', handle: 'sofas', parent: 'Living Room', description: 'Two and three seater sofas in fabrics that last.', cover: 'public/images/collections/antonin.webp' },
+  { title: 'Sofas', handle: 'sofas', parent: 'Living Room', description: 'Two and three seater sofas in fabrics that last.', cover: 'public/images/collections/sofas-1.jpg' },
   { title: 'Coffee Tables', handle: 'coffee-tables', parent: 'Living Room', description: 'Solid wood centre and coffee tables.', cover: 'public/images/collections/center-table.jpg' },
   { title: 'Bedroom', handle: 'bedroom', description: 'Beds and bedside tables crafted in solid wood.', cover: 'public/images/collections/bedroom.jpg' },
-  { title: 'Beds', handle: 'beds', parent: 'Bedroom', description: 'King and queen size beds.', cover: 'public/images/collections/camelot.webp' },
+  { title: 'Beds', handle: 'beds', parent: 'Bedroom', description: 'King and queen size beds.', cover: 'public/images/collections/bed-set.jpg' },
   { title: 'Bedside Tables', handle: 'bedside-tables', parent: 'Bedroom', description: 'Bedside tables with soft-close drawers.', cover: 'public/images/collections/bed-side-tables.jpg' },
   { title: 'Dining', handle: 'dining', description: 'Dining sets for four to eight people.', cover: 'public/images/collections/coalesce-dining.jpg' },
   { title: 'Office Chairs', handle: 'office-chairs', description: 'Ergonomic manager and visitor chairs.', cover: 'public/images/collections/ceo-chairs.webp' },
