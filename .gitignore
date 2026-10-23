@@ -15,3 +15,6 @@ out/
 .env
 /prisma/*.db
 /prisma/*.db-journal
+
+# Walkthrough documents (contain the admin password) — never commit
+/walkthrough-output/
