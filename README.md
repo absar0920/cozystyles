@@ -398,13 +398,15 @@ wordmark (artwork that did — some hero banners, the Imagine banner — is left
 
 #### Fonts
 
-- **Poppins 400/500/600/700** (+ italic) via `next/font/google` — the theme font everywhere. Live loads no lighter
+All font files live in `src/fonts/` (latin subset, from Google Fonts) and load with `next/font/local`, so a build never downloads fonts (a Hostinger build once failed because Google Fonts answered differently there).
+
+- **Poppins 400/500/600/700** (+ italic) self-hosted from `src/fonts/` with `next/font/local` — the theme font everywhere. Live loads no lighter
   Poppins face, so text the live CSS sets at weight 100–300 renders at 400 there; with no light face loaded the
   same happens here (`font-light` etc. intentionally render like live).
-- **Work Sans 400/500/600** via `next/font/google` — only the desktop mega menu and mobile menu (live Globo menu).
+- **Work Sans 400/500/600** self-hosted from `src/fonts/` with `next/font/local` — only the desktop mega menu and mobile menu (live Globo menu).
 - **Poppins 200**, self-hosted at `public/fonts/poppins-200-latin.woff2` under its own family (`font-poppins-thin`)
   — only our own artwork: the Cozy Furnitures logo wordmark and the catalogue cover lettering.
-- **Barlow Condensed 100/600** via `next/font/google` — the Coalesce product-template headings.
+- **Barlow Condensed 100/600** self-hosted from `src/fonts/` with `next/font/local` — the Coalesce product-template headings.
 
 ### Seed contents
 

@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Roboto } from 'next/font/google';
+import localFont from 'next/font/local';
 import { GENERAL_QUESTION_TEXT, waLink, type WhatsAppConfig } from '@/lib/whatsapp';
 import { currentPath, logWhatsAppClick } from '@/components/whatsapp/log-click';
 import { ThemeForm } from './ContactForm';
 
 /** the reCAPTCHA anchor's own face (`Roboto, helvetica, arial, sans-serif`) */
-const roboto = Roboto({ weight: '400', subsets: ['latin'], display: 'swap' });
+const roboto = localFont({ src: '../../fonts/roboto-400-latin.woff2', weight: '400', style: 'normal', display: 'swap' });
 
 /** Live /pages/lead-form: shadowed 60% card, "<brand> Information Form", 2-col floating fields, green submit. */
 export function LeadForm() {

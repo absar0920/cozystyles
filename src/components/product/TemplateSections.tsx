@@ -1,4 +1,4 @@
-import { Barlow_Condensed } from 'next/font/google';
+import localFont from 'next/font/local';
 import { ProductCard } from '@/components/catalog/ProductCard';
 import type { CatalogCard } from '@/components/catalog/catalog-data';
 import { isExternalHref, normalizeHref, validateHref } from '@/lib/links';
@@ -9,7 +9,13 @@ import { TestimonialsCarousel } from './TestimonialsCarousel';
 import type { IconsSection, ImageTextSection, OverlaySection, PdpSection, SlideshowSection } from './pdp-data';
 
 /** Coalesce template headings use Barlow Condensed (live section style override). */
-const barlow = Barlow_Condensed({ subsets: ['latin'], weight: ['100', '600'], display: 'swap' });
+const barlow = localFont({
+  src: [
+    { path: '../../fonts/barlow-condensed-100-latin.woff2', weight: '100', style: 'normal' },
+    { path: '../../fonts/barlow-condensed-600-latin.woff2', weight: '600', style: 'normal' },
+  ],
+  display: 'swap',
+});
 
 /**
  * Live heading scale for `.h2`–`.h4` (font-size/line-height <768 / ≥768 / ≥1068), applied as
