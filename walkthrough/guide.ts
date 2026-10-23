@@ -224,7 +224,13 @@ export class Guide {
 
 /** Navigate and wait for the page; also waits out Hostinger CDN's "Checking your browser" interstitial. */
 export async function gotoPage(page: Page, url: string) {
-  await page.goto(url);
+  // The first request after a deploy can hit a cold server: give it one more try before failing.
+  try {
+    await page.goto(url);
+  } catch (err) {
+    if (!(err instanceof Error) || !/Timeout/i.test(err.message)) throw err;
+    await page.goto(url);
+  }
   for (let i = 0; i < 20; i++) {
     const checking = await page
       .locator('body')
