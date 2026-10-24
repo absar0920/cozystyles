@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { PrismaClient } from '@prisma/client';
 
 /** SPEC decision 29 — unsaved changes are not lost silently: links, and the browser Back button after in-app navigation. */
 
@@ -89,4 +90,44 @@ test('after saving, Back leaves with no prompt', async ({ page }) => {
   // the stored value really is the original again
   await page.goto('/admin/settings');
   await expect(page.getByLabel('Phone', { exact: true })).toHaveValue(original);
+});
+
+test('in a long session, creating a page and opening New page again stays on the new page', async ({ page }) => {
+  // a slow connection (as on the live server) keeps the first form's clean-up waiting while the owner moves on
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Network.enable');
+  await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 300, downloadThroughput: 2_000_000, uploadThroughput: 1_000_000 });
+  const titles: string[] = [];
+  const prisma = new PrismaClient();
+  try {
+    await page.goto('/admin/pages');
+    // a long session: the tab's history is full (browsers stop counting history.length at 50)
+    await page.evaluate(() => {
+      for (let i = 0; i < 60; i++) window.history.pushState(window.history.state, '', window.location.href);
+    });
+    for (let i = 0; i < 2; i++) {
+      await page.getByRole('link', { name: 'New page' }).click();
+      await expect(page.getByRole('heading', { level: 1, name: 'New page' })).toBeVisible();
+      const editor = page.getByTestId('rich-text-editor').getByRole('textbox');
+      await expect(editor).toBeVisible();
+      const title = `E2E Quick page ${Date.now()} ${i}`;
+      titles.push(title);
+      await page.locator('#page-title').fill(title);
+      await editor.click();
+      await page.keyboard.type('Some text.');
+      await page.getByTestId('save-bar').getByRole('button', { name: 'Create page' }).click();
+      await expect(page).toHaveURL(/\/admin\/pages\/\d+\?created=1$/, { timeout: 30_000 });
+      await page.getByRole('link', { name: 'All pages' }).click();
+      await expect(page.getByRole('heading', { level: 1, name: 'Pages' })).toBeVisible();
+    }
+    await page.getByRole('link', { name: 'New page' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'New page' })).toBeVisible();
+    // the previous form's extra Back-button entry must not take this new page back to the list
+    await page.waitForTimeout(4000);
+    await expect(page).toHaveURL(/\/admin\/pages\/new$/);
+    await expect(page.getByTestId('rich-text-editor').getByRole('textbox')).toBeVisible();
+  } finally {
+    await prisma.page.deleteMany({ where: { title: { in: titles } } });
+    await prisma.$disconnect();
+  }
 });

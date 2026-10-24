@@ -121,12 +121,27 @@ function scheduleDrop(guardedHref: string) {
  * router replaces the state object after a save (wiping our flag) while the entry itself stays.
  */
 let sentinelHref: string | null = null;
-/** history.length right after that push: a later push (navigating on) changes it, a replace does not */
-let sentinelLength = 0;
-if (typeof window !== 'undefined') window.addEventListener('popstate', () => (sentinelHref = null));
+/**
+ * Every `history.pushState` (ours and the router's) is counted; a later push means the owner navigated on, a
+ * replace does not. Not `history.length`: browsers stop it at 50, so in a long session every later page at the
+ * same address looked like the extra entry and the late drop sent a fresh New page back to the list.
+ */
+let pushCount = 0;
+let sentinelPush = -1;
+type CountedPush = History['pushState'] & { __uncounted?: History['pushState'] };
+if (typeof window !== 'undefined') {
+  window.addEventListener('popstate', () => (sentinelHref = null));
+  const original = (window.history.pushState as CountedPush).__uncounted ?? window.history.pushState;
+  const counted: CountedPush = function (this: History, ...args: Parameters<History['pushState']>) {
+    pushCount++;
+    return original.apply(this, args);
+  };
+  counted.__uncounted = original;
+  window.history.pushState = counted;
+}
 
 function onSentinel(): boolean {
-  if (sentinelHref !== null && sentinelHref === window.location.href && sentinelLength === window.history.length) return true;
+  if (sentinelHref !== null && sentinelHref === window.location.href && sentinelPush === pushCount) return true;
   const st = window.history.state as Record<string, unknown> | null;
   return !!st && st[SENTINEL] === true;
 }
@@ -195,7 +210,7 @@ export function UnsavedChangesGuard({ dirty, message = DEFAULT_MESSAGE }: { dirt
     const pushSentinel = () => {
       window.history.pushState({ ...(window.history.state ?? {}), [SENTINEL]: true }, '', guardedHref);
       sentinelHref = guardedHref;
-      sentinelLength = window.history.length;
+      sentinelPush = pushCount;
     };
     let leaving = false;
     let active = true;
