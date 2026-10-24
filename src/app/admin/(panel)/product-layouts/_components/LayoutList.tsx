@@ -15,6 +15,8 @@ import { productsPhrase } from '@/lib/product-layout-draft';
 import { createProductLayoutAction, deleteProductLayoutAction, duplicateProductLayoutAction } from '@/app/admin/actions/product-layouts';
 import type { LayoutChoice } from '../_lib/load';
 import { MoveProductsDialog, MoveToast, type MoveDone } from './MoveProducts';
+import { toast } from '@/components/toast/toast';
+import { actionFailed } from '@/components/admin/action-failed';
 
 function SubmitDelete({ className }: { className: string }) {
   const { pending } = useFormStatus();
@@ -37,10 +39,11 @@ export function LayoutList({ layouts }: { layouts: LayoutChoice[] }) {
   const copy = async (l: LayoutChoice) => {
     setBusy(l.id);
     setError(null);
-    const res = await duplicateProductLayoutAction(l.id);
+    const res = await duplicateProductLayoutAction(l.id).catch(actionFailed);
     if (!res.ok) {
       setBusy(null);
       setError(res.error);
+      toast.error('Layout not copied');
       return;
     }
     router.push(`/admin/product-layouts/${res.id}?copied=${l.id}`);
@@ -169,12 +172,14 @@ export function NewLayoutButton({ layouts }: { layouts: LayoutChoice[] }) {
       const res = await createProductLayoutAction({ name, fromLayoutId: fromLayout?.id ?? null });
       if (!res.ok) {
         setError(res.error);
+        toast.error('Layout not created');
         setBusy(false);
         return;
       }
       router.push(`/admin/product-layouts/${res.id}?created=1`);
     } catch {
       setError('The layout could not be created. Please try again.');
+      toast.error('Layout not created');
       setBusy(false);
     }
   };

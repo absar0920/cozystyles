@@ -5,6 +5,7 @@ import { SortableList } from './SortableList';
 import { ACCEPT_IMAGES, uploadImage, type UploadPurpose } from './upload-client';
 import { useUserChangeEvent } from './ui-client';
 import { CloseIcon, UploadIcon } from './icons';
+import { toast } from '@/components/toast/toast';
 
 export type GalleryItem = {
   key: string;
@@ -108,6 +109,10 @@ export function ImageGallery({ items, onChange, tagOptions, purpose = 'product',
     const list = Array.from(files);
     const accepted = list.slice(0, Math.max(0, room));
     setNote(accepted.length < list.length ? `You can have up to ${maxItems} photos.` : null);
+    if (accepted.length < list.length) {
+      const left = list.length - accepted.length;
+      toast.warning(`${left} photo${left === 1 ? '' : 's'} not added`);
+    }
     const jobs = accepted.map((file) => ({ key: newKey(), file, name: file.name, progress: 0, error: null }));
     setPending((p) => [...p, ...jobs]);
     order.current.push(...jobs.map((j) => j.key));

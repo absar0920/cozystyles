@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CatalogCard } from './catalog-data';
 import { ProductGrid } from './ProductGrid';
+import { toast } from '@/components/toast/toast';
 
 /**
  * Live `pagination-type--infinite`: when the (invisible) pagination block is fully in view the
@@ -42,6 +43,8 @@ export function InfiniteGrid({
         return [...prev, ...next.filter((p) => !seen.has(p.id))];
       });
       setCurrent((c) => c + 1);
+    } catch {
+      toast.error('More products could not be loaded');
     } finally {
       busy.current = false;
       setLoading(false);

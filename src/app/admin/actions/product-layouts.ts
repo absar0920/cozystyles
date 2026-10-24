@@ -33,6 +33,7 @@ import {
 import { MAX_DESCRIPTION, type LayoutActionError, type LayoutDraft } from '@/lib/product-layout-draft';
 import { lockLayout } from '@/lib/layout-lock';
 import { loadLayoutEditorData, layoutUsage, type LayoutEditorData } from '@/app/admin/(panel)/product-layouts/_lib/load';
+import { ALREADY_REMOVED, flashToast } from '@/components/toast/server';
 
 /**
  * Admin actions for product page layouts (docs/product-layouts/SPEC.md §5, §9.6, §10). Every action starts with
@@ -187,6 +188,7 @@ async function createLayoutWithSections(opts: {
         return l.id;
       });
       revalidateLayouts();
+      await flashToast('success', opts.assignProductId != null ? `This product now has its own layout “${name}”` : `Layout “${name}” created`);
       return { ok: true, id, name };
     } catch (e) {
       if (isP2002(e)) {
@@ -417,8 +419,14 @@ export async function deleteProductLayoutAction(formData: FormData): Promise<voi
   await requireAdmin();
   const id = Number(formData.get('id'));
   const layout = await loadLayout(id);
-  if (!layout) redirect('/admin/product-layouts?deleted=1');
-  if (PROTECTED_LAYOUT_KEYS.includes(layout.key)) redirect(`/admin/product-layouts/${layout.id}?error=protected`);
+  if (!layout) {
+    await flashToast('warning', ALREADY_REMOVED);
+    redirect('/admin/product-layouts?deleted=1');
+  }
+  if (PROTECTED_LAYOUT_KEYS.includes(layout.key)) {
+    await flashToast('error', 'Layout not deleted');
+    redirect(`/admin/product-layouts/${layout.id}?error=protected`);
+  }
   let deleted = false;
   let gone = false;
   await prisma.$transaction(async (tx) => {
@@ -432,10 +440,17 @@ export async function deleteProductLayoutAction(formData: FormData): Promise<voi
     await tx.productLayout.delete({ where: { id: layout.id } });
     deleted = true;
   });
-  if (gone) redirect('/admin/product-layouts?deleted=1');
-  if (!deleted) redirect(`/admin/product-layouts/${layout.id}?error=in-use`);
+  if (gone) {
+    await flashToast('warning', ALREADY_REMOVED);
+    redirect('/admin/product-layouts?deleted=1');
+  }
+  if (!deleted) {
+    await flashToast('error', 'Layout not deleted');
+    redirect(`/admin/product-layouts/${layout.id}?error=in-use`);
+  }
   await releaseUploads([...rowUrls(layout.sections), ...snapshotUrls(layout.previousVersion), ...snapshotUrls(layout.originalVersion)]);
   revalidateLayouts();
+  await flashToast('success', `Layout “${layout.name}” removed`);
   redirect('/admin/product-layouts?deleted=1');
 }
 

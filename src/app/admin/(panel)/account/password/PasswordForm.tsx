@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from 'react';
 import { changePasswordAction, type ChangePasswordState } from '@/app/admin/actions/auth';
 import { SubmitButton } from '@/components/admin/SubmitButton';
 import { Field, FormError, Notice } from '@/components/admin/ui';
+import { useResultToast } from '@/components/toast/useResultToast';
 import { EyeIcon } from '@/components/admin/icons';
 
 const INITIAL: ChangePasswordState = { ok: false, error: null };
@@ -61,6 +62,7 @@ function PasswordInput({
 
 export function PasswordForm() {
   const [state, formAction] = useActionState(changePasswordAction, INITIAL);
+  useResultToast(state, (s) => (s.ok ? { tone: 'success', message: 'Your new password is saved' } : s.error ? { tone: 'error', message: 'Password not changed' } : null));
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');

@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
+import { toast } from '@/components/toast/toast';
 
 /*
  * Keeps an owner's edits when their sign-in has ended (the 12-hour session ran out, or a password change on
@@ -101,6 +102,7 @@ export function SessionGuard({ email: initialEmail }: { email: string }) {
 
   useEffect(() => {
     if (!open) return;
+    toast.warning('Signed out. Sign in to save your work.');
     setError(null);
     setPassword('');
     const t = window.setTimeout(() => passwordRef.current?.focus(), 0);
@@ -137,11 +139,14 @@ export function SessionGuard({ email: initialEmail }: { email: string }) {
       if (data.ok) {
         setPassword('');
         releaseHeld();
+        toast.success('Signed in again');
       } else {
         setError(data.error ?? 'Could not sign in. Please try again.');
+        toast.error('Sign-in failed');
       }
     } catch {
       setError('Could not reach the store. Check your internet connection and try again.');
+      toast.error('Sign-in failed');
     } finally {
       setBusy(false);
     }

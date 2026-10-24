@@ -8,6 +8,7 @@ import { WHATSAPP_DEFAULTS, buildProductMessage, parseWhatsAppNumberInput, waLin
 import { Field, FormError, Notice, SectionCard, TextArea, TextInput } from '@/components/admin/ui';
 import { LinkPicker } from '@/components/admin/LinkPicker';
 import { StickySaveBar } from '@/components/admin/StickySaveBar';
+import { toast } from '@/components/toast/toast';
 import { UnsavedChangesGuard } from '@/components/admin/UnsavedChangesGuard';
 import { ExternalLinkIcon } from '@/components/admin/icons';
 import { siteName, siteOrigin } from '@/lib/site-url';
@@ -42,6 +43,7 @@ export function SettingsForm({ initial, targets }: { initial: SettingsValues; ta
   useEffect(() => {
     if (!state.ok || !state.savedAt || state.savedAt === handled.current) return;
     handled.current = state.savedAt;
+    toast.success('Settings saved');
     const sent = submitted.current;
     const stored = { ...(sent ?? baseline), ...(state.values as Partial<SettingsValues>) };
     stored.whatsapp = displayNumber(stored.whatsapp);
@@ -125,6 +127,7 @@ export function SettingsForm({ initial, targets }: { initial: SettingsValues; ta
                 rel="noopener noreferrer"
                 aria-disabled={!number}
                 data-testid="whatsapp-test-link"
+                onClick={() => toast.info('Opening WhatsApp with a test message…')}
                 className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-4 text-sm font-semibold ${
                   number ? 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50' : 'pointer-events-none border-gray-200 text-gray-300'
                 }`}
@@ -140,7 +143,7 @@ export function SettingsForm({ initial, targets }: { initial: SettingsValues; ta
             <Notice tone="warning">Leave empty to hide all WhatsApp buttons. Customers will not be able to order until you add a number.</Notice>
           )}
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-4">
               <Field label="Greeting (order button)" htmlFor={`${formId}-whatsappGreeting`} hint="The first line of the message when a customer taps “Order on WhatsApp”.">
                 <TextInput {...text('whatsappGreeting')} maxLength={200} showCount placeholder={WHATSAPP_DEFAULTS.greeting} />
@@ -177,7 +180,7 @@ export function SettingsForm({ initial, targets }: { initial: SettingsValues; ta
             <TextInput {...text('announcement')} maxLength={120} showCount placeholder="e.g. Save more this wedding season!" />
           </Field>
           <FormError message={fe.announcement} />
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
               <LinkPicker
                 name="announcementHref"
@@ -270,7 +273,7 @@ export function SettingsForm({ initial, targets }: { initial: SettingsValues; ta
 
       {/* 4. Contact details */}
       <SectionCard title="Contact details" description="Shown in the website footer, on the Contact us page and in the What is Pre-Order? popup.">
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Field label="Phone" htmlFor={`${formId}-phone`}>
             <TextInput {...text('phone')} inputMode="tel" placeholder="+92-42-111-269-926" />
           </Field>
@@ -299,7 +302,7 @@ export function SettingsForm({ initial, targets }: { initial: SettingsValues; ta
 
       {/* 5. Social links */}
       <SectionCard title="Social links" description="Icons under “Follow Us” in the footer. Leave a box empty to hide that icon.">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {(
             [
               ['facebook', 'Facebook', 'https://www.facebook.com/yourpage'],

@@ -5,6 +5,7 @@ import localFont from 'next/font/local';
 import { GENERAL_QUESTION_TEXT, waLink, type WhatsAppConfig } from '@/lib/whatsapp';
 import { currentPath, logWhatsAppClick } from '@/components/whatsapp/log-click';
 import { ThemeForm } from './ContactForm';
+import { toast } from '@/components/toast/toast';
 
 /** the reCAPTCHA anchor's own face (`Roboto, helvetica, arial, sans-serif`) */
 const roboto = localFont({ src: '../../fonts/roboto-400-latin.woff2', weight: '400', style: 'normal', display: 'swap' });
@@ -99,13 +100,16 @@ export function ComplaintForm({ whatsapp, email }: { whatsapp: WhatsAppConfig | 
       if (response.ok && data.ok) {
         setStatus('sent');
         formEl.reset();
+        toast.success('Complaint sent');
       } else {
         setError(data.error ?? 'Something went wrong. Please try again.');
         setStatus('error');
+        toast.error('Complaint not sent');
       }
     } catch {
       setError('Network error — please check your connection and try again.');
       setStatus('error');
+      toast.error('Complaint not sent');
     }
   }
 
@@ -147,7 +151,10 @@ export function ComplaintForm({ whatsapp, email }: { whatsapp: WhatsAppConfig | 
                   href={waLink(whatsapp.number, GENERAL_QUESTION_TEXT)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => logWhatsAppClick({ kind: 'GENERAL', path: currentPath() })}
+                  onClick={() => {
+                    logWhatsAppClick({ kind: 'GENERAL', path: currentPath() });
+                    toast.info('Opening WhatsApp…');
+                  }}
                 >
                   {displayWhatsApp(whatsapp.number)}
                 </a>
@@ -319,9 +326,11 @@ export function TrackTicket() {
     const digits = ticket.trim().replace(/^HS-/i, '');
     if (!/^\d{6,}$/.test(digits)) {
       setMessage('Please enter a valid ticket number.');
+      toast.error('Check the ticket number');
       return;
     }
     setMessage('We couldn’t find a ticket with that number. Please check it and try again.');
+    toast.info('Ticket not found');
   }
 
   return (

@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from 'react';
 import type { UploadPurpose } from '@/lib/uploads';
+import { toast } from '@/components/toast/toast';
 
 export type { UploadPurpose };
 export type UploadedImage = { id: number; url: string; width: number; height: number };
@@ -35,6 +36,8 @@ export function pendingUploadCount(): number {
 export const WAITING_FOR_UPLOAD = 'Waiting for the photo to finish uploading…';
 
 /** Uploads one photo to /api/admin/uploads (XHR, for progress). Rejects with the server's plain-English error. */
+const CANCELLED = 'The upload was cancelled.';
+
 export function uploadImage(file: File, purpose: UploadPurpose, onProgress?: (pct: number) => void): Promise<UploadedImage> {
   setPending(1);
   let done = false;
@@ -67,12 +70,23 @@ export function uploadImage(file: File, purpose: UploadPurpose, onProgress?: (pc
       }
     };
     xhr.onerror = () => reject(new Error('The upload failed. Check your internet connection and try again.'));
-    xhr.onabort = () => reject(new Error('The upload was cancelled.'));
+    xhr.onabort = () => reject(new Error(CANCELLED));
     xhr.send(body);
-  }).finally(() => {
-    // Count the upload as finished only after the caller has put the photo into its form and that form has
-    // re-checked its unsaved state. Otherwise the page looks clean for a moment, the unsaved-changes guard
-    // drops its Back-button entry, and the history step reloads the page — losing the new photo.
-    window.setTimeout(finish, 150);
-  });
+  })
+    .then(
+      (uploaded) => {
+        toast.success('Photo uploaded');
+        return uploaded;
+      },
+      (e: unknown) => {
+        if (!(e instanceof Error && e.message === CANCELLED)) toast.error('Photo not uploaded');
+        throw e;
+      },
+    )
+    .finally(() => {
+      // Count the upload as finished only after the caller has put the photo into its form and that form has
+      // re-checked its unsaved state. Otherwise the page looks clean for a moment, the unsaved-changes guard
+      // drops its Back-button entry, and the history step reloads the page — losing the new photo.
+      window.setTimeout(finish, 150);
+    });
 }

@@ -29,7 +29,7 @@ export function ImageTextEditor({ section, setValues, setBody, errors, imageMeta
   const recommended = v.size === 'large' ? 'about 1462 × 842' : 'about 1268 × 1028';
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <div data-field="image">
         <ImageUpload
           label="Photo"
@@ -63,7 +63,7 @@ export function ImageTextEditor({ section, setValues, setBody, errors, imageMeta
         value={v.imageFirst ? 'left' : 'right'}
         onChange={(p) => set({ imageFirst: p === 'left' })}
       />
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <SegmentedControl
           label="Photo size"
           options={[
@@ -87,7 +87,7 @@ export function ImageTextEditor({ section, setValues, setBody, errors, imageMeta
       <EditorField label="Heading" field="heading" error={errors.heading} htmlFor={`${k}-heading`}>
         <TextInput id={`${k}-heading`} value={v.heading} maxLength={MAX_HEADING} showCount onChange={(e) => set({ heading: e.target.value })} className={inputError(errors.heading)} />
       </EditorField>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <EditorField label="Heading size" field="headingClass" htmlFor={`${k}-hsize`}>
           <Select id={`${k}-hsize`} value={v.headingClass} onChange={(e) => set({ headingClass: e.target.value as HeadingSize })}>
             {HEADING_SIZE_OPTIONS.map((o) => (

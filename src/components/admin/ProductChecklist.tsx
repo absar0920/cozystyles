@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { searchProductsForMoveAction, type MoveCandidate } from '@/app/admin/actions/product-layouts';
+import { toast } from '@/components/toast/toast';
 import { SearchIcon } from './icons';
+import { unstable_rethrow } from 'next/navigation';
 
 const PAGE = 20;
 
@@ -48,6 +50,9 @@ export function ProductChecklist({
       const r = await searchProductsForMoveAction({ q, layoutId, skip: items.length, take: PAGE });
       setItems([...items, ...r.items.filter((x) => !items.some((y) => y.id === x.id))]);
       setTotal(r.total);
+    } catch (e) {
+      unstable_rethrow(e);
+      toast.error('More products could not be loaded');
     } finally {
       setLoadingMore(false);
     }

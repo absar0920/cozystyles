@@ -26,6 +26,7 @@ import {
 } from '../_lib/variants';
 import { OptionValuesEditor } from './OptionValuesEditor';
 import { useReportPending } from './pending';
+import { toast } from '@/components/toast/toast';
 
 type Confirm = { title: string; consequences: string[]; confirmLabel: string; run: () => void };
 
@@ -197,6 +198,7 @@ export function OptionsEditor({
     });
     if (!err && added > 0 && fromValue) {
       const n = `${added} new combination${added === 1 ? '' : 's'}`;
+      toast.info(`${n} added. Check their prices.`);
       setCopyNote({
         optionKey: o.key,
         text: `${n} for “${text.trim()}” copied the prices and status of “${fromValue}”. Check them in the table below before saving.`,

@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentAdmin } from '@/lib/auth';
 import { LoginForm } from '@/components/admin/shell/LoginForm';
 import { safeAdminNext } from '@/lib/admin-login';
+import { ToastOnMount } from '@/components/toast/ToastOnMount';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +33,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       {next !== '/admin' && (
         <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-sm text-amber-800">
           You were signed out. Sign in again to go back to the page you were on.
+          <ToastOnMount tone="warning" message="Session ended" />
         </p>
       )}
       <LoginForm next={next} />

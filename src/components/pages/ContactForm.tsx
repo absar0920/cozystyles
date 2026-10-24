@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/components/toast/toast';
 
 type Status = 'idle' | 'sending' | 'sent' | 'error';
 
@@ -92,13 +93,16 @@ export function ThemeForm({
       if (response.ok && data.ok) {
         setStatus('sent');
         setValues({});
+        toast.success('Message sent');
       } else {
         setError(data.error ?? 'Something went wrong. Please try again.');
         setStatus('error');
+        toast.error('Message not sent');
       }
     } catch {
       setError('Network error — please check your connection and try again.');
       setStatus('error');
+      toast.error('Message not sent');
     }
   }
 

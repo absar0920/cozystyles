@@ -9,6 +9,7 @@ import { CheckboxField, Field, FormError, Notice, SectionCard, Select, TextInput
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { StickySaveBar } from '@/components/admin/StickySaveBar';
+import { toast } from '@/components/toast/toast';
 import { UnsavedChangesGuard } from '@/components/admin/UnsavedChangesGuard';
 import { ProductsPicker, type PickerProduct } from './ProductsPicker';
 
@@ -53,6 +54,7 @@ export function CollectionForm({
   useEffect(() => {
     if (!state.ok || !state.savedAt || state.savedAt === handled.current || !state.saved) return;
     handled.current = state.savedAt;
+    toast.success(state.createdId != null ? 'Collection added' : 'Collection saved');
     const next = { ...values, handle: state.saved.handle, description: state.saved.description };
     setValues(next);
     setBaseline(next);

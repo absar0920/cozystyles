@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { CheckboxField, Field, FormError, Notice, SectionCard, Select, TextInput } from '@/components/admin/ui';
 import { ImageGallery, newKey, type GalleryItem } from '@/components/admin/ImageGallery';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
-import { StickySaveBar, type SaveBarAction } from '@/components/admin/StickySaveBar';
+import { toast, type ToastTone } from '@/components/toast/toast';
+import { SAVE_ERROR_TOAST, StickySaveBar, type SaveBarAction } from '@/components/admin/StickySaveBar';
 import { UnsavedChangesGuard } from '@/components/admin/UnsavedChangesGuard';
 import { pendingUploadCount, WAITING_FOR_UPLOAD } from '@/components/admin/upload-client';
 import { ViewOnStoreLink } from '@/components/admin/ViewOnStoreLink';
@@ -27,8 +28,9 @@ import { BulkEditBar } from './BulkEditBar';
 import { CollectionsTree } from './CollectionsTree';
 import { AdvancedSection } from './AdvancedSection';
 import { PendingContext, type PendingEntry, type ReportPending } from './pending';
+import { actionFailed } from '@/components/admin/action-failed';
 
-type Problem = { message: string; field?: string } | null;
+type Problem = { message: string; field?: string; toast?: { tone: ToastTone; message: string } } | null;
 
 /**
  * "Saved" notice that survives the remount a save causes (the server page keys the editor by updatedAt and
@@ -148,7 +150,11 @@ export function ProductEditor({
   // an edit after a failed save clears the old message (the server checks again on the next save)
   const problemFor = useRef<ProductEditorState | null>(null);
   useEffect(() => {
-    if (!problem || stale) return;
+    if (!problem) {
+      problemFor.current = null; // cleared some other way (e.g. the option box was emptied): forget its state
+      return;
+    }
+    if (stale) return;
     if (problemFor.current === null) problemFor.current = state;
     else if (problemFor.current !== state) {
       problemFor.current = null;
@@ -220,6 +226,7 @@ export function ProductEditor({
     if (pending) {
       setProblem({ message: pending.message, field: pending.field });
       focusField(pending.field);
+      toast.error(SAVE_ERROR_TOAST);
       return;
     }
     const cur = stateRef.current;
@@ -237,6 +244,10 @@ export function ProductEditor({
         if (res.code === 'STALE') {
           setStale(res.currentUpdatedAt);
           setProblem({ message: res.error });
+          return;
+        }
+        if (res.code === 'RELOAD') {
+          setProblem({ message: res.error, toast: { tone: 'warning', message: 'Saved. Refresh the page to see it.' } });
           return;
         }
         setProblem({ message: res.error, field: res.field });
@@ -260,6 +271,7 @@ export function ProductEditor({
       initialLayout.current = res.state.layout;
       setSaved(res.state.handle);
       setFlash('saved');
+      toast.success(res.state.status === 'ACTIVE' ? (isNew ? 'Product added to the store' : 'Product saved') : isNew ? 'Draft product added' : 'Draft saved');
       const savedId = res.state.id;
       if (savedId != null) {
         justSaved.add(savedId);
@@ -277,10 +289,11 @@ export function ProductEditor({
     if (state.id == null) return;
     if ((dirty || pendingUploadCount() > 0) && !window.confirm('Your unsaved changes are not copied. Duplicate the saved product anyway?')) return;
     setDuplicating(true);
-    const res = await duplicateProductAction(state.id);
+    const res = await duplicateProductAction(state.id).catch(actionFailed);
     setDuplicating(false);
     if (!res.ok) {
       setProblem({ message: res.error });
+      toast.error('Copy not made');
       return;
     }
     setBaseline(snapshot(stateRef.current)); // leaving on purpose
@@ -583,6 +596,7 @@ export function ProductEditor({
         saving={saving}
         status={isNew ? 'New product — not saved yet' : pill.text}
         error={problem?.message ?? null}
+        errorToast={problem?.toast}
         actions={actions}
       />
     </div>
@@ -618,11 +632,12 @@ function LayoutHelp({
     if (productId == null) return;
     setBusy(true);
     setError(null);
-    const res = await makeLayoutForProductAction({ productId });
+    const res = await makeLayoutForProductAction({ productId }).catch(actionFailed);
     if (!res.ok) {
       setBusy(false);
       setConfirm(false);
       setError(res.error);
+      toast.error('Own layout not made');
       return;
     }
     router.push(`/admin/product-layouts/${res.id}?own=1`);

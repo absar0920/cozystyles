@@ -61,7 +61,7 @@ export function BlogPostEditor({
   brokenLinks?: BrokenLink[];
 }) {
   const isNew = post == null;
-  const { formRef, onSubmit, state, pending, dirty, status, fieldError } = useEditorSave(saveBlogPostAction);
+  const { formRef, onSubmit, state, pending, dirty, status, fieldError } = useEditorSave(saveBlogPostAction, 'Blog post');
   // the title input is uncontrolled so text typed before hydration survives; read it once mounted
   useEffect(() => {
     const el = document.getElementById('post-title') as HTMLInputElement | null;

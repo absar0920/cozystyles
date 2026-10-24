@@ -92,6 +92,9 @@ test('reorder the Customer Support footer menu', async ({ page }) => {
     await expect.poll(() => labels(page)).toEqual(afterDrag);
     // the drop has registered once the save bar says so (a click during the drop animation is swallowed)
     await expect(saveBar(page)).toContainText('Unsaved changes');
+    // dnd-kit swallows every click for 50 ms after a drop (its document click blocker is removed on a timer);
+    // a production build renders fast enough for the save click to land inside that window
+    await page.waitForTimeout(100);
     await saveMenu(page);
     expect((await storefrontCustomerSupport(page)).slice(0, afterDrag.length)).toEqual(afterDrag);
 

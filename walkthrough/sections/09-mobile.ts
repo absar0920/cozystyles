@@ -59,27 +59,28 @@ const STATUS_LINE: Record<string, string> = {
 
 /* ------------------------------------------------------------------------------------------------ helpers */
 
-type Width = { scrollWidth: number; innerWidth: number; culprits: string[] };
+type Width = { scrollWidth: number; screenWidth: number; culprits: string[] };
 
 /** Page width vs. screen width, plus (when too wide) the outermost elements that stick out on the right. */
 async function measureWidth(page: Page): Promise<Width> {
   return page.evaluate(() => {
-    const innerWidth = window.innerWidth;
+    // the layout width, not window.innerWidth: a phone zooms out to fit a too-wide page and innerWidth grows with it
+    const screenWidth = document.documentElement.clientWidth;
     const scrollWidth = document.documentElement.scrollWidth;
     const culprits: string[] = [];
-    if (scrollWidth - innerWidth > 1) {
+    if (scrollWidth - screenWidth > 1) {
       // an element is harmless when an ancestor that clips its overflow (or is fixed) fits on the screen
       const clipped = (el: Element) => {
         for (let p = el.parentElement; p && p !== document.documentElement; p = p.parentElement) {
           const s = getComputedStyle(p);
           if (s.position === 'fixed') return true;
-          if (s.overflowX !== 'visible') return p.getBoundingClientRect().right <= innerWidth + 1;
+          if (s.overflowX !== 'visible') return p.getBoundingClientRect().right <= screenWidth + 1;
         }
         return false;
       };
       const wide = Array.from(document.body.querySelectorAll<HTMLElement>('*')).filter((el) => {
         const r = el.getBoundingClientRect();
-        return r.width > 0 && r.height > 0 && r.right > innerWidth + 1 && getComputedStyle(el).position !== 'fixed' && !clipped(el);
+        return r.width > 0 && r.height > 0 && r.right > screenWidth + 1 && getComputedStyle(el).position !== 'fixed' && !clipped(el);
       });
       const outer = wide.filter((el) => !wide.some((o) => o !== el && o.contains(el)));
       for (const el of outer.slice(0, 3)) {
@@ -89,19 +90,19 @@ async function measureWidth(page: Page): Promise<Width> {
         culprits.push(`${what}, ${Math.round(el.getBoundingClientRect().right)}px from the left`.replace(/[_`*|\\]/g, ' '));
       }
     }
-    return { scrollWidth, innerWidth, culprits };
+    return { scrollWidth, screenWidth, culprits };
   });
 }
 
 /**
- * The page must not scroll sideways on the phone: scrollWidth − innerWidth ≤ 1. Passing → an Expected line;
+ * The page must not scroll sideways on the phone: scrollWidth − screen width ≤ 1. Passing → an Expected line;
  * too wide → a finding (the walkthrough continues). Store pages are scrolled once first so late photos are in.
  */
 async function checkPhoneWidth(g: Guide, page: Page, name: string, opts: { loadImages?: boolean } = {}): Promise<boolean> {
   if (opts.loadImages) await loadAllImages(page);
   await page.waitForTimeout(300);
   const w = await measureWidth(page);
-  if (w.scrollWidth - w.innerWidth <= 1) {
+  if (w.scrollWidth - w.screenWidth <= 1) {
     g.expect(`The ${name} fits the phone's width: it does not slide sideways when you swipe left or right.`);
     return true;
   }
@@ -109,7 +110,7 @@ async function checkPhoneWidth(g: Guide, page: Page, name: string, opts: { loadI
   g.finding(
     'bug',
     `The ${name} is wider than a phone screen`,
-    `On a ${w.innerWidth}px-wide phone screen the ${name} (\`${path}\`) is ${w.scrollWidth}px wide, so it slides sideways when a shopper swipes and part of it is cut off at the right edge.${
+    `On a ${w.screenWidth}px-wide phone screen the ${name} (\`${path}\`) is ${w.scrollWidth}px wide, so it slides sideways when a shopper swipes and part of it is cut off at the right edge.${
       w.culprits.length ? ` Parts that stick out: ${w.culprits.join('; ')}.` : ''
     } Suggestion: make these parts shrink or wrap to the screen width.`,
   );

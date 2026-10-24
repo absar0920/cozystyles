@@ -1,3 +1,5 @@
+import { ToastOnMount } from '@/components/toast/ToastOnMount';
+
 /**
  * Admin-only bar shown on a product page opened with `?layoutPreview=<token>` (docs/product-layouts/SPEC.md §6.2).
  * Rendered only after the page checked for an admin session.
@@ -15,7 +17,10 @@ export function LayoutPreviewBar({ expired, layoutId }: { expired: boolean; layo
       className="sticky bottom-0 z-[60] flex flex-wrap items-center justify-start gap-x-4 gap-y-1 bg-yellow-300 py-2 pl-4 pr-[85px] text-left text-[14px] font-medium text-black shadow-[0_-2px_6px_rgba(0,0,0,0.15)] md:justify-center md:px-[85px] md:text-center"
     >
       {expired ? (
-        <span>This preview has expired. Go back and press Preview again.</span>
+        <span>
+          This preview has expired. Go back and press Preview again.
+          <ToastOnMount tone="warning" message="Preview expired" />
+        </span>
       ) : (
         // on a phone the second sentence would push the bar to three lines next to the WhatsApp button
         <span>

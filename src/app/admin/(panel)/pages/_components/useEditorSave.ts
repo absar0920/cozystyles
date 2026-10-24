@@ -4,6 +4,7 @@ import { startTransition, useActionState, useEffect, useRef, useState } from 're
 import { usePathname, useRouter } from 'next/navigation';
 import { useFormDirty } from '@/components/admin/UnsavedChangesGuard';
 import type { ContentFormState } from '@/app/admin/actions/pages';
+import { useResultToast } from '@/components/toast/useResultToast';
 
 type SaveAction = (prev: ContentFormState, fd: FormData) => Promise<ContentFormState>;
 
@@ -14,7 +15,7 @@ const INITIAL_STATE: ContentFormState = { ok: true };
  * (not `<form action>`) so React doesn't reset the fields after a save. After a successful save the form is
  * re-snapshotted, so the unsaved-changes guard and the save bar go quiet, and the status reads "Saved".
  */
-export function useEditorSave(action: SaveAction) {
+export function useEditorSave(action: SaveAction, noun: string) {
   const formRef = useRef<HTMLFormElement>(null);
   const [rawState, formAction, pending] = useActionState(action, INITIAL_STATE);
   // Next.js resolves an action with undefined when its answer is a redirect it could not render: never crash on it
@@ -25,6 +26,10 @@ export function useEditorSave(action: SaveAction) {
   const opening = state.ok && state.createdId != null;
   const { dirty, markClean } = useFormDirty(formRef);
   const [savedOnce, setSavedOnce] = useState(false);
+
+  useResultToast(state, (s) =>
+    s.ok && s.savedAt ? { tone: 'success', message: s.createdId != null ? `${noun} added` : `${noun} saved` } : null,
+  );
 
   useEffect(() => {
     if (!state.ok || !state.savedAt) return;

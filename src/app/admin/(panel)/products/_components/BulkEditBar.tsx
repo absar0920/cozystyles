@@ -4,6 +4,7 @@ import { forwardRef, useState } from 'react';
 import { VARIANT_STATUSES, VARIANT_STATUS_COPY, type VariantStatus } from '@/lib/variant-status';
 import type { OptionState } from '../_lib/types';
 import { priceTextError, type BulkFields, type BulkTarget } from '../_lib/variants';
+import { toast } from '@/components/toast/toast';
 
 const inputCls =
   'min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20';
@@ -45,14 +46,18 @@ export const BulkEditBar = forwardRef<
   const apply = () => {
     if (nothing) {
       setDone('Fill in at least one field to change.');
+      toast.error('Nothing changed');
       return;
     }
     if (regularError || saleError) {
       setDone('Fix the price first: whole rupees only, e.g. 45000.');
+      toast.error('Nothing changed');
       return;
     }
     const n = onApply({ regularPrice: regular, salePrice: sale, clearSale, status });
     setDone(n ? `Updated ${n} combination${n === 1 ? '' : 's'}. Remember to save.` : 'No combinations match that choice.');
+    if (n) toast.success(`${n} combination${n === 1 ? '' : 's'} changed. Save to keep ${n === 1 ? 'it' : 'them'}.`);
+    else toast.info('Nothing matched');
     setRegular('');
     setSale('');
     setClearSale(false);

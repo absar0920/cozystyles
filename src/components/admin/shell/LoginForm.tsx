@@ -3,11 +3,13 @@
 import { useActionState } from 'react';
 import { loginAction, type LoginState } from '@/app/admin/actions/auth';
 import { SubmitButton } from '@/components/admin/SubmitButton';
+import { useResultToast } from '@/components/toast/useResultToast';
 
 const INITIAL: LoginState = { error: null };
 
 export function LoginForm({ next = '/admin' }: { next?: string }) {
   const [state, formAction] = useActionState(loginAction, INITIAL);
+  useResultToast(state, (s) => (s.error ? { tone: 'error', message: 'Sign-in failed' } : null));
 
   return (
     <form action={formAction} className="space-y-4" noValidate>

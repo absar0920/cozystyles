@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { ToastOnMount } from '@/components/toast/ToastOnMount';
 
 /** Something went wrong on an admin page: a calm message instead of the browser's "Application error". */
 export default function AdminError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
@@ -12,6 +13,7 @@ export default function AdminError({ reset }: { error: Error & { digest?: string
 
   return (
     <div className="mx-auto max-w-lg rounded-2xl border border-gray-200 bg-white p-6 text-center shadow-sm">
+      <ToastOnMount tone="error" message="That didn’t work" />
       <h1 className="font-heading text-lg font-bold text-ink-dark">Something went wrong</h1>
       <p className="mt-2 text-sm text-gray-600">
         This page could not finish loading. Please try again. If it keeps happening, reload the page or sign in again.

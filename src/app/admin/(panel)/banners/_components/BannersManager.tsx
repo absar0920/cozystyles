@@ -5,6 +5,7 @@ import { deleteBannerAction, reorderBannersAction, toggleBannerAction } from '@/
 import type { LinkTarget } from '@/lib/links';
 import { Notice, ToggleSwitch } from '@/components/admin/ui';
 import { SortableList } from '@/components/admin/SortableList';
+import { toast } from '@/components/toast/toast';
 import { StickySaveBar } from '@/components/admin/StickySaveBar';
 import { UnsavedChangesGuard } from '@/components/admin/UnsavedChangesGuard';
 import { ConfirmDelete } from '@/components/admin/ConfirmDelete';
@@ -82,6 +83,7 @@ export function BannersManager({ banners, targets }: { banners: BannerRow[]; tar
       if (res.ok) {
         setBaseline(order);
         setFlash('Order saved. The home page is updated.');
+        toast.success('Banner order saved');
       } else setOrderError(res.error ?? 'The order could not be saved.');
     });
   };
@@ -93,6 +95,7 @@ export function BannersManager({ banners, targets }: { banners: BannerRow[]; tar
   const onSaved = useCallback((id: number, guarded: boolean) => {
     setEditing(null);
     setFlash('Saved. The home page is updated.');
+    toast.success('Banner saved');
     pendingReveal.current?.();
     const reveal = () => document.getElementById(`banner-${id}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
     if (!guarded) {

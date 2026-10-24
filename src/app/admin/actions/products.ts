@@ -15,6 +15,7 @@ import { loadProductEditorState, productDeleteConsequences } from '@/app/admin/(
 import { deleteBullets } from '@/app/admin/(panel)/products/_lib/delete';
 import { parseMoney } from '@/app/admin/(panel)/products/_lib/variants';
 import { DISCOUNT_GROUPS, type SaveProductInput, type SaveProductResult } from '@/app/admin/(panel)/products/_lib/types';
+import { ALREADY_REMOVED, flashToast } from '@/components/toast/server';
 
 /**
  * Admin product actions (SPEC §5.1). Every save updates options, values, variants and photos in place
@@ -469,7 +470,7 @@ export async function saveProductAction(input: SaveProductInput): Promise<SavePr
   revalidateProduct([handle, existing?.handle]);
   if (!existing || existing.layout !== d.layout) revalidateLayoutUsage();
   const state = await loadProductEditorState(productId);
-  if (!state) return { ok: false, code: 'INVALID', error: 'The product was saved but could not be reloaded. Please refresh the page.' };
+  if (!state) return { ok: false, code: 'RELOAD', error: 'The product was saved but could not be reloaded. Please refresh the page.' };
   return { ok: true, state };
 }
 
@@ -557,6 +558,7 @@ export async function duplicateProductAction(id: number): Promise<{ ok: true; id
 
   revalidatePath('/admin/products');
   revalidateLayoutUsage();
+  await flashToast('success', `Copy of “${src.title}” created as a draft`);
   return { ok: true, id: newId };
 }
 
@@ -568,9 +570,12 @@ export async function deleteProductAction(formData: FormData): Promise<void> {
   if (!Number.isInteger(id) || id <= 0) redirect('/admin/products');
   const p = await prisma.product.findUnique({
     where: { id },
-    select: { handle: true, bodyHtml: true, images: { select: { src: true } }, productOptions: { select: { values: { select: { swatchImage: true } } } } },
+    select: { handle: true, title: true, bodyHtml: true, images: { select: { src: true } }, productOptions: { select: { values: { select: { swatchImage: true } } } } },
   });
-  if (!p) redirect('/admin/products?deleted=1');
+  if (!p) {
+    await flashToast('warning', ALREADY_REMOVED);
+    redirect('/admin/products?deleted=1');
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.product.delete({ where: { id } });
@@ -579,6 +584,7 @@ export async function deleteProductAction(formData: FormData): Promise<void> {
 
   revalidateProduct([p.handle]);
   revalidateLayoutUsage();
+  await flashToast('success', `“${p.title}” removed`);
   redirect('/admin/products?deleted=1');
 }
 
@@ -598,9 +604,10 @@ export async function toggleProductHotAction(formData: FormData): Promise<void> 
   await requireAdmin();
   const id = Number(formData.get('id'));
   if (!Number.isInteger(id) || id <= 0) return;
-  const product = await prisma.product.findUnique({ where: { id }, select: { hot: true, handle: true } });
-  if (!product) return;
+  const product = await prisma.product.findUnique({ where: { id }, select: { hot: true, handle: true, title: true } });
+  if (!product) return await flashToast('warning', ALREADY_REMOVED);
   await prisma.product.update({ where: { id }, data: { hot: !product.hot } });
   revalidateProduct([product.handle]);
+  await flashToast('success', product.hot ? `“${product.title}” removed from Hot Selling Products` : `“${product.title}” added to Hot Selling Products`);
 }
 

@@ -52,7 +52,9 @@ export type SaveProductInput = Omit<ProductEditorState, 'handleTouched' | 'statu
 export type SaveProductResult =
   | { ok: true; state: ProductEditorState }
   | { ok: false; code: 'INVALID'; error: string; field?: string }
-  | { ok: false; code: 'STALE'; error: string; currentUpdatedAt: string };
+  | { ok: false; code: 'STALE'; error: string; currentUpdatedAt: string }
+  /** saved, but the fresh copy could not be loaded back (deleted a moment later) */
+  | { ok: false; code: 'RELOAD'; error: string };
 
 /** A collection row for the checkbox tree (DFS order with depth). */
 export type CollectionRow = { id: number; title: string; depth: number };

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dialog, dialogButton } from '@/components/admin/Dialog';
 import { CollectionPicker, type PickedCollection } from '@/components/admin/CollectionPicker';
@@ -10,6 +10,8 @@ import { Select } from '@/components/admin/ui';
 import { moveProductsAction, searchProductsForMoveAction, undoMoveProductsAction, type MoveResult } from '@/app/admin/actions/product-layouts';
 import { productsPhrase } from '@/lib/product-layout-draft';
 import type { LayoutChoice } from '../_lib/load';
+import { toast } from '@/components/toast/toast';
+import { useToastClearance } from '@/components/toast/useToastClearance';
 
 export type MoveDone = Extract<MoveResult, { ok: true }>;
 
@@ -80,10 +82,13 @@ export function MoveProductsDialog({
     setError(null);
     try {
       const res = await moveProductsAction({ fromId: from.id, toId: to.id, scope, collectionId: collection?.id ?? null, productIds: [...chosen] });
-      if (!res.ok) setError(res.error);
-      else onMoved(res);
+      if (!res.ok) {
+        setError(res.error);
+        toast.error('Products not moved');
+      } else onMoved(res);
     } catch {
       setError('The products could not be moved. Please try again.');
+      toast.error('Products not moved');
     } finally {
       setBusy(false);
     }
@@ -202,6 +207,9 @@ export function MoveProductsDialog({
 export function MoveToast({ done, onClose }: { done: MoveDone | null; onClose: () => void }) {
   const router = useRouter();
   const [state, setState] = useState<'idle' | 'undoing' | 'undone' | 'error'>('idle');
+  const barRef = useRef<HTMLDivElement>(null);
+  // this bar is a toast of its own (with Undo): other toasts stack above it
+  useToastClearance(barRef, !!done);
   useEffect(() => setState('idle'), [done]);
   useEffect(() => {
     if (!done || state === 'undoing') return;
@@ -220,7 +228,7 @@ export function MoveToast({ done, onClose }: { done: MoveDone | null; onClose: (
     }
   };
   return (
-    <div role="status" data-testid="move-toast" className="fixed inset-x-4 bottom-28 z-40 mx-auto flex max-w-md flex-wrap items-center justify-between gap-2 rounded-xl bg-ink-dark px-4 py-3 text-sm text-white shadow-xl lg:left-64">
+    <div ref={barRef} role="status" data-testid="move-toast" className="fixed inset-x-4 bottom-28 z-40 mx-auto flex max-w-md flex-wrap items-center justify-between gap-2 rounded-xl bg-ink-dark px-4 py-3 text-sm text-white shadow-xl lg:left-64">
       <span>
         {state === 'undone'
           ? 'Moved back.'

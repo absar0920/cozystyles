@@ -105,7 +105,7 @@ export function BannerForm({
         </div>
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <div>
           <LinkPicker
             name="href"

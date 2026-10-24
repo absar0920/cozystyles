@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
 import { Notice, TextInput, ToggleSwitch } from '@/components/admin/ui';
 import { SortableList } from '@/components/admin/SortableList';
+import { toast } from '@/components/toast/toast';
 import { StickySaveBar, type SaveBarAction } from '@/components/admin/StickySaveBar';
 import { UnsavedChangesGuard } from '@/components/admin/UnsavedChangesGuard';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
@@ -58,6 +59,7 @@ import { SlideshowEditor } from './sections/SlideshowEditor';
 import { FeaturedEditor } from './sections/FeaturedEditor';
 import { AutomaticEditor, KindDiagram } from './sections/AutomaticEditor';
 import type { SectionEditorProps } from './sections/common';
+import { actionFailed } from '@/components/admin/action-failed';
 
 type MoveState = { fromId: number | null; toId: number | null; title: string } | null;
 
@@ -285,6 +287,7 @@ export function LayoutEditor({
     setRenaming(false);
     const n = data.layout.usedBy;
     setFlash(n > 0 ? `Saved. ${n === 1 ? 'The product page is' : `${n} product pages are`} updated.` : 'Saved.');
+    toast.success('Layout saved');
     router.refresh();
   };
 
@@ -346,6 +349,7 @@ export function LayoutEditor({
     if (!saveAsNew) return;
     if (pendingUploadCount() > 0) {
       setSaveAsNew({ ...saveAsNew, error: WAITING_FOR_UPLOAD });
+      toast.info('Saving waits until the upload finishes');
       return;
     }
     setSaveAsNew({ ...saveAsNew, busy: true, error: null });
@@ -356,6 +360,7 @@ export function LayoutEditor({
         router.push(`/admin/product-layouts/${res.id}?from=${L.id}`);
         return;
       }
+      toast.error('New layout not saved');
       if (res.code === 'INVALID' && res.sectionErrors) {
         setSaveAsNew(null);
         showErrors(res);
@@ -364,16 +369,18 @@ export function LayoutEditor({
       setSaveAsNew({ ...saveAsNew, busy: false, error: res.error });
     } catch {
       setSaveAsNew({ ...saveAsNew, busy: false, error: 'The layout could not be saved. Please try again.' });
+      toast.error('New layout not saved');
     }
   };
 
   const makeCopy = async () => {
     if (dirty && !window.confirm('Your unsaved changes are not copied. Make a copy of the saved layout anyway?')) return;
     setCopying(true);
-    const res = await duplicateProductLayoutAction(L.id);
+    const res = await duplicateProductLayoutAction(L.id).catch(actionFailed);
     setCopying(false);
     if (!res.ok) {
       setProblem(res.error);
+      toast.error('Layout not copied');
       return;
     }
     setBaseline(draftRef.current);
@@ -388,6 +395,7 @@ export function LayoutEditor({
     // a copy's original design carries the name of the layout it was copied from: keep this layout's own name then
     const clash = server.layouts.some((l) => l.id !== L.id && layoutNameKey(l.name) === layoutNameKey(loaded.name));
     setDraft(clash ? { ...loaded, name: draftRef.current.name, description: draftRef.current.description } : loaded);
+    toast.info(which === 'previous' ? 'Previous version loaded. Save to keep it.' : 'Original design loaded. Save to keep it.');
     setErrors({});
     setOpen(new Set());
   };
@@ -828,6 +836,7 @@ export function LayoutEditor({
           setProblem(null);
           setNameError(null);
           setDiscardOpen(false);
+          toast.info('Changes discarded');
         }}
         onCancel={() => setDiscardOpen(false)}
       />
@@ -1015,10 +1024,12 @@ function PreviewDialog({
   const go = async () => {
     if (!picked) {
       setError('Pick a product to preview on.');
+      toast.error('Preview not opened');
       return;
     }
     if (pendingUploadCount() > 0) {
       setError(WAITING_FOR_UPLOAD);
+      toast.info('The preview waits until the upload finishes');
       return;
     }
     // opened now (inside the click) so the browser doesn't block it; filled in when the preview is ready
@@ -1028,11 +1039,14 @@ function PreviewDialog({
     try {
       const res = await createLayoutPreviewAction({ layoutId: L.id, draft, productId: picked.id });
       if (res.ok) {
-        if (win) win.location.href = res.url;
-        else window.location.assign(res.url);
+        if (win) {
+          win.location.href = res.url;
+          toast.info('Preview opened in a new tab');
+        } else window.location.assign(res.url);
         onClose();
       } else {
         win?.close();
+        toast.error('Preview not opened');
         if (res.code === 'INVALID' && (res.sectionErrors || res.field)) {
           onClose();
           onErrors(res);
@@ -1041,6 +1055,7 @@ function PreviewDialog({
     } catch {
       win?.close();
       setError('The preview could not be made. Please try again.');
+      toast.error('Preview not opened');
     } finally {
       setBusy(false);
     }

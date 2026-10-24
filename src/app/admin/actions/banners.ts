@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-guard';
 import { normalizeHref, validateHref } from '@/lib/links';
 import { releaseUploads } from '@/lib/uploads';
+import { ALREADY_REMOVED, flashToast } from '@/components/toast/server';
 
 /** Home banners (SPEC §5.4): a desktop photo, an optional phone photo, a link, on/off and a drag order. */
 
@@ -85,10 +86,12 @@ export async function toggleBannerAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const id = Number(formData.get('id'));
   if (!Number.isInteger(id)) return;
-  const banner = await prisma.banner.findUnique({ where: { id }, select: { active: true } });
-  if (!banner) return;
+  const banner = await prisma.banner.findUnique({ where: { id }, select: { active: true, title: true } });
+  if (!banner) return await flashToast('warning', ALREADY_REMOVED);
   await prisma.banner.update({ where: { id }, data: { active: !banner.active } });
   revalidateBanners();
+  const name = banner.title ? `“${banner.title}”` : 'Banner';
+  await flashToast('success', banner.active ? `${name} is now hidden from the home page` : `${name} is now shown on the home page`);
 }
 
 /** Sets positions 0..n-1 in the given order. Every id must be an existing banner, each exactly once. */
@@ -109,9 +112,10 @@ export async function deleteBannerAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const id = Number(formData.get('id'));
   if (!Number.isInteger(id)) return;
-  const banner = await prisma.banner.findUnique({ where: { id }, select: { image: true, mobileImage: true } });
-  if (!banner) return;
+  const banner = await prisma.banner.findUnique({ where: { id }, select: { image: true, mobileImage: true, title: true } });
+  if (!banner) return await flashToast('warning', ALREADY_REMOVED);
   await prisma.banner.delete({ where: { id } });
   await releaseUploads([banner.image, banner.mobileImage].filter((u): u is string => !!u));
   revalidateBanners();
+  await flashToast('success', banner.title ? `Banner “${banner.title}” removed` : 'Banner removed');
 }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ThemeArrowRight } from '@/components/icons';
+import { toast } from '@/components/toast/toast';
 
 /**
  * Footer newsletter sign-up. There is no mailing service: it posts to the shared /api/contact endpoint with
@@ -19,6 +20,7 @@ export function NewsletterForm() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
       setStatus('error');
       setError('Please enter a valid email address.');
+      toast.error('Not subscribed');
       return;
     }
     setStatus('loading');
@@ -43,8 +45,10 @@ export function NewsletterForm() {
         throw new Error(msg);
       }
       setStatus('done');
+      toast.success('You’re subscribed');
     } catch (err) {
       setStatus('error');
+      toast.error('Not subscribed');
       setError(err instanceof Error ? err.message : 'Could not subscribe right now. Please try again.');
     }
   }

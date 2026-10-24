@@ -5,6 +5,7 @@ import { asksAvailability, VARIANT_STATUS_COPY, isVariantStatus } from '@/lib/va
 import { buildProductMessage, waLink, type WhatsAppConfig } from '@/lib/whatsapp';
 import { WhatsAppGlyph } from './WhatsAppGlyph';
 import { currentPath, logWhatsAppClick } from './log-click';
+import { toast } from '@/components/toast/toast';
 
 /**
  * "ORDER ON WHATSAPP" / "ASK ABOUT AVAILABILITY" buy button (SPEC §5.7.2). The message is rebuilt on every
@@ -49,15 +50,16 @@ export function OrderOnWhatsAppButton({ config, product, variant, options, quant
       rel="noopener noreferrer"
       data-testid="order-on-whatsapp"
       data-ready={origin ? 'true' : undefined}
-      onClick={() =>
+      onClick={() => {
+        toast.info(kind === 'ORDER' ? 'Opening WhatsApp with your order…' : 'Opening WhatsApp to ask about this item…');
         logWhatsAppClick({
           kind,
           productId: product.id,
           variantId: variant.id,
           quantity: Math.min(99, Math.max(1, Math.round(quantity) || 1)),
           path: currentPath(),
-        })
-      }
+        });
+      }}
       className={`btn h-[52px] min-w-0 flex-1 gap-[10px] max-[480px]:gap-2 max-[480px]:px-3 max-[480px]:tracking-[0.06em] ${className}`}
     >
       <WhatsAppGlyph className="h-[18px] w-[18px] shrink-0" />

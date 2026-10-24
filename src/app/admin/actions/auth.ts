@@ -7,12 +7,14 @@ import { clearSessionCookie, getCurrentAdmin, setSessionCookie } from '@/lib/aut
 import { ADMIN_PASSWORD_MIN_LENGTH, safeAdminNext, signInWithPassword } from '@/lib/admin-login';
 import { rateLimit, resetRateLimit } from '@/lib/ratelimit';
 import { requireAdmin } from '@/lib/admin-guard';
+import { flashToast } from '@/components/toast/server';
 
 export type LoginState = { error: string | null };
 
 export async function loginAction(_prev: LoginState, formData: FormData): Promise<LoginState> {
   const error = await signInWithPassword(formData.get('email'), formData.get('password'));
   if (error) return { error };
+  await flashToast('success', 'Signed in');
   // back to the page the admin was on when the session ran out (?next=), else the dashboard
   redirect(safeAdminNext(formData.get('next')));
 }
@@ -22,6 +24,7 @@ export async function logoutAction() {
   if (admin) {
     await clearSessionCookie();
   }
+  await flashToast('info', 'Signed out');
   redirect('/admin/login');
 }
 

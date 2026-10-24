@@ -46,7 +46,7 @@ export function PageEditor({
 }) {
   const isNew = page == null;
   const designed = page?.kind === 'DESIGNED';
-  const { formRef, onSubmit, state, pending, dirty, status, fieldError } = useEditorSave(savePageAction);
+  const { formRef, onSubmit, state, pending, dirty, status, fieldError } = useEditorSave(savePageAction, 'Page');
   // the title input is uncontrolled so text typed before hydration survives; read it once mounted
   useEffect(() => {
     const el = document.getElementById('page-title') as HTMLInputElement | null;

@@ -7,7 +7,8 @@ import type { LinkTarget } from '@/lib/links';
 import type { MenuNodeInput } from '../_lib/tree';
 import { CheckboxField, Notice, ToggleSwitch } from '@/components/admin/ui';
 import { SortableList } from '@/components/admin/SortableList';
-import { StickySaveBar } from '@/components/admin/StickySaveBar';
+import { toast } from '@/components/toast/toast';
+import { SAVE_ERROR_TOAST, StickySaveBar } from '@/components/admin/StickySaveBar';
 import { UnsavedChangesGuard } from '@/components/admin/UnsavedChangesGuard';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { LinkPicker, linkTargetText } from '@/components/admin/LinkPicker';
@@ -228,6 +229,7 @@ export function MenuEditor({
     if (missing) {
       setShowMissing(true);
       setError('Every item needs a label (except empty rows).');
+      toast.error(SAVE_ERROR_TOAST);
       expandPath(missing.key);
       focusKey.current = missing.key;
       return;
@@ -244,6 +246,7 @@ export function MenuEditor({
       setTree(fresh);
       setBaseline(snapshot(fresh));
       setFlash('Saved. The store is updated.');
+      toast.success('Menu saved');
     });
   };
 
@@ -288,7 +291,20 @@ export function MenuEditor({
         error={error}
         status="All changes saved"
         actions={[
-          ...(dirty ? [{ label: 'Undo all changes', shortLabel: 'Undo', variant: 'secondary' as const, type: 'button' as const, onClick: () => edit(fromInput(JSON.parse(baseline) as MenuNodeInput[])) }] : []),
+          ...(dirty
+            ? [
+                {
+                  label: 'Undo all changes',
+                  shortLabel: 'Undo',
+                  variant: 'secondary' as const,
+                  type: 'button' as const,
+                  onClick: () => {
+                    edit(fromInput(JSON.parse(baseline) as MenuNodeInput[]));
+                    toast.info('Changes undone');
+                  },
+                },
+              ]
+            : []),
           { label: 'Save menu', type: 'button', onClick: save, disabled: !dirty },
         ]}
       />
@@ -399,7 +415,7 @@ function ItemRow({
           {levelName(location, depth) !== 'Link' && (
             <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{levelName(location, depth)}</p>
           )}
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label htmlFor={`menu-label-${node.key}`} className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Label

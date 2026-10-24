@@ -6,6 +6,8 @@ import { useFormStatus } from 'react-dom';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { CopyIcon, TrashIcon } from '@/components/admin/icons';
 import { deleteProductAction, duplicateProductAction, productDeleteInfoAction } from '@/app/admin/actions/products';
+import { toast } from '@/components/toast/toast';
+import { actionFailed, NETWORK_ERROR } from '@/components/admin/action-failed';
 
 function SubmitDelete({ className }: { className: string }) {
   const { pending } = useFormStatus();
@@ -27,18 +29,30 @@ export function ProductRowActions({ id, title }: { id: number; title: string }) 
 
   const duplicate = async () => {
     setBusy('dup');
-    const res = await duplicateProductAction(id);
+    const res = await duplicateProductAction(id).catch(actionFailed);
     setBusy(null);
     if (res.ok) router.push(`/admin/products/${res.id}?duplicated=1`);
-    else setError(res.error);
+    else {
+      setError(res.error);
+      toast.error('Copy not made');
+    }
   };
 
   const askDelete = async () => {
     setBusy('del');
-    const b = await productDeleteInfoAction(id);
+    const b = await productDeleteInfoAction(id).catch((e: unknown) => {
+      actionFailed(e); // a redirect (signed out) goes through
+      return undefined;
+    });
     setBusy(null);
     if (b) setBullets(b);
-    else setError('This product no longer exists.');
+    else if (b === undefined) {
+      setError(NETWORK_ERROR);
+      toast.error('Could not reach the store');
+    } else {
+      setError('This product no longer exists.');
+      toast.error('Product not found');
+    }
   };
 
   return (

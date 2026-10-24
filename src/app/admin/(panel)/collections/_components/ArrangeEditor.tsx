@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from 'react';
 import { saveCollectionIndexAction } from '@/app/admin/actions/collections';
 import { Notice } from '@/components/admin/ui';
 import { SortableList } from '@/components/admin/SortableList';
+import { toast } from '@/components/toast/toast';
 import { StickySaveBar } from '@/components/admin/StickySaveBar';
 import { UnsavedChangesGuard } from '@/components/admin/UnsavedChangesGuard';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
@@ -110,7 +111,10 @@ export function ArrangeEditor({ initialCards, candidates }: { initialCards: Arra
     setPicked([]);
     setQuery('');
     setAdding(false);
-    if (add.length) setFlash(`${add.length} added at the end. Save to show ${add.length === 1 ? 'it' : 'them'} on the store.`);
+    if (add.length) {
+      setFlash(`${add.length} added at the end. Save to show ${add.length === 1 ? 'it' : 'them'} on the store.`);
+      toast.info(add.length === 1 ? 'Collection added to the list' : `${add.length} collections added to the list`);
+    }
   };
 
   const save = () =>
@@ -128,6 +132,7 @@ export function ArrangeEditor({ initialCards, candidates }: { initialCards: Arra
         setBaseline(snapshot(cards));
         setBaseCards(cards);
         setFlash('Saved. The Collections page is updated.');
+        toast.success('Collection order saved');
       } else setError(res.error ?? 'Could not save.');
     });
 

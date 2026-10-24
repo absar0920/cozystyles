@@ -1,7 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePendingUploads, WAITING_FOR_UPLOAD } from './upload-client';
+import { toast, type ToastTone } from '@/components/toast/toast';
+import { useToastClearance } from '@/components/toast/useToastClearance';
+
+/** The toast for a save that ended in an error; the reason itself is in the bar. */
+export const SAVE_ERROR_TOAST = 'Not saved. The reason is at the bottom of the page.';
 
 export type SaveBarAction = {
   label: string;
@@ -27,16 +32,40 @@ export function StickySaveBar({
   saving,
   status,
   error,
+  errorToast,
   actions,
 }: {
   dirty: boolean;
   saving?: boolean;
   status?: string;
   error?: string | null;
+  /** the toast for a save that ends with `error` (default: SAVE_ERROR_TOAST); null for none */
+  errorToast?: { tone: ToastTone; message: string } | null;
   actions: SaveBarAction[];
 }) {
   const [typing, setTyping] = useState(false);
   const uploading = usePendingUploads() > 0;
+  const barRef = useRef<HTMLDivElement>(null);
+
+  // A save that ends in an error also pops up a toast (the reason stays in the bar). Keyed on the save ending,
+  // not on the text, so the same error twice toasts twice. Errors set without a save (a failed copy, a missing
+  // label caught before saving) toast where they are set.
+  const wasSaving = useRef(saving);
+  useEffect(() => {
+    const ended = wasSaving.current && !saving;
+    wasSaving.current = saving;
+    if (!ended || !error) return;
+    const t = errorToast === undefined ? { tone: 'error' as const, message: SAVE_ERROR_TOAST } : errorToast;
+    if (t) toast[t.tone](t.message);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [saving]);
+
+  useEffect(() => {
+    if (error === WAITING_FOR_UPLOAD) toast.info('Saving waits until the upload finishes');
+  }, [error]);
+
+  // toasts sit just above the bar, whatever its height (an error can wrap to several lines on a phone)
+  useToastClearance(barRef, !typing);
 
   // while a photo is uploading, no form on the page may submit (Enter in a field included)
   useEffect(() => {
@@ -106,6 +135,7 @@ export function StickySaveBar({
 
   return (
     <div
+      ref={barRef}
       data-testid="save-bar"
       className={`fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white px-4 pt-3 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] transition-transform pb-[max(env(safe-area-inset-bottom),0.75rem)] sm:px-6 lg:left-64 lg:px-8 ${
         typing ? 'translate-y-full' : ''

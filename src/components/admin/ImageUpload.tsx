@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { ACCEPT_IMAGES, uploadImage, type UploadPurpose } from './upload-client';
 import { useUserChangeEvent } from './ui-client';
 import { ImageIcon, UploadIcon } from './icons';
+import { toast } from '@/components/toast/toast';
 
 export type ImageUploadProps = {
   /** hidden input: the URL ('' when none) */
@@ -195,6 +196,7 @@ export function ImageUpload({
           onInvalid={(e) => {
             e.preventDefault();
             setError('Please upload a photo');
+            toast.error('Not saved. A photo is needed.');
             buttonRef.current?.focus();
           }}
         />

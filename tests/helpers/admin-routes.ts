@@ -52,6 +52,18 @@ export async function adminRoutes(prisma: PrismaClient): Promise<AdminRoute[]> {
     { name: 'menu: main', path: '/admin/menus?tab=main' },
     { name: 'menu: about', path: '/admin/menus?tab=about' },
     { name: 'menu: support', path: '/admin/menus?tab=support' },
+    {
+      // an open item shows its link as the page's full title ("Page · Get in Touch | …"): it must not widen the screen
+      name: 'menu: support (items open)',
+      path: '/admin/menus?tab=support',
+      prepare: async (page) => {
+        // bottom-up: opening an item moves only the items below it, so no click lands on a shifting row
+        const closed = page.getByTestId('menu-item').locator('button[aria-expanded="false"]:not([aria-haspopup])');
+        for (let n = await closed.count(); n > 0; n--) await closed.last().click();
+        await expect(closed).toHaveCount(0);
+        await expect(page.getByTestId('link-picker-popover')).toHaveCount(0);
+      },
+    },
     { name: 'menu: popular', path: '/admin/menus?tab=popular' },
     { name: 'pages list', path: '/admin/pages' },
     { name: 'text page', path: `/admin/pages/${textPage.id}` },

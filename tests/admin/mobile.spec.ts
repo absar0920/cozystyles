@@ -12,8 +12,9 @@ test.afterAll(async () => {
   await prisma.$disconnect();
 });
 
+// clientWidth, not innerWidth: a phone zooms out to fit a too-wide page, and innerWidth grows with it
 const overflow = (page: Page) =>
-  page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }));
+  page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, width: document.documentElement.clientWidth }));
 
 function inViewport(box: { x: number; y: number; width: number; height: number } | null, vp: { width: number; height: number }) {
   return !!box && box.x >= -1 && box.y >= -1 && box.x + box.width <= vp.width + 1 && box.y + box.height <= vp.height + 1;
@@ -27,8 +28,8 @@ test('no admin screen scrolls sideways', async ({ page }) => {
     expect(res?.status(), r.name).toBe(200);
     await page.waitForLoadState('networkidle');
     if (r.prepare) await r.prepare(page);
-    const { scrollWidth, innerWidth } = await overflow(page);
-    if (scrollWidth > innerWidth + 1) wide.push(`${r.name} (${r.path}): ${scrollWidth}px wide in a ${innerWidth}px screen`);
+    const { scrollWidth, width } = await overflow(page);
+    if (scrollWidth > width + 1) wide.push(`${r.name} (${r.path}): ${scrollWidth}px wide in a ${width}px screen`);
   }
   expect(wide).toEqual([]);
 });
@@ -90,6 +91,6 @@ test('the link picker opens as a bottom sheet', async ({ page }) => {
   await sheet.getByRole('searchbox').fill('Sofas');
   // the first search waits for the session check (SessionGuard), which the dev server may still have to compile
   await expect(sheet.getByTestId('link-result').first()).toBeVisible({ timeout: 30_000 });
-  const { scrollWidth, innerWidth } = await overflow(page);
-  expect(scrollWidth).toBeLessThanOrEqual(innerWidth + 1);
+  const { scrollWidth, width } = await overflow(page);
+  expect(scrollWidth).toBeLessThanOrEqual(width + 1);
 });

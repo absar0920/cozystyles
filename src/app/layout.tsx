@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
+import { Toaster } from '@/components/toast/Toaster';
 import { siteName } from '@/lib/site-url';
 import './globals.css';
 
@@ -60,6 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${poppins.variable} ${poppinsThin.variable} ${workSans.variable}`}>
       <body>
         {children}
+        <Toaster />
       </body>
     </html>
   );

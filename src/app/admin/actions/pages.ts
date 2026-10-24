@@ -9,6 +9,7 @@ import { slugify } from '@/lib/slug';
 import { BLOG_HANDLE_PREFIX, BUILT_IN_PAGE_HANDLES, blogHandle, blogSlug, pagePublicPath } from '@/lib/page-kinds';
 import { sanitizeRichText } from '@/lib/rich-text/sanitize';
 import { extractUploadUrls, releaseUploads } from '@/lib/uploads';
+import { ALREADY_REMOVED, flashToast } from '@/components/toast/server';
 
 /**
  * Pages (TEXT + DESIGNED) and blog posts (BLOG). SPEC §5.3.
@@ -184,24 +185,30 @@ export async function togglePagePublishedAction(formData: FormData) {
   await requireAdmin();
   const id = parseId(formData);
   if (!id) return;
-  const page = await prisma.page.findUnique({ where: { id }, select: { id: true, published: true, handle: true, kind: true } });
-  if (!page || page.kind === 'BLOG') return;
+  const page = await prisma.page.findUnique({ where: { id }, select: { id: true, published: true, handle: true, kind: true, title: true } });
+  if (!page) return await flashToast('warning', ALREADY_REMOVED);
+  if (page.kind === 'BLOG') return;
   await prisma.page.update({ where: { id }, data: { published: !page.published } });
   revalidateContent([pagePublicPath(page), `/admin/pages/${id}`]);
+  await flashToast('success', page.published ? `“${page.title}” is now hidden from the store` : `“${page.title}” is now visible on the store`);
 }
 
 export async function deletePageAction(formData: FormData) {
   await requireAdmin();
   const id = parseId(formData);
   if (!id) return;
-  const page = await prisma.page.findUnique({ where: { id }, select: { id: true, handle: true, kind: true, bodyHtml: true } });
-  if (!page) redirect('/admin/pages');
+  const page = await prisma.page.findUnique({ where: { id }, select: { id: true, handle: true, kind: true, bodyHtml: true, title: true } });
+  if (!page) {
+    await flashToast('warning', ALREADY_REMOVED);
+    redirect('/admin/pages');
+  }
   // custom-design pages can be hidden but never deleted; blog posts have their own delete
   if (page.kind !== 'TEXT') return;
 
   await prisma.page.delete({ where: { id } });
   await releaseUploads(extractUploadUrls(page.bodyHtml));
   revalidateContent([pagePublicPath(page)]);
+  await flashToast('success', `“${page.title}” removed`);
   redirect('/admin/pages?deleted=1');
 }
 
@@ -328,22 +335,28 @@ export async function toggleBlogPostPublishedAction(formData: FormData) {
   await requireAdmin();
   const id = parseId(formData);
   if (!id) return;
-  const post = await prisma.page.findUnique({ where: { id }, select: { id: true, published: true, handle: true, kind: true } });
-  if (!post || post.kind !== 'BLOG') return;
+  const post = await prisma.page.findUnique({ where: { id }, select: { id: true, published: true, handle: true, kind: true, title: true } });
+  if (!post) return await flashToast('warning', ALREADY_REMOVED);
+  if (post.kind !== 'BLOG') return;
   await prisma.page.update({ where: { id }, data: { published: !post.published } });
   revalidateContent([pagePublicPath(post), `/admin/blog/${id}`]);
+  await flashToast('success', post.published ? `“${post.title}” is now hidden from the blog` : `“${post.title}” is now visible on the blog`);
 }
 
 export async function deleteBlogPostAction(formData: FormData) {
   await requireAdmin();
   const id = parseId(formData);
   if (!id) return;
-  const post = await prisma.page.findUnique({ where: { id }, select: { id: true, handle: true, kind: true, bodyHtml: true, featuredImage: true } });
-  if (!post) redirect('/admin/blog');
+  const post = await prisma.page.findUnique({ where: { id }, select: { id: true, handle: true, kind: true, bodyHtml: true, featuredImage: true, title: true } });
+  if (!post) {
+    await flashToast('warning', ALREADY_REMOVED);
+    redirect('/admin/blog');
+  }
   if (post.kind !== 'BLOG') return;
 
   await prisma.page.delete({ where: { id } });
   await releaseUploads([...(post.featuredImage ? [post.featuredImage] : []), ...extractUploadUrls(post.bodyHtml)]);
   revalidateContent([pagePublicPath(post)]);
+  await flashToast('success', `“${post.title}” removed`);
   redirect('/admin/blog?deleted=1');
 }

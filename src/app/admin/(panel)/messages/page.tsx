@@ -6,6 +6,7 @@ import { markMessageAction, deleteMessageAction } from '@/app/admin/actions/mess
 import { AdminPageHeader, AdminTable, Badge, EmptyRow, Notice, Tabs } from '@/components/admin/ui';
 import { ConfirmDelete } from '@/components/admin/ConfirmDelete';
 import { ChevronDown, ChevronLeft, ChevronRight, SearchIcon } from '@/components/icons';
+import { ToastLink } from '@/components/toast/ToastLink';
 
 export const dynamic = 'force-dynamic';
 
@@ -157,9 +158,9 @@ export default async function MessagesPage({
             title="There is no mailing list"
             action={
               signups > 0 ? (
-                <a href="/admin/messages/newsletter-signups" download className={`${ghostBtn} min-h-10`}>
+                <ToastLink href="/admin/messages/newsletter-signups" download toastMessage="Download started" className={`${ghostBtn} min-h-10`}>
                   Download sign-ups (CSV)
-                </a>
+                </ToastLink>
               ) : undefined
             }
           >

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { ThemeArrowUp } from '@/components/icons';
 import { GENERAL_QUESTION_TEXT, waLink, type WhatsAppConfig } from '@/lib/whatsapp';
 import { currentPath, logWhatsAppClick } from '@/components/whatsapp/log-click';
+import { toast } from '@/components/toast/toast';
 
 /** Live `#whatsapp-chat`: 60×60 WhatsApp image, fixed bottom 10 / right 15. Sends a general question; hidden when WhatsApp is off. */
 export function WhatsappButton({ config }: { config: WhatsAppConfig | null }) {
@@ -16,7 +17,10 @@ export function WhatsappButton({ config }: { config: WhatsAppConfig | null }) {
         rel="noopener noreferrer"
         aria-label="Chat on WhatsApp"
         data-testid="whatsapp-bubble"
-        onClick={() => logWhatsAppClick({ kind: 'GENERAL', path: currentPath() })}
+        onClick={() => {
+          logWhatsAppClick({ kind: 'GENERAL', path: currentPath() });
+          toast.info('Opening WhatsApp…');
+        }}
         className="block"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}

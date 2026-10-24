@@ -9,6 +9,7 @@ import { slugify } from '@/lib/slug';
 import { isRichTextEmpty, sanitizeRichText } from '@/lib/rich-text/sanitize';
 import { extractUploadUrls, releaseUploads } from '@/lib/uploads';
 import { parseSectionData, serializeSectionData } from '@/lib/product-layout-sections';
+import { ALREADY_REMOVED, flashToast } from '@/components/toast/server';
 
 /** Admin collection actions (SPEC §5.2). */
 
@@ -160,8 +161,11 @@ export async function deleteCollectionAction(formData: FormData) {
 
   const id = Number(formData.get('id'));
   if (!Number.isInteger(id)) return;
-  const collection = await prisma.collection.findUnique({ where: { id }, select: { handle: true, image: true, description: true } });
-  if (!collection) redirect('/admin/collections');
+  const collection = await prisma.collection.findUnique({ where: { id }, select: { handle: true, title: true, image: true, description: true } });
+  if (!collection) {
+    await flashToast('warning', ALREADY_REMOVED);
+    redirect('/admin/collections');
+  }
 
   let layoutSections = 0;
   await prisma.$transaction(async (tx) => {
@@ -181,6 +185,7 @@ export async function deleteCollectionAction(formData: FormData) {
 
   revalidateCollection(collection.handle);
   if (layoutSections) revalidatePath('/admin/product-layouts', 'layout');
+  await flashToast('success', `“${collection.title}” removed`);
   redirect('/admin/collections?deleted=1');
 }
 
