@@ -14,6 +14,8 @@ import { richTextToPlainText } from '@/lib/rich-text/sanitize';
 import { getWhatsAppConfig } from '@/lib/whatsapp-server';
 import type { WhatsAppConfig } from '@/lib/whatsapp';
 import '@/components/pages/content.css';
+import { canonical } from '@/lib/seo';
+import { DESIGNED_PAGE_ALIASES, DESIGNED_PAGES_WITHOUT_CONTENT } from '@/lib/page-kinds';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,7 +70,19 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
   if (!page || !page.published || page.kind === 'BLOG') return { title: 'Page not found' };
   const title = decodeEntities(page.seoTitle?.trim() || page.title);
   const description = page.seoDescription?.trim() || richTextToPlainText(page.bodyHtml).slice(0, 160);
-  return { title, ...(description ? { description: description.slice(0, 160) } : {}) };
+  // a designed page whose live block renders nothing (loyalty-form) stays out of search results
+  const empty = page.kind === 'DESIGNED' && DESIGNED_PAGES_WITHOUT_CONTENT.includes(page.handle);
+  return { title, ...(description ? { description: description.slice(0, 160) } : {}), ...canonical(await canonicalPagePath(page)), ...(empty ? { robots: { index: false } } : {}) };
+}
+
+/** `/pages/about` shows the About Us page: while that one is published, it is the canonical address of both. */
+async function canonicalPagePath(page: { handle: string; kind: string }): Promise<string> {
+  const main = page.kind === 'DESIGNED' ? DESIGNED_PAGE_ALIASES[page.handle] : undefined;
+  if (main) {
+    const target = await getPageByHandle(main);
+    if (target?.published && target.kind === 'DESIGNED') return `/pages/${main}`;
+  }
+  return `/pages/${page.handle}`;
 }
 
 export default async function StaticPage({ params }: { params: PageParams }) {

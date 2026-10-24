@@ -87,6 +87,21 @@ uploads and Next.js static assets are sent with long-lived cache headers, and pa
 (`no-store`), so orders and stock are always fresh. New sites sometimes show a short *"Checking your
 browser before accessing …"* page from the CDN; it passes by itself within ~5 seconds.
 
+### 7. Search engines
+Nothing to configure. The shop writes **/sitemap.xml** (home, collections, published products with their
+photos, published pages and blog posts — built per request, so a change in the admin shows at once) and
+**/robots.txt**, and every page names its clean address as canonical (`?variant=` links from WhatsApp
+messages, sort and filter variants count as the same page).
+
+Only the live shop is indexed: the deployment is recognised by `NEXT_PUBLIC_SITE_URL`. On
+`staging.…` (also `dev.`, `test.`, `preview.`, localhost) robots.txt says `Disallow: /` and every page
+carries `noindex`, so staging never competes with the live shop in search results. Set
+`NEXT_PUBLIC_SEARCH_INDEXING=on|off` to override that guess (it is read at build time: redeploy after
+changing it).
+
+Once the live shop is up: add `https://cozystyle.pk` to [Google Search Console](https://search.google.com/search-console)
+and submit `https://cozystyle.pk/sitemap.xml` under **Sitemaps** (once; Google re-reads it by itself).
+
 ## Upgrading later
 Push to the connected branch (or upload a new zip) and **Redeploy**. Migrations in `prisma/migrations/`
 are applied during the build; the database and `UPLOADS_DIR` are untouched.

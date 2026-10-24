@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import { Toaster } from '@/components/toast/Toaster';
-import { siteName } from '@/lib/site-url';
+import { siteName, siteOrigin } from '@/lib/site-url';
+import { searchIndexing } from '@/lib/seo';
 import './globals.css';
 
 // Live theme font: Poppins everywhere (body, headings, buttons, prices, footer). Live loads only the
@@ -44,8 +45,11 @@ const workSans = localFont({
 });
 
 const SITE_NAME = siteName();
+const ORIGIN = siteOrigin();
 
 export const metadata: Metadata = {
+  // canonical and social-card addresses are absolute on the shop's own host
+  ...(ORIGIN ? { metadataBase: new URL(ORIGIN) } : {}),
   title: {
     // live: "<page> - Interwood", home page just the store name
     default: SITE_NAME,
@@ -54,6 +58,8 @@ export const metadata: Metadata = {
   // The home page's (and any page without its own) description for search engines: plain and true for any shop
   // built on this site — no product ranges, payment methods or services it might not offer.
   description: `Browse ${SITE_NAME} online: our furniture collections, with photos, prices and details for every product.`,
+  // staging and local copies stay out of search results (src/lib/seo.ts)
+  ...(searchIndexing() ? {} : { robots: { index: false, follow: false } }),
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

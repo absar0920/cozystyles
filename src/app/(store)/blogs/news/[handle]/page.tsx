@@ -9,6 +9,7 @@ import { ShareArticle } from '@/components/pages/ShareArticle';
 import { listPublishedPosts, toPostView } from '@/components/pages/blog-data';
 import { blogExcerpt, decodeEntities, formatArticleDate } from '@/components/pages/content';
 import '@/components/pages/content.css';
+import { canonical } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +32,7 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
   const post = toPostView(row);
   const title = decodeEntities(row.seoTitle?.trim() || row.title);
   const description = row.seoDescription?.trim() || blogExcerpt(post.contentHtml, 160);
-  return { title, ...(description ? { description } : {}) };
+  return { title, ...(description ? { description } : {}), ...canonical(pagePublicPath(row)) };
 }
 
 /** Live template-article: breadcrumb, sticky reading bar, centred meta + title, 1060px image + body, tags, share. */

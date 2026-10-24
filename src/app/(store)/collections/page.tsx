@@ -3,6 +3,7 @@ import { cache } from 'react';
 import { prisma } from '@/lib/db';
 import { siteName } from '@/lib/site-url';
 import { CategoryTile } from '@/components/catalog/CategoryTile';
+import { canonical } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,6 +44,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: 'Collections',
     description: collectionsDescription(siteName(), cards.map((c) => c.title)),
+    ...canonical('/collections'),
   };
 }
 

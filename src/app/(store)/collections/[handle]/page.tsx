@@ -18,18 +18,34 @@ import {
   type RawSearchParams,
 } from '@/components/catalog/filters';
 import { loadCollectionPage } from './actions';
+import { canonical, pagedPath } from '@/lib/seo';
+import { prisma } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 type PageParams = Promise<{ handle: string }>;
 
-export async function generateMetadata({ params }: { params: PageParams }): Promise<Metadata> {
+/**
+ * Sorted / filtered views count as the collection itself. Unfiltered page 2 onwards lists other products, so it is
+ * its own page — up to the last one (a higher number shows the last page).
+ */
+async function canonicalCollectionPath(handle: string, sp: RawSearchParams): Promise<string> {
+  const path = `/collections/${handle}`;
+  const filters = parseCatalogFilters(sp);
+  if (filterParams({ ...filters, q: '' }).length || filters.page <= 1) return path;
+  const total = await prisma.product.count({ where: { status: 'ACTIVE', ...(handle === 'all' ? {} : { collections: { some: { handle } } }) } });
+  return pagedPath(path, Math.min(filters.page, Math.max(1, Math.ceil(total / COLLECTION_PER_PAGE))));
+}
+
+export async function generateMetadata({ params, searchParams }: { params: PageParams; searchParams: Promise<RawSearchParams> }): Promise<Metadata> {
   const { handle } = await params;
-  if (handle === 'all') return { title: 'Products' };
+  const self = canonical(await canonicalCollectionPath(handle, await searchParams));
+  if (handle === 'all') return { title: 'Products', ...self };
   const collection = await getCatalogCollection(handle);
   if (!collection) return { title: 'Collection not found' };
   const desc = stripHtml(collection.description);
   return {
+    ...self,
     title: collection.title,
     description: desc
       ? desc.slice(0, 160)

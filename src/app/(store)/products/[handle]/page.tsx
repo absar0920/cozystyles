@@ -24,6 +24,7 @@ import { getWhatsAppConfig } from '@/lib/whatsapp-server';
 import { getAdminOrNull } from '@/lib/admin-guard';
 import { prisma } from '@/lib/db';
 import { LayoutPreviewBar } from '@/components/product/LayoutPreviewBar';
+import { canonical } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,6 +50,8 @@ export async function generateMetadata({ params, searchParams }: Params): Promis
   return {
     title: product.title,
     description,
+    // ?variant= links (every WhatsApp order message has one) count as the product page itself
+    ...canonical(`/products/${product.handle}`),
     ...(preview ? { robots: { index: false, follow: false } } : {}),
   };
 }

@@ -21,6 +21,12 @@ const STRIP = 'Free delivery in Lahore';
 
 test.describe.configure({ mode: 'serial' });
 
+/** The addresses in /sitemap.xml, as opened in the browser (its XML view). */
+async function sitemapPaths(page: Page): Promise<string[]> {
+  expect((await page.goto('/sitemap.xml'))?.status()).toBe(200);
+  return page.evaluate(() => Array.from(document.getElementsByTagName('loc'), (e) => new URL(e.textContent ?? '').pathname));
+}
+
 function watch(page: Page) {
   const problems: string[] = [];
   page.on('pageerror', (e) => problems.push(`pageerror: ${e.message}`));
@@ -40,6 +46,8 @@ test('an empty store works and the owner can set it up from the browser', async 
     expect(res?.status(), path).toBe(200);
   }
   expect((await page.goto('/products/nothing-here'))?.status()).toBe(404);
+  // The sitemap of an empty shop: only the pages every shop has (no empty "Products" listing).
+  expect(await sitemapPaths(page)).toEqual(['/', '/collections', '/pages/contact']);
   // No reviews, no borrowed certifications and no card logos (orders go through WhatsApp).
   await page.goto('/');
   await expect(page.getByText('Our customer speaks for us')).toHaveCount(0);
@@ -165,6 +173,9 @@ test('an empty store works and the owner can set it up from the browser', async 
   expect(await photo.evaluate((img: HTMLImageElement) => img.decode().then(() => img.naturalWidth))).toBeGreaterThan(0);
   await expect(page.getByText(/order on whatsapp/i)).toHaveCount(0);
   await expect(page.getByText(/write a review/i)).toHaveCount(0);
+
+  // ... and the sitemap now lists it, with the all-products listing.
+  expect(await sitemapPaths(page)).toEqual(expect.arrayContaining([product, '/collections/all']));
 
   // A published best seller makes the home page's Hot Selling Products row.
   await page.goto('/');

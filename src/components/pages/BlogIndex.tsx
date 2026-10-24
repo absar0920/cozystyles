@@ -5,7 +5,7 @@ import { distinctTags, loadBlogPosts } from './blog-data';
 import { formatIndexDate, formatLongDate } from './content';
 import './content.css';
 
-const PER_PAGE = 9;
+export const BLOG_PER_PAGE = 9;
 
 /**
  * Live `/blogs/news` (template-blog): breadcrumb, centred header + tag select, 3-up cards, numbered pagination.
@@ -17,9 +17,9 @@ export async function BlogIndex({ page, tag, blog = 'news' }: { page: number; ta
   const basePath = tag ? `/blogs/news/tagged/${tag}` : `/blogs/${blog}`;
   const tags = distinctTags(all);
   const posts = tag ? all.filter((p) => p.tags.some((t) => t.href === basePath)) : all;
-  const pageCount = Math.max(1, Math.ceil(posts.length / PER_PAGE));
+  const pageCount = Math.max(1, Math.ceil(posts.length / BLOG_PER_PAGE));
   const current = Math.min(Math.max(1, page), pageCount);
-  const visible = posts.slice((current - 1) * PER_PAGE, current * PER_PAGE);
+  const visible = posts.slice((current - 1) * BLOG_PER_PAGE, current * BLOG_PER_PAGE);
   const tagLabel = tag ? tags.find((t) => t.href === basePath)?.label : undefined;
   const pageHref = (n: number) => (n === 1 ? basePath : `${basePath}?page=${n}`);
 

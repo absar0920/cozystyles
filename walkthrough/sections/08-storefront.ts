@@ -1,7 +1,9 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import type { Section } from '../context';
 import { gotoPage, type Guide } from '../guide';
-import { BANNERS, BLOG_POSTS, COLLECTIONS, MENUS, PRODUCTS, SHOPPER, STORE, type ProductData } from '../data';
+import { BANNERS, BLOG_POSTS, COLLECTIONS, MENUS, PAGES, PRODUCTS, SHOPPER, STORE, type ProductData } from '../data';
+import { searchIndexing } from '../../src/lib/seo';
+import { slugify } from '../../src/lib/slug';
 
 /**
  * Section 08 — a customer shopping on a computer (the separate, signed-out "shopper" browser):
@@ -716,6 +718,52 @@ const section: Section = {
     await expect(page).toHaveURL(new RegExp(`^${reEsc(origin)}/?$`));
     g.expect('The home page opens.');
     g.note('The blog (Blog in the main menu) was checked from the customer’s side in section 7.');
+
+    /* ------------------------------------------------------------------ 8.10 search engines */
+    g.part(
+      '8.10 For search engines: the sitemap and robots.txt',
+      'Google and other search engines read two files to find the shop’s pages. Nobody has to fill them in: the shop writes them itself from what is published in the admin.',
+    );
+    await g.goto(page, '/sitemap.xml', `Open **${origin}/sitemap.xml**`);
+    // the browser shows the XML as a tree; its <loc> elements are the listed addresses
+    const listed = await page.evaluate(() => Array.from(document.getElementsByTagName('loc'), (e) => e.textContent ?? ''));
+    const paths = listed.map((u) => new URL(u).pathname);
+    const published = PRODUCTS.filter((p) => !p.draft);
+    // collections with a published product (an empty one only says "No products found")
+    const filled = COLLECTIONS.filter((c) => published.some((p) => p.collections.includes(c.title)));
+    for (const p of published) expect(paths, `sitemap lists ${p.handle}`).toContain(`/products/${p.handle}`);
+    for (const c of filled) expect(paths, `sitemap lists ${c.handle}`).toContain(`/collections/${c.handle}`);
+    for (const c of COLLECTIONS.filter((c) => !filled.includes(c))) expect(paths).not.toContain(`/collections/${c.handle}`);
+    // the pages' web addresses as the admin made them from their titles in section 7
+    for (const p of PAGES) expect(paths, `sitemap lists ${p.title}`).toContain(`/pages/${slugify(p.title)}`);
+    expect(paths).toEqual(expect.arrayContaining(['/', '/collections', '/collections/all', '/blogs/news', '/pages/contact']));
+    expect(paths.filter((p) => p.startsWith('/blogs/news/'))).toHaveLength(BLOG_POSTS.length);
+    if (draft) expect(paths).not.toContain(`/products/${draft.handle}`);
+    expect(paths.some((p) => p.startsWith('/admin') || p.startsWith('/search'))).toBe(false);
+    expect(new Set(listed.map((u) => new URL(u).origin)).size).toBe(1);
+    g.expect(
+      `A list of addresses (shown as XML): the home page, **/collections**, the ${filled.length} collections that have products, the ${published.length} published products (each with its photos), the ${PAGES.length} pages, **Contact us**, the blog and its ${BLOG_POSTS.length} posts.` +
+        (draft ? ` The draft **${draft.title}** is **not** listed.` : '') +
+        ' No admin or search pages.',
+    );
+    await g.shot(page, 'The sitemap lists every published page of the shop');
+
+    await g.goto(page, '/robots.txt', `Open **${origin}/robots.txt**`);
+    const robots = await page.locator('body').innerText();
+    if (searchIndexing(origin)) {
+      expect(robots).toContain(`Sitemap: ${origin}/sitemap.xml`);
+      expect(robots).toContain('Disallow: /admin');
+      g.expect(`It lets search engines in, keeps them out of the admin and search results, and ends with **Sitemap: ${origin}/sitemap.xml**.`);
+    } else {
+      expect(robots).toMatch(/User-Agent: \*\s+Disallow: \/\s*$/i);
+      g.expect(
+        'It says **Disallow: /**: this copy of the shop is closed to search engines (and every page carries a “noindex” tag), so it never competes with the live shop in search results. On the live shop the same file lets them in and points to the sitemap.',
+      );
+    }
+    await g.shot(page, 'robots.txt');
+    g.note(
+      'After the shop goes live, add it to **Google Search Console** (search.google.com/search-console) and submit **https://cozystyle.pk/sitemap.xml** there once. Google then re-reads it by itself as products are added.',
+    );
   },
 };
 

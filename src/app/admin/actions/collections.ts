@@ -10,6 +10,7 @@ import { isRichTextEmpty, sanitizeRichText } from '@/lib/rich-text/sanitize';
 import { extractUploadUrls, releaseUploads } from '@/lib/uploads';
 import { parseSectionData, serializeSectionData } from '@/lib/product-layout-sections';
 import { ALREADY_REMOVED, flashToast } from '@/components/toast/server';
+import { RESERVED_COLLECTION_HANDLES } from '@/components/catalog/constants';
 
 /** Admin collection actions (SPEC §5.2). */
 
@@ -104,10 +105,12 @@ export async function saveCollectionAction(_prev: CollectionFormState, formData:
 
   if (Object.keys(fe).length) return { ok: false, error: 'Please fix the highlighted fields.', fieldErrors: fe };
 
-  // Keep web addresses unique (append -2, -3, …).
+  // Keep web addresses unique (append -2, -3, …); the shop's own catalogue addresses count as taken.
   const baseHandle = handle;
   for (let n = 2; ; n++) {
-    const clash = await prisma.collection.findFirst({ where: { handle, ...(id != null ? { id: { not: id } } : {}) }, select: { id: true } });
+    const clash =
+      RESERVED_COLLECTION_HANDLES.includes(handle) ||
+      (await prisma.collection.findFirst({ where: { handle, ...(id != null ? { id: { not: id } } : {}) }, select: { id: true } }));
     if (!clash) break;
     handle = `${baseHandle}-${n}`;
   }

@@ -41,6 +41,15 @@ export const DESIGNED_PAGE_HANDLES: readonly string[] = [
 ];
 
 /**
+ * DESIGNED pages with no content of their own: track-your-order redirects to WhatsApp, and the live loyalty-form
+ * app block renders nothing. Search engines are not sent there (sitemap, noindex).
+ */
+export const DESIGNED_PAGES_WITHOUT_CONTENT: readonly string[] = ['track-your-order', 'loyalty-form'];
+
+/** DESIGNED pages that show the same page as another address (the live shop's): that one is their canonical. */
+export const DESIGNED_PAGE_ALIASES: Readonly<Record<string, string>> = { about: 'about-us' };
+
+/**
  * Page addresses the store answers from code even when no page row has them (the built-in “Contact us” page at
  * /pages/contact), so a text page can never take them.
  */

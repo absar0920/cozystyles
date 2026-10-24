@@ -5,6 +5,7 @@ import { ContactPage } from '@/components/pages/ContactPage';
 import { decodeEntities } from '@/components/pages/content';
 import StaticPage, { generateMetadata as textPageMetadata } from '../[handle]/page';
 import '@/components/pages/content.css';
+import { canonical } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: decodeEntities(page?.seoTitle?.trim() || page?.title?.trim() || 'Contact us'),
     description: (page?.seoDescription?.trim() || DEFAULT_DESCRIPTION).slice(0, 160),
+    ...canonical('/pages/contact'),
   };
 }
 

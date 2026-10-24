@@ -45,3 +45,20 @@ test('Create collection saves without a redirect and opens the new collection', 
   expect(await prisma.collection.count({ where: { title } })).toBe(1);
   expect(errors).toEqual([]);
 });
+
+test('a collection never takes the shop’s own catalogue addresses (/collections/all, frontpage, all-1)', async ({ page }) => {
+  // /collections/all lists every product and /collections/frontpage redirects there: a collection typed with
+  // one of those addresses gets the next free one instead (its page would never be reachable)
+  for (const [typed, expected] of [['all', 'all-2'], ['frontpage', 'frontpage-2']] as const) {
+    const title = uniqueName('Reserved');
+    created.push(title);
+    await page.goto('/admin/collections/new');
+    await page.getByRole('textbox', { name: 'Name', exact: true }).fill(title);
+    await page.locator('main summary', { hasText: /^Advanced/ }).click();
+    await page.getByRole('textbox', { name: 'Web address' }).fill(typed);
+    await saveBar(page).getByRole('button', { name: 'Create collection' }).click();
+    await expect(page).toHaveURL(/\/admin\/collections\/\d+\?saved=1$/, { timeout: 30_000 });
+    const row = await prisma.collection.findFirst({ where: { title }, select: { handle: true } });
+    expect(row?.handle).toBe(expected);
+  }
+});

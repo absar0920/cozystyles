@@ -6,6 +6,8 @@ import { MarqueeStrip } from '@/components/home/MarqueeStrip';
 import { ProductCarousel } from '@/components/home/ProductCarousel';
 import { CategoryTiles } from '@/components/home/CategoryTiles';
 import { SeoTextBlock } from '@/components/home/SeoTextBlock';
+import type { Metadata } from 'next';
+import { canonical } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +16,8 @@ export const dynamic = 'force-dynamic';
  * Settings → Home page), Hot Selling Products (products ticked "Best seller") and Shop by Category (the Collections
  * page cards with a photo). Each part is left out while it has nothing to show, so a new shop starts with none.
  */
+export const metadata: Metadata = canonical('/');
+
 export default async function HomePage() {
   const [bannerRows, hot, tiles, settings] = await Promise.all([
     getBanners(),
